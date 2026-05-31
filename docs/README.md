@@ -71,6 +71,6 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 ## 状态
 
-- 版本：**v0.2.4** 已封版（Stage 0 最小闭环产品）；下一步 **v0.3.0** 规模化试点
-- 阶段：Stage 0 闭环系统（FS-AOL 楔子）→ 准备 Stage 0→1 试点
+- 版本：**v0.2.4** 已封版；**v0.3.0** 规模化试点 + UX wow（不加本质）已立项，见 [PUB-05-releases.md](public/PUB-05-releases.md) § v0.3.0
+- 阶段：Stage 0 闭环 → **Stage 0→1 试点**（2–4 周真发 + 可运营）
 - 最近更新：2026-05-31
