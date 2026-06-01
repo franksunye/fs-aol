@@ -11,7 +11,7 @@ const OPTIONS: Array<{ value: SuggestionSortKey; label: string }> = [
   { value: "housekeeper", label: "管家" },
   { value: "stale", label: "滞留时间" },
   { value: "priority", label: "优先级" },
-  { value: "disposition", label: "处置情况" },
+  { value: "disposition", label: "反馈情况" },
 ];
 
 export function SuggestionSort({ current }: { current: SuggestionSortKey }) {

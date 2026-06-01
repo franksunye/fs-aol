@@ -1,4 +1,4 @@
-/* 管家移动处置页：强制浅色主题（不受根 layout dark 影响） */
+/* 管家移动反馈页：强制浅色主题（不受根 layout dark 影响） */
 .mobile-light {
   color-scheme: light;
   --background: #f3f4f6;

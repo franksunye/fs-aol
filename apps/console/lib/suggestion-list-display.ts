@@ -9,7 +9,7 @@ export const INBOX_LAYER_LABELS = {
   workOrder: "工单",
   situation: "情况",
   actionPlan: "动作",
-  disposition: "处置",
+  disposition: "反馈",
 } as const;
 
 export function primaryAction(s: SuggestionDoc): string {
@@ -138,7 +138,7 @@ export function analysisContextLine(s: SuggestionDoc): string {
   return parts.join(" · ") || "—";
 }
 
-/** L4 处置：管家回填阻塞（decision 由右侧 badge 表达） */
+/** L4 反馈：管家回填卡点（decision 由右侧 badge 表达） */
 export function dispositionContextLine(blockerLabel: string): string {
-  return `阻塞 · ${blockerLabel}`;
+  return `卡点 · ${blockerLabel}`;
 }

@@ -1,7 +1,7 @@
 # Agent Console · v1.0 console-mvp
 
-产品轨第一个可见界面（FS-AOL 产品脊柱 **S1 总览 + S2 处置 + S3 信任轨**）。
-Python 引擎在 GitHub Actions 里写入追踪库，本应用读取同一个库，让人**在产品内看见并处置**跟进建议。
+产品轨第一个可见界面（FS-AOL 产品脊柱 **S1 总览 + S2 反馈 + S3 信任轨**）。
+Python 引擎在 GitHub Actions 里写入追踪库，本应用读取同一个库，让人**在产品内看见并反馈**跟进建议。
 
 - **栈**：Next.js (App Router) + Tailwind v4 + shadcn/ui + `@libsql/client`
 - **链接层**：libSQL/Turso。本地默认读 `data/agent_loop_tracking.db`（相对路径 `../../data/`）；
@@ -51,7 +51,7 @@ CONSOLE_AUTH_PASSWORD=your-password
 
 | 路由 | 脊柱 | 说明 |
 |------|------|------|
-| `/` | S1 | 建议总览：处置率/优先级统计 + 列表 |
+| `/` | S1 | 建议总览：反馈率/优先级统计 + 列表 |
 | `/suggestions/[key]` | S2 + S3 | 跟进方案 + 同意/拒绝/修改；推理与查证轨 |
 | `POST /api/outcomes` | — | 审批回写 `suggestion_outcomes`（链接层契约） |
 

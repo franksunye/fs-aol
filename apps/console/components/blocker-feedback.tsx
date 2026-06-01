@@ -41,7 +41,7 @@ export function BlockerFeedbackForm({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "提交失败");
       }
-      toast.success("阻塞信息已保存");
+      toast.success("卡点已保存");
       startTransition(() => router.refresh());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "提交失败");
@@ -51,7 +51,7 @@ export function BlockerFeedbackForm({
   return (
     <div className="space-y-3 rounded-lg border p-4">
       <div>
-        <div className="text-sm font-medium">阻塞信息</div>
+        <div className="text-sm font-medium">卡点</div>
         <p className="text-muted-foreground text-xs">
           当前：{blockerDisplay(currentType, currentNote)}
         </p>

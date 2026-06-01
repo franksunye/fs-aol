@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Check, X, Pencil, PhoneCall } from "lucide-react";
 import type { Decision, SuggestionDoc } from "@/lib/suggestions";
-import { decisionLabel } from "@/lib/labels";
 
 const btnBase =
   "h-11 w-full gap-1.5 rounded-lg border bg-white text-sm font-medium shadow-none";
@@ -75,10 +74,10 @@ export function MobileDispositionActions({
   return (
     <section className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900">处置</h2>
+        <h2 className="text-base font-semibold text-zinc-900">反馈</h2>
         {currentDecision ? (
           <span className="text-xs text-zinc-400">
-            已处理（可覆盖）
+            已反馈（可覆盖）
           </span>
         ) : null}
       </div>
@@ -121,11 +120,6 @@ export function MobileDispositionActions({
           拒绝
         </Button>
       </div>
-      {currentDecision ? (
-        <p className="mt-3 text-center text-xs text-violet-600">
-          当前：{decisionLabel(currentDecision)}
-        </p>
-      ) : null}
     </section>
   );
 }
@@ -181,7 +175,7 @@ function MobileModifyDialog({
         <DialogHeader>
           <DialogTitle>修改跟进方案</DialogTitle>
           <DialogDescription>
-            调整主行动与沟通要点后保存，记为「已修改」处置。
+            调整主行动与沟通要点后保存，记为「已修改」反馈。
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">

@@ -17,7 +17,7 @@ export function MobileHeader() {
         <ChevronLeft className="h-6 w-6" />
       </button>
       <h1 className="flex-1 pr-10 text-center text-base font-semibold tracking-tight text-zinc-900">
-        跟进行动 · 处置
+        跟进行动 · 反馈
       </h1>
     </header>
   );

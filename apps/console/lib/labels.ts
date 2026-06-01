@@ -27,7 +27,7 @@ export const DECISION_LABELS: Record<string, string> = {
 };
 
 export function decisionLabel(decision?: string | null): string {
-  if (!decision) return "待处置";
+  if (!decision) return "待反馈";
   return DECISION_LABELS[decision] || decision;
 }
 

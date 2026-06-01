@@ -155,5 +155,5 @@ def send_follow_up_textcard(
         title=title,
         description=desc,
         url=console_url,
-        btntxt="打开处置页",
+        btntxt="打开反馈页",
     )

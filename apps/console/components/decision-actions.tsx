@@ -72,7 +72,7 @@ export function DecisionActions({
     <div className="flex flex-wrap items-center gap-2">
       {currentDecision ? (
         <span className="text-muted-foreground mr-1 text-xs">
-          已处置（可覆盖）：
+          已反馈（可覆盖）：
         </span>
       ) : null}
       <Button
@@ -158,7 +158,7 @@ function ModifyDialog({
         <DialogHeader>
           <DialogTitle>修改跟进方案</DialogTitle>
           <DialogDescription>
-            调整主行动与沟通要点后保存，记为「已修改」处置。
+            调整主行动与沟通要点后保存，记为「已修改」反馈。
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">

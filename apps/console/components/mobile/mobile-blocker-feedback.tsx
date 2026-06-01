@@ -46,7 +46,7 @@ export function MobileBlockerFeedback({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "提交失败");
       }
-      toast.success("阻塞信息已保存");
+      toast.success("卡点已保存");
       startTransition(() => router.refresh());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "提交失败");
@@ -56,7 +56,7 @@ export function MobileBlockerFeedback({
   return (
     <section className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900">阻塞</h2>
+        <h2 className="text-base font-semibold text-zinc-900">卡点</h2>
         <span className="text-xs text-zinc-400">
           {blockerStatusShort(currentType)}
         </span>

@@ -303,25 +303,25 @@ class TrackingStore:
         )
 
     def build_prior_context(self, dedupe_key: str) -> str:
-        """拼装上一轮处置/阻塞（只读），供推理 prompt 使用。"""
+        """拼装上一轮反馈/卡点（只读），供推理 prompt 使用。"""
         lines: list[str] = []
         outcome = self.get_latest_outcome(dedupe_key)
         if outcome and outcome.decision:
             label = _DECISION_LABELS.get(outcome.decision, outcome.decision)
-            line = f"- 处置：{label}"
+            line = f"- 反馈：{label}"
             if outcome.note:
                 line += f"（{outcome.note}）"
             lines.append(line)
         blocker = self.get_latest_blocker(dedupe_key)
         if blocker and blocker.blocker_type != "UNKNOWN":
             label = BLOCKER_LABELS.get(blocker.blocker_type, blocker.blocker_type)
-            line = f"- 阻塞：{label}"
+            line = f"- 卡点：{label}"
             if blocker.note:
                 line += f" — 「{blocker.note}」"
             lines.append(line)
         if not lines:
             return ""
-        return "## 上一轮处置（只读）\n" + "\n".join(lines)
+        return "## 上一轮反馈（只读）\n" + "\n".join(lines)
 
     def mark_processed(self, wo: WorkOrder, suggestion: FollowUpSuggestion, status: str) -> None:
         now = bj_now().isoformat()

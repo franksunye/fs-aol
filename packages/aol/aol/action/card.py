@@ -40,15 +40,15 @@ def _blocker_line(blocker: Optional[BlockerFeedback]) -> str:
     if blocker and blocker.blocker_type and blocker.blocker_type != "UNKNOWN":
         label = BLOCKER_LABELS.get(blocker.blocker_type, blocker.blocker_type)
         note = f" — {_truncate(blocker.note, 24)}" if blocker.note else ""
-        return f"> **阻塞信息**：{label}{note}\n"
-    return "> **阻塞信息**：待采集\n"
+        return f"> **卡点**：{label}{note}\n"
+    return "> **卡点**：待采集\n"
 
 
 def _console_link(base_url: str, dedupe_key: str) -> str:
     if not base_url:
         return ""
     path = quote(dedupe_key, safe="")
-    # 移动处置页：首屏只拉单条建议，查证轨懒加载（见 apps/console/app/m/s/）
+    # 移动反馈页：首屏只拉单条建议，查证轨懒加载（见 apps/console/app/m/s/）
     return f"{base_url.rstrip('/')}/m/s/{path}"
 
 
@@ -60,16 +60,16 @@ def _build_compact_card(
     console_base_url: str,
     blocker: Optional[BlockerFeedback],
 ) -> str:
-    """移动端 action 通知卡：把人拉回 Console，详情在处置页。"""
+    """移动端 action 通知卡：把人拉回 Console，详情在反馈页。"""
     emoji = _PRIORITY_EMOJI.get(s.priority, "⚪")
     customer = wo.customer_name or "客户"
     ref = wo.order_num or wo.work_order_id
     event = domain.event_type_label(wo.event_type)
     city = wo.city or "—"
     stale = f" · 停留 {wo.stale_days} 天" if wo.stale_days else ""
-    action = _truncate(s.action_plan.primary_action or s.reason_summary or "查看处置页", 56)
+    action = _truncate(s.action_plan.primary_action or s.reason_summary or "查看反馈页", 56)
     link = _console_link(console_base_url, dedupe_key or wo.dedupe_key)
-    footer = f"\n> [打开处置页]({link})\n" if link else ""
+    footer = f"\n> [打开反馈页]({link})\n" if link else ""
 
     return (
         f"### {emoji} 跟进行动 · {customer}\n"
@@ -119,7 +119,7 @@ def _build_verbose_card(
         )
 
     link = _console_link(console_base_url, dedupe_key or wo.dedupe_key)
-    footer = f"\n> [打开 Console 处置]({link})\n" if link else ""
+    footer = f"\n> [打开 Console 反馈]({link})\n" if link else ""
 
     return (
         f"### {emoji} 跟进行动 · {wo.city}\n"

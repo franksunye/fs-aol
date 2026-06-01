@@ -3,8 +3,8 @@ import "./mobile-theme.css";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 
 export const metadata: Metadata = {
-  title: "跟进行动 · 处置",
-  description: "FS-AOL 移动处置页",
+  title: "跟进行动 · 反馈",
+  description: "FS-AOL 移动反馈页",
 };
 
 export const viewport: Viewport = {

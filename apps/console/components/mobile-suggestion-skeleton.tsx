@@ -1,4 +1,4 @@
-/** 移动处置页骨架 — 浅色卡片布局 */
+/** 移动反馈页骨架 — 浅色卡片布局 */
 export function MobileSuggestionSkeleton() {
   return (
     <div aria-busy="true" aria-label="加载跟进建议" className="space-y-3 pb-6">

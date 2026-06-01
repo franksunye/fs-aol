@@ -6,7 +6,7 @@
 
 export const AUTH_COOKIE = "aol_console_session";
 
-/** 管家从企微点进来的处置页及提交 API，试点阶段免登录。 */
+/** 管家从企微点进来的反馈页及提交 API，试点阶段免登录。 */
 export function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/suggestions/")) return true;
   if (pathname.startsWith("/m/s/")) return true;

@@ -67,7 +67,7 @@ export function SuggestionInboxTable({
       >
         <div>优先级</div>
         <div>跟进条目</div>
-        <div className="text-right">处置</div>
+        <div className="text-right">反馈</div>
       </div>
       <ul className="divide-y">
         {rows.map((r) => {

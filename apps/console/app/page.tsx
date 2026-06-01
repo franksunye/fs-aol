@@ -61,7 +61,7 @@ export default async function Page({
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Agent Console</h1>
           <p className="text-muted-foreground text-sm">
-            Follow-up Agent · 看见并处置今天的跟进建议
+            Follow-up Agent · 看见并反馈今天的跟进建议
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -77,9 +77,9 @@ export default async function Page({
 
       <section className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="待跟进建议" value={stats.needFollow} hint={`共 ${stats.total} 条记录`} />
-        <Stat label="待处置" value={stats.pending} hint="尚未同意/拒绝/修改/已跟进" />
+        <Stat label="待反馈" value={stats.pending} hint="尚未同意/拒绝/修改/已跟进" />
         <Stat
-          label="App 内处置率"
+          label="App 内反馈率"
           value={`${stats.handledRate}%`}
           hint={`同意 ${stats.approved} · 已跟进 ${stats.followedUp} · 修改 ${stats.modified}`}
         />
@@ -94,14 +94,14 @@ export default async function Page({
         <Stat label="曝光" value={stats.exposureCount} hint="需跟进建议条数" />
         <Stat label="采纳率" value={`${stats.adoptionRate}%`} hint="同意/修改/已跟进" />
         <Stat
-          label="阻塞采集率"
+          label="卡点采集率"
           value={`${stats.blockerCaptureRate}%`}
           hint="已回填 A/B/C/D"
         />
         <Stat
           label="UNKNOWN 占比"
           value={`${stats.unknownBlockerRate}%`}
-          hint="尚未采集阻塞"
+          hint="尚未采集卡点"
         />
       </section>
 
