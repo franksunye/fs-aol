@@ -1,0 +1,15 @@
+name = "fs-aol-scheduler"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# UTC 00:00–14:00 每小时 = 北京时间 08:00–22:00 每小时整点
+[triggers]
+crons = ["0 0-14 * * *"]
+
+[vars]
+GITHUB_OWNER = "franksunye"
+GITHUB_REPO = "fs-aol"
+GITHUB_WORKFLOW_AGENT_CRON = "agent_cron.yml"
+# Secrets（Cloudflare Dashboard → Workers → Settings → Variables）:
+#   GITHUB_TOKEN  — PAT，scope: repo + workflow
+#   TRIGGER_SECRET — 可选；设置后 /trigger?secret=... 才允许手动触发

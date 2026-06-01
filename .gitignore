@@ -32,3 +32,4 @@ next-env.d.ts
 docs/private/**
 docs/PRIV-*.md
 .vercel
+.wrangler/

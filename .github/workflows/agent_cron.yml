@@ -1,10 +1,9 @@
 name: Agentic Follow-up Cron Engine (DB Polling)
 
 on:
-  schedule:
-    # UTC 时间。每天 00:00-14:00（北京时间 08:00-22:00）每小时执行一次
-    - cron: '0 0-14 * * *'
-  workflow_dispatch:  # 支持在 GitHub 网页手动触发测试
+  # 定时由 Cloudflare Worker 触发 workflow_dispatch（见 cloudflare-worker/）
+  # GHA 原生 schedule 在免费 tier 易延迟/漏跑，已移除
+  workflow_dispatch:
 
 # 避免上一轮还没跑完就被下一轮重叠触发
 concurrency:
