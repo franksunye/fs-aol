@@ -13,10 +13,8 @@ export default async function MobileSuggestionAction({
   const dedupeKey = decodeURIComponent(key);
 
   return (
-    <main className="px-4 py-5">
-      <Suspense fallback={<MobileSuggestionSkeleton />}>
-        <MobileSuggestionContent dedupeKey={dedupeKey} />
-      </Suspense>
-    </main>
+    <Suspense fallback={<MobileSuggestionSkeleton />}>
+      <MobileSuggestionContent dedupeKey={dedupeKey} />
+    </Suspense>
   );
 }
