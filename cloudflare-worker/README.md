@@ -4,6 +4,8 @@
 
 模式对齐 [sales-reward-hub/cloudflare-worker](https://github.com/franksunye/sales-reward-hub/tree/main/cloudflare-worker)。
 
+**已部署**：`https://fs-aol-scheduler.sunye.workers.dev`
+
 ## 架构
 
 ```
@@ -39,17 +41,12 @@ wrangler deploy
 
 ## 手动触发
 
-部署后 Worker URL 形如 `https://fs-aol-scheduler.<account>.workers.dev`
-
 ```bash
 # 状态
-curl https://fs-aol-scheduler.<account>.workers.dev/status
+curl https://fs-aol-scheduler.sunye.workers.dev/status
 
-# 立即跑一轮 cron（不受 08–22 窗口限制）
-curl "https://fs-aol-scheduler.<account>.workers.dev/trigger"
-
-# 若配置了 TRIGGER_SECRET
-curl "https://fs-aol-scheduler.<account>.workers.dev/trigger?secret=YOUR_SECRET"
+# 立即跑一轮（需 TRIGGER_SECRET，见 Cloudflare Dashboard Secrets）
+curl "https://fs-aol-scheduler.sunye.workers.dev/trigger?secret=YOUR_TRIGGER_SECRET"
 ```
 
 ## 排期
