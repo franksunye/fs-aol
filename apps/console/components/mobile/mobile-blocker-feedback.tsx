@@ -6,8 +6,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BLOCKER_CHOICES, blockerDisplay } from "@/lib/blockers";
+import { BLOCKER_CHOICES, BLOCKER_LABELS } from "@/lib/blockers";
 import type { BlockerType } from "@/lib/blockers";
+
+function blockerStatusShort(type?: BlockerType | null): string {
+  if (!type || type === "UNKNOWN") return "待采集";
+  return BLOCKER_LABELS[type] ?? type;
+}
 
 export function MobileBlockerFeedback({
   dedupeKey,
@@ -50,12 +55,11 @@ export function MobileBlockerFeedback({
 
   return (
     <section className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-      <h2 className="mb-3 text-base font-semibold text-zinc-900">阻塞</h2>
-      <div className="mb-3">
-        <p className="text-sm font-medium text-zinc-800">阻塞信息</p>
-        <p className="text-sm text-zinc-500">
-          当前：{blockerDisplay(currentType, currentNote)}
-        </p>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-semibold text-zinc-900">阻塞</h2>
+        <span className="text-xs text-zinc-400">
+          {blockerStatusShort(currentType)}
+        </span>
       </div>
       <div className="mb-4 grid grid-cols-2 gap-2">
         {BLOCKER_CHOICES.map((c) => (

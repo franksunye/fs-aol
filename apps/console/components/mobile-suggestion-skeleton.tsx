@@ -40,7 +40,10 @@ export function MobileSuggestionSkeleton() {
       </div>
 
       <div className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-        <div className="mb-3 h-5 w-10 animate-pulse rounded bg-zinc-100" />
+        <div className="mb-3 flex items-center justify-between">
+          <div className="h-5 w-10 animate-pulse rounded bg-zinc-100" />
+          <div className="h-4 w-14 animate-pulse rounded bg-zinc-100" />
+        </div>
         <div className="mb-4 grid grid-cols-2 gap-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-10 animate-pulse rounded-lg bg-zinc-100" />
