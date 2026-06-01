@@ -48,7 +48,8 @@ def _console_link(base_url: str, dedupe_key: str) -> str:
     if not base_url:
         return ""
     path = quote(dedupe_key, safe="")
-    return f"{base_url.rstrip('/')}/suggestions/{path}"
+    # 移动处置页：首屏只拉单条建议，查证轨懒加载（见 apps/console/app/m/s/）
+    return f"{base_url.rstrip('/')}/m/s/{path}"
 
 
 def _build_compact_card(

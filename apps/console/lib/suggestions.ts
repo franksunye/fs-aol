@@ -128,13 +128,20 @@ function mapBlocker(row: Record<string, unknown>): BlockerRow {
   };
 }
 
-async function latestOutcomes(): Promise<Map<string, OutcomeRow>> {
-  const res = await db.execute(
-    `SELECT o.* FROM ${TABLE_OUTCOMES} o
-     JOIN (SELECT dedupe_key, MAX(id) AS mid FROM ${TABLE_OUTCOMES} GROUP BY dedupe_key) m
-       ON o.id = m.mid`
-  );
+async function latestOutcomesForKeys(
+  dedupeKeys: string[]
+): Promise<Map<string, OutcomeRow>> {
   const map = new Map<string, OutcomeRow>();
+  if (dedupeKeys.length === 0) return map;
+  const ph = dedupeKeys.map(() => "?").join(",");
+  const res = await db.execute({
+    sql: `SELECT o.* FROM ${TABLE_OUTCOMES} o
+          INNER JOIN (
+            SELECT dedupe_key, MAX(id) AS mid FROM ${TABLE_OUTCOMES}
+            WHERE dedupe_key IN (${ph}) GROUP BY dedupe_key
+          ) m ON o.id = m.mid`,
+    args: dedupeKeys,
+  });
   for (const row of res.rows as unknown as Record<string, unknown>[]) {
     const o = mapOutcome(row);
     map.set(o.dedupeKey, o);
@@ -142,13 +149,20 @@ async function latestOutcomes(): Promise<Map<string, OutcomeRow>> {
   return map;
 }
 
-async function latestBlockers(): Promise<Map<string, BlockerRow>> {
-  const res = await db.execute(
-    `SELECT b.* FROM ${TABLE_BLOCKERS} b
-     JOIN (SELECT dedupe_key, MAX(id) AS mid FROM ${TABLE_BLOCKERS} GROUP BY dedupe_key) m
-       ON b.id = m.mid`
-  );
+async function latestBlockersForKeys(
+  dedupeKeys: string[]
+): Promise<Map<string, BlockerRow>> {
   const map = new Map<string, BlockerRow>();
+  if (dedupeKeys.length === 0) return map;
+  const ph = dedupeKeys.map(() => "?").join(",");
+  const res = await db.execute({
+    sql: `SELECT b.* FROM ${TABLE_BLOCKERS} b
+          INNER JOIN (
+            SELECT dedupe_key, MAX(id) AS mid FROM ${TABLE_BLOCKERS}
+            WHERE dedupe_key IN (${ph}) GROUP BY dedupe_key
+          ) m ON b.id = m.mid`,
+    args: dedupeKeys,
+  });
   for (const row of res.rows as unknown as Record<string, unknown>[]) {
     const b = mapBlocker(row);
     map.set(b.dedupeKey, b);
@@ -180,37 +194,85 @@ function mapSuggestion(
 
 export async function listSuggestions(options?: {
   housekeeperId?: string;
+  /** 默认 100；移动收件箱传 30 */
+  limit?: number;
 }): Promise<SuggestionRow[]> {
   await ensureSchema();
   const hk = options?.housekeeperId?.trim();
+  const limit = Math.min(Math.max(options?.limit ?? 100, 1), 500);
   const sql = hk
-    ? `SELECT * FROM ${TABLE_LOGS} WHERE housekeeper_id = ? ORDER BY processed_at DESC LIMIT 500`
-    : `SELECT * FROM ${TABLE_LOGS} ORDER BY processed_at DESC LIMIT 500`;
-  const args = hk ? [hk] : [];
-  const [res, outcomes, blockers] = await Promise.all([
-    db.execute({ sql, args }),
-    latestOutcomes(),
-    latestBlockers(),
+    ? `SELECT * FROM ${TABLE_LOGS} WHERE housekeeper_id = ? ORDER BY processed_at DESC LIMIT ?`
+    : `SELECT * FROM ${TABLE_LOGS} ORDER BY processed_at DESC LIMIT ?`;
+  const args = hk ? [hk, limit] : [limit];
+  const res = await db.execute({ sql, args });
+  const logRows = res.rows as unknown as Record<string, unknown>[];
+  const keys = logRows.map((r) => str(r.dedupe_key)).filter(Boolean);
+  const [outcomes, blockers] = await Promise.all([
+    latestOutcomesForKeys(keys),
+    latestBlockersForKeys(keys),
   ]);
-  return (res.rows as unknown as Record<string, unknown>[]).map((r) =>
-    mapSuggestion(r, outcomes, blockers)
-  );
+  return logRows.map((r) => mapSuggestion(r, outcomes, blockers));
 }
 
+/** 单条建议：一次 Turso 往返（避免全表扫 outcomes/blockers 或 3 次 RTT） */
 export async function getSuggestion(
   dedupeKey: string
 ): Promise<SuggestionRow | null> {
   await ensureSchema();
-  const [res, outcomes, blockers] = await Promise.all([
-    db.execute({
-      sql: `SELECT * FROM ${TABLE_LOGS} WHERE dedupe_key = ? LIMIT 1`,
-      args: [dedupeKey],
-    }),
-    latestOutcomes(),
-    latestBlockers(),
-  ]);
+  const res = await db.execute({
+    sql: `SELECT
+            l.*,
+            o.id AS o_id, o.dedupe_key AS o_dedupe_key, o.work_order_id AS o_work_order_id,
+            o.decision AS o_decision, o.note AS o_note, o.operator AS o_operator,
+            o.modified_suggestion AS o_modified_suggestion, o.created_at AS o_created_at,
+            b.id AS b_id, b.dedupe_key AS b_dedupe_key, b.work_order_id AS b_work_order_id,
+            b.blocker_type AS b_blocker_type, b.note AS b_note, b.source AS b_source,
+            b.operator AS b_operator, b.created_at AS b_created_at
+          FROM ${TABLE_LOGS} l
+          LEFT JOIN ${TABLE_OUTCOMES} o ON o.id = (
+            SELECT MAX(o2.id) FROM ${TABLE_OUTCOMES} o2 WHERE o2.dedupe_key = l.dedupe_key
+          )
+          LEFT JOIN ${TABLE_BLOCKERS} b ON b.id = (
+            SELECT MAX(b2.id) FROM ${TABLE_BLOCKERS} b2 WHERE b2.dedupe_key = l.dedupe_key
+          )
+          WHERE l.dedupe_key = ? LIMIT 1`,
+    args: [dedupeKey],
+  });
   const row = (res.rows as unknown as Record<string, unknown>[])[0];
-  return row ? mapSuggestion(row, outcomes, blockers) : null;
+  if (!row) return null;
+  const outcomes = new Map<string, OutcomeRow>();
+  const blockers = new Map<string, BlockerRow>();
+  if (row.o_id != null) {
+    const o = mapOutcome({
+      id: row.o_id,
+      dedupe_key: row.o_dedupe_key,
+      work_order_id: row.o_work_order_id,
+      decision: row.o_decision,
+      note: row.o_note,
+      operator: row.o_operator,
+      modified_suggestion: row.o_modified_suggestion,
+      created_at: row.o_created_at,
+    });
+    outcomes.set(o.dedupeKey, o);
+  }
+  if (row.b_id != null) {
+    const b = mapBlocker({
+      id: row.b_id,
+      dedupe_key: row.b_dedupe_key,
+      work_order_id: row.b_work_order_id,
+      blocker_type: row.b_blocker_type,
+      note: row.b_note,
+      source: row.b_source,
+      operator: row.b_operator,
+      created_at: row.b_created_at,
+    });
+    blockers.set(b.dedupeKey, b);
+  }
+  const logRow: Record<string, unknown> = { ...row };
+  for (const k of Object.keys(logRow)) {
+    if (k.startsWith("o_") || k.startsWith("b_")) delete logRow[k];
+  }
+  return mapSuggestion(logRow, outcomes, blockers);
 }
 
 export async function getLatestBlocker(
@@ -250,13 +312,10 @@ export async function recordBlocker(input: {
   });
 }
 
-export async function getTrace(workOrderId: string): Promise<TraceRow | null> {
-  const res = await db.execute({
-    sql: `SELECT * FROM ${TABLE_TRACES} WHERE work_order_id = ? ORDER BY id DESC LIMIT 1`,
-    args: [workOrderId],
-  });
-  const row = (res.rows as unknown as Record<string, unknown>[])[0];
-  if (!row) return null;
+function mapTraceRow(
+  row: Record<string, unknown>,
+  opts: { includePrompts: boolean }
+): TraceRow {
   const steps = parseJson<TraceStep[]>(row.steps_json, []);
   const enrichStep = steps.find((s) => s.name === "enrich_work_order_context");
   return {
@@ -267,14 +326,39 @@ export async function getTrace(workOrderId: string): Promise<TraceRow | null> {
     error: str(row.error),
     latencyMs: Number(row.latency_ms ?? 0),
     totalTokens: Number(row.total_tokens ?? 0),
-    promptSystem: str(row.prompt_system),
-    promptUser: str(row.prompt_user),
-    rawResponse: str(row.raw_response),
+    promptSystem: opts.includePrompts ? str(row.prompt_system) : "",
+    promptUser: opts.includePrompts ? str(row.prompt_user) : "",
+    rawResponse: opts.includePrompts ? str(row.raw_response) : "",
     parsed: parseJson<SuggestionDoc | null>(row.parsed, null),
     steps,
     enrich: (enrichStep?.output as Record<string, unknown>) ?? null,
     createdAt: str(row.created_at),
   };
+}
+
+/** 懒加载用：不拉 prompt / raw_response，减小 payload */
+export async function getTraceLite(
+  workOrderId: string
+): Promise<TraceRow | null> {
+  await ensureSchema();
+  const res = await db.execute({
+    sql: `SELECT work_order_id, mode, model, status, error, latency_ms, total_tokens,
+                 steps_json, parsed, created_at
+          FROM ${TABLE_TRACES} WHERE work_order_id = ? ORDER BY id DESC LIMIT 1`,
+    args: [workOrderId],
+  });
+  const row = (res.rows as unknown as Record<string, unknown>[])[0];
+  return row ? mapTraceRow(row, { includePrompts: false }) : null;
+}
+
+export async function getTrace(workOrderId: string): Promise<TraceRow | null> {
+  await ensureSchema();
+  const res = await db.execute({
+    sql: `SELECT * FROM ${TABLE_TRACES} WHERE work_order_id = ? ORDER BY id DESC LIMIT 1`,
+    args: [workOrderId],
+  });
+  const row = (res.rows as unknown as Record<string, unknown>[])[0];
+  return row ? mapTraceRow(row, { includePrompts: true }) : null;
 }
 
 export async function recordOutcome(input: {

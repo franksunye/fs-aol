@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getSuggestion, getTrace, type SuggestionDoc } from "@/lib/suggestions";
+import { getSuggestion, type SuggestionDoc } from "@/lib/suggestions";
+import { TracePanelLazy } from "@/components/trace-panel-lazy";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DecisionActions } from "@/components/decision-actions";
 import { BlockerFeedbackForm } from "@/components/blocker-feedback";
-import { TraceView } from "@/components/trace-view";
 import {
   eventTypeLabel,
   statusLabel,
@@ -96,7 +96,6 @@ export default async function SuggestionDetail({
   const row = await getSuggestion(dedupeKey);
   if (!row) notFound();
 
-  const trace = await getTrace(row.workOrderId);
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
 
@@ -170,7 +169,7 @@ export default async function SuggestionDetail({
         </TabsContent>
         <TabsContent value="trace" className="pt-2">
           <Card className="p-5">
-            <TraceView trace={trace} />
+            <TracePanelLazy workOrderId={row.workOrderId} />
           </Card>
         </TabsContent>
       </Tabs>
