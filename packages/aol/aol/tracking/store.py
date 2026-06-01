@@ -79,13 +79,21 @@ class TrackingStore:
         conn.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN state_at TEXT")
 
     @staticmethod
+    def _turso_table_columns(turso: Any, table: str) -> set[str]:
+        res = turso.execute(f"PRAGMA table_info({table})")
+        if not res.rows:
+            return set()
+        if hasattr(res, "columns") and res.columns:
+            name_idx = res.columns.index("name")
+            return {row[name_idx] for row in res.rows}
+        return {row[1] for row in res.rows if len(row) > 1}
+
+    @staticmethod
     def _migrate_logs_state_at_turso(turso: Any) -> None:
-        try:
-            turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN state_at TEXT")
-        except Exception as exc:
-            msg = str(exc).lower()
-            if "duplicate column" not in msg and "already exists" not in msg:
-                raise
+        cols = TrackingStore._turso_table_columns(turso, TABLE_LOGS)
+        if not cols or "state_at" in cols:
+            return
+        turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN state_at TEXT")
 
     @staticmethod
     def _migrate_sqlite_v02(conn: sqlite3.Connection) -> None:
