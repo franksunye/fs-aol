@@ -25,9 +25,9 @@ POC 当前把 `403`、`110100`、`state` 这些**系统码直接写进了引擎�
 fs-aol 的产出是 `Suggestion` / `Action Spec`——要给人看、要驱动 UI、最终要开源复用。
 
 - 如果建议里写的是"status=403 的单子"，它**只对懂 XLink 的人有意义**，无法泛化。
-- 我们的开源终局（[01-vision](PUB-01-vision.md)）是把这套运行时复用到 CRM / 招聘 / 医疗随访。
-  这**完全依赖**一个稳定的领域语义层：Agent 只认领域概念（工单完工、待跟进、客户、
-  服务资源），不认任何厂商系统的字段名。
+- 我们的终局（[01-vision](PUB-01-vision.md)）是把 **Harness + Cognitive + Trusted Execution** 复用到多行业；
+  开源 Connector/Event Schema，不先开源认知核心。领域语义是 **Business Harness 与 Cognitive Layer 的交界**：
+  Harness 把系统事实译成领域对象；Ontology 定义领域关系与行业规则。
 - 这正是 DDD 的**通用语言（Ubiquitous Language）+ 防腐层（Anti-Corruption Layer）**：
   让混乱的外部系统语义，在边界处被翻译成干净、内聚、可演进的领域语义。
 

@@ -1,6 +1,6 @@
 # FS-AOL Monorepo
 
-Field Service Agent Operating Layer — Python 跟进引擎 + Next.js 审批 Console，共享 Turso 追踪库与跨语言契约。
+**FS-COS（Field Service Cognitive Operating System）** — 现场服务认知与决策层（工程仓库 fs-aol）：Python 跟进引擎 + Next.js Console，共享 Turso 与契约。Agent 执行；认知与决策是核心叙事。
 
 GitHub: [franksunye/fs-aol](https://github.com/franksunye/fs-aol)
 

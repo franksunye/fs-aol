@@ -6,13 +6,15 @@
 ## 一屏看懂
 
 **一句话**：用最接地气的传统业务（防水维修工单跟进），撕开口子，构建服务行业的
-**Field Service Agent Operating Layer（FS-AOL）**——FSM 之上的 System of Action。
+**Field Service Cognitive Operating System（FS-COS）**——FSM 之上的 **System of Cognition**；
+Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 **fs-aol**。
 
 | 维度 | 内容 |
 |------|------|
-| **目标** | 在 FSM 之上构建 AOL：一组持续协作的业务 Agent，自动推进获客→报价→成交→交付→回款 |
-| **切入** | 现场服务工单的「跟进真空期」——痛点深、闭环短、容错高、可量化（Follow-up Agent 作楔子） |
-| **路径** | Stage 0 闭环系统 → Stage 1 Agent Runtime → Stage 2 AOL Core → Stage 3 开源生态 |
+| **目标** | 理解业务与客户，决定「下一步做什么」，再由 Agent 在审批后执行 |
+| **切入** | 现场服务工单的「跟进真空期」——Follow-up 作 Phase 1 楔子，验证业务价值 |
+| **路径** | Phase 1 Follow-up Skill → Phase 2 Harness+Cognitive → Phase 3 Decision → Phase 4 更多 Skill → Phase 5 Connector/SDK 开源 |
+| **分层** | Model / Skill（商品）→ Harness / Cognitive / Trusted Execution（护城河）→ Business Systems |
 | **产品化** | 两轨纪律：`poc-*` 验证（headless）/ `vX.Y` 产品轨（必有 UI+UX+可感知 KPI）。见 [PUB-07](public/PUB-07-product-surface.md) |
 | **当下** | Stage 0：`poc-followup` 引擎已跑通并对 XLink 真实工单库（生产只读）验证；产品起点 = v1.0 Console MVP |
 
@@ -32,9 +34,9 @@
 
 | 文档 | 说明 |
 |------|------|
-| [PUB-01-vision.md](public/PUB-01-vision.md) | **为什么**：FS-AOL 愿景（System of Action）+ Follow-up 楔子论证 |
-| [PUB-02-architecture.md](public/PUB-02-architecture.md) | **是什么**：FS-AOL 架构规格 v1.0（8 大组件 + 业务 Agent + 四原语） |
-| [PUB-03-roadmap.md](public/PUB-03-roadmap.md) | **怎么走**：平台演进 Stage 0→3（闭环→Runtime→AOL Core→开源） |
+| [PUB-01-vision.md](public/PUB-01-vision.md) | **为什么**：FS-COS 愿景（System of Cognition）+ 战略修正 + Follow-up 楔子 |
+| [PUB-02-architecture.md](public/PUB-02-architecture.md) | **是什么**：FS-COS 架构 v1.2（Model/Skill/Harness/Cognitive/Trusted Execution + 四原语映射） |
+| [PUB-03-roadmap.md](public/PUB-03-roadmap.md) | **怎么走**：Phase 1→5（价值验证→认知→决策→执行→Connector 开源） |
 | [PUB-04-domain-semantics.md](public/PUB-04-domain-semantics.md) | **用什么语言思考**：领域语义对齐（Agent 的语义层） |
 | [PUB-changelog.md](public/PUB-changelog.md) | **版本摘要表**：每版一行，讨论功能放进哪个小版本 |
 | [PUB-05-releases.md](public/PUB-05-releases.md) | **发哪些版**：两轨（POC vs 产品轨）+ 产品 OKR/KPI 总表 → Live |
@@ -72,5 +74,5 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 ## 状态
 
 - 版本：**v0.2.4** 已封版；**v0.3.0** 规模化试点 + UX wow（不加本质）已立项，见 [PUB-05-releases.md](public/PUB-05-releases.md) § v0.3.0
-- 阶段：Stage 0 闭环 → **Stage 0→1 试点**（2–4 周真发 + 可运营）
-- 最近更新：2026-05-31
+- 阶段：Phase 1（Follow-up 楔子）→ v0.3 运营试点
+- 最近更新：2026-06-01（对齐《认知机器》五层：Harness / Trusted Execution / Skill）

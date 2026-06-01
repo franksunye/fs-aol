@@ -2,39 +2,88 @@
 
 ## 一句话愿景
 
-> **Field Service Agent Operating Layer（FS-AOL）是服务行业的 System of Action。**
+> **Field Service Cognitive Operating System（FS-COS）是服务行业的 System of Cognition。**
 >
-> 它建立在 FSM 之上，通过一组持续协作的业务 Agent，帮助服务型企业自动推进
-> 从获客、报价、成交、交付到回款的完整生命周期，让每一家中小企业都拥有
-> 一支**数字运营团队**。
+> 我们不负责「运行 Agent」，而负责**理解业务、理解客户、理解销售与项目风险，
+> 并决定 Agent 应该做什么**。Agent 是执行器；**认知层（Cognitive Layer）才是核心资产**。
 
-当我们开始讨论 Qualification / Estimate / Follow-up / Closing 这些 Agent 时，
-本质上已经不再是在设计一个 FSM 模块，而是在**定义一种新的软件架构**。
+工程仓库名仍为 **fs-aol**（历史命名）；对外战略叙事以 **FS-COS**（Field Service Cognitive Operating System /
+亦可称 **Field Service Cognitive Platform**）为准。
 
 ---
 
-## 从「记录业务」到「运营业务」
+## 与《认知机器》五层对照（SSOT）
 
-| | 传统软件 | 未来软件 |
+书中隐含分层与早期「LLM → Agent → AOL → FSM」**并不一一对应**。对齐后的世界观：
+
+```text
+Model Layer              Claude / GPT / Gemini / DeepSeek     ← 商品层，不建护城河
+        ↑
+Skill Layer              Follow-up · Estimate · Dispatch …    ← 领域能力，可替换（未来或内置为 Claude Skill）
+        ↑
+Business Harness         客户/项目/时间线/报价上下文组装       ← 核心资产 ★
+        ↑
+Cognitive Layer          Business Memory · Decision · Graph   ← 核心资产 ★
+        ↑
+Trusted Execution        审批 · 执行 · 记录 · 审计 · 回滚       ← 核心资产 ★
+        ↑
+Business Systems         FSM · Excel · QuickBooks · 企微 …
+```
+
+| 书中层 | 我们早期说法 | 修正后定位 |
+|--------|--------------|------------|
+| **Model** | LLM | 可插拔供应商；**永远不与模型公司争 Runtime** |
+| **Skill** | × Agent | Follow-up / Estimate 等是 **Skill**，不是平台；commodity 化风险高 |
+| **Harness** | Context Engine | 改名为 **Business Harness**：模型不知道你的 FSM/Excel/微信，由我们拼装 `Project Context` |
+| **Cognitive** | （新增强调） | 客户是否价格敏感、平均 7 天成交等——**不是 Prompt/Skill** |
+| **Trusted Execution** | Action + Approval 分散 | **合并为一层**：建议→审批→执行→归档→可审计；Claude 无法替企业担责 |
+| **Business** | FSM | System of Record，commodity |
+
+> **最危险**：把 Estimate / Follow-up 当成终局（纯 Skill）。  
+> **最安全**：**Harness + Cognitive + Trusted Execution**——Claude 接不进客户 FSM、建不起行业图谱、承担不了审批与审计责任。
+
+---
+
+## 战略修正（相对早期「Agent Operating Layer」表述）
+
+结合《认知机器》与平台演进判断，我们做五处关键修正——**修正的是定位与护城河，不是推翻当前 POC 技术栈**：
+
+| # | 旧表述（危险区） | 新表述（护城河） |
+|---|----------------|----------------|
+| 1 | AOL = Agent Runtime，价值在「运行 Agent」 | **Business Reality → Business Knowledge → Business Decisions → Agent**；Agent 只是手脚 |
+| 2 | Event Bus 是 Kernel 核心 | Event Bus 是**可替换基础设施**（Temporal / Kafka / 云厂商都能做） |
+| 3 | Data Fabric 接上游即可 | 升级为 **Cognitive Layer**：客户/项目/销售/运营/行业认知 |
+| 4 | 先开源 AOL Kernel | **不先开源 Kernel**；开源 Connector、Event Schema、Agent SDK |
+| 5 | Agent Marketplace 是终局 | 终局是 **Decision Intelligence（决策智能）**，不是 Agent 应用商店 |
+
+> **不要站在模型与用户之间做翻译层、中间层、拼装层。**
+> OpenAI / Claude / Gemini 未来都可能内置 Runtime；若我们的价值仅是「运行 Agent」，就在死亡名单里。
+
+---
+
+## 从「记录业务」到「理解并决策业务」
+
+| | 传统软件 | 未来软件（FS-COS） |
 |---|---|---|
-| 范式 | **System of Record** | **System of Action** |
-| 职责 | 保存事实 | 推动行动 |
-| 回答 | 记录发生了什么 | 决定下一步应该发生什么 |
+| 范式 | **System of Record** | **System of Cognition** |
+| 职责 | 保存事实 | 形成认知、给出决策、再驱动行动 |
+| 回答 | 记录发生了什么 | **理解意味着什么 → 下一步应该做什么** |
 
 - 过去 20 年，`CRM / ERP / FSM` 改变了企业**记录**业务的方式。
-- 未来 20 年，**Agent Operating Layer** 将改变企业**运营**业务的方式。
+- 接下来，`Cognitive Operating System` 改变企业**理解并运营**业务的方式。
 
-FSM 告诉你「发生了什么」；AOL 告诉你「下一步做什么，并帮你完成它」。
+FSM 告诉你「发生了什么」；**认知层**告诉你「这对客户/项目意味着什么」；Agent 在人工批准后**执行**。
 
 ---
 
 ## 核心使命（Mission）
 
-帮助每一家服务型企业拥有一支**数字运营团队**。
+帮助每一家服务型企业，把分散在 FSM、表格、聊天里的**业务现实**，沉淀为可复用的**行业认知与决策能力**。
 
-- 不是一个 AI 助手；
 - 不是一个聊天机器人；
-- 而是一组能够**持续推进业务流程**的 Agent。
+- 不是一个通用 Agent Runtime；
+- 而是一套能持续回答 **「现在是什么情况、风险在哪、下一步做什么」** 的认知与决策系统，
+  再由 Agent 把决策落到消息、任务与工单动作上。
 
 ### 未来的组织形态
 
@@ -42,148 +91,157 @@ FSM 告诉你「发生了什么」；AOL 告诉你「下一步做什么，并帮
 今天                  未来
 老板                  老板
  ↓                     ↓
-销售                  Agent Team
+销售                  认知 + 决策系统
  ↓                     ↓
-客服                  员工
- ↓
-调度
- ↓
+客服                  Agent 执行层
+ ↓                     ↓
+调度                  员工（判断、关系、现场）
 施工
 ```
 
 - **员工负责**：判断、沟通、执行、关系建立。
-- **Agent 负责**：跟踪、分析、决策建议、流程推进。
+- **认知层负责**：画像、风险、时机、策略、优先级。
+- **Agent 负责**：在 guardrails 内执行已批准的 Action。
 
 ---
 
-## 产品定位：Agent Layer Above FSM
+## 产品定位：Cognitive Layer Above FSM
 
 ```text
-                      AOL（驱动行动）
+                      FS-COS（理解 + 决策）
 ────────────────────────────────────────
-  Qualification · Estimate · Follow-up · Closing
-  Scheduling · Dispatch · Procurement · Collection
+  客户认知 · 项目认知 · 销售认知 · 决策引擎
+  Follow-up / Estimate / Closing …（执行型 Agent）
 ────────────────────────────────────────
                       FSM（存储事实）
   Customer · Lead · Quote · Job · Invoice
 ```
 
-- **FSM 负责**：存储事实。
-- **AOL 负责**：驱动行动。
+- **FSM 负责**：存储事实（commodity layer，可替换）。
+- **Cognitive Layer 负责**：业务世界模型、认知图谱、决策智能（**护城河**）。
+- **Agent 负责**：在 Human-in-the-loop 下执行（commodity 趋势：未来可能 Skills 化）。
+
+### 认知层 vs 系统事实（示例）
+
+| 视角 | 看到什么 |
+|------|----------|
+| FSM | `Quote Sent` |
+| LLM（裸文本） | 一些沟通记录 |
+| **Cognitive Layer** | 高概率成交客户、当前犹豫、**最佳跟进窗口约 48 小时** |
 
 ---
 
-## 长期架构（五层）
+## 长期架构（自下而上 · 与《认知机器》一致）
 
-| 层 | 名称 | 职责 |
-|---|------|------|
-| L1 | **System of Record（数据层）** | Customer / Lead / Quote / Job / Invoice / Payment；来源可为自有 FSM、第三方 FSM、CRM、ERP、Excel |
-| L2 | **Context Layer（业务上下文层）** | 统一客户画像、统一项目画像、统一时间线、统一业务状态 |
-| L3 | **Agent Runtime（运行时）** | 启动 / 暂停 Agent、Agent 通信、Agent 记忆、状态管理 |
-| L4 | **Decision Layer（决策层）** | 优先级排序、成交预测、风险识别、策略推荐、资源分配 |
-| L5 | **Action Layer（执行层）** | 发微信 / 短信、生成报价、创建任务 / 工单、通知员工 |
+| 层 | 名称 | 护城河 | 职责 |
+|---|------|--------|------|
+| L0 | **Business Systems** | — | FSM / Excel / QuickBooks / 企微；Business Reality |
+| L1 | **Trusted Execution Layer** | ★ | 建议 → **审批** → 执行 → **记录/审计/回滚**；企业级责任边界 |
+| L2 | **Cognitive Layer** | ★ | Business Memory、Decision Engine、Cognitive Graph、Ontology（何谓高价值 Lead、危险 Quote） |
+| L3 | **Business Harness** | ★ | 跨源组装 `customer` / `quote` / `timeline` / `job` / `sales` → **Project Context**，再交 Model |
+| L4 | **Skill Layer** | — | Follow-up Skill、Estimate Skill…（产品可仍称 Agent，战略上视为 Skill） |
+| L5 | **Model Layer** | — | 混元 / DeepSeek / Claude…可替换 |
 
-> 数据在最底层，行动在最顶层。AOL 的价值在于把「事实」逐层升华为「被执行的决策」。
+> **Ontology** 归属 Cognitive Layer（行业世界模型），不是 Harness 的简单字段拼接。  
+> 数据在底层，**Harness 与 Cognitive 在中间**，Skill/Model 在上且可替换。
 
 ---
 
-## Agent 演进路线
+## 核心资产（三块护城河）
+
+与《认知机器》一致，长期付费点集中在：
+
+| 资产块 | 含义 | 示例 |
+|--------|------|------|
+| **Business Harness** | 业务上下文组装器 | 客户/房屋/区域/施工史/规范库 → `Project Context`；Claude 不知道你的 FSM |
+| **Cognitive Layer** | 企业独有认知 + 决策 | Cognitive Graph、Ontology、Business Memory、Decision Intelligence |
+| **Trusted Execution** | 可信执行与责任 | 审批闸门、Action、Turso 审计轨、outcome 回写、回滚策略 |
+
+**商品层（不建护城河）**：Model、Skill（含 Follow-up/Estimate 能力本身）、Event Bus、通用 Workflow、Agent Marketplace。
+
+---
+
+## Skill 演进路线（应用层 · 可替换）
+
+对外产品可仍写「Agent」；战略上它们是 **Skill**——依赖 Harness 上下文与 Cognitive 决策，经 Trusted Execution 落盘。
 
 ### 第一代 · 获客到成交（销售域）
 
-| Agent | 目标 | 输入 | 输出 |
-|-------|------|------|------|
-| **Qualification** | 识别高价值客户 | 电话 / 微信 / 表单 / 广告线索 | 客户等级、成交概率、跟进建议 |
-| **Estimate** | 生成专业报价 | 现场信息 / 图片 / 视频 / 工程规范 | 报价单、材料单、风险说明 |
-| **Follow-up** | 防止客户流失 | 沟通记录 / 报价记录 / 客户行为 | 下一步行动、推荐话术、自动提醒 |
-| **Closing** | 提升成交率 | 报价历史 / 跟进历史 / 客户特征 | 成交策略、折扣建议、升级建议 |
+| Skill | Harness 输入 | Cognitive 问题 | 经 Trusted Execution 的输出 |
+|-------|--------------|----------------|------------------------------|
+| **Qualification** | 线索/渠道上下文 | 是否高价值 | 分级、跟进建议 → 审批 → 任务 |
+| **Estimate** | 现场/图片/规范库 | 方案与风险 | 报价 PDF → 审批 → FSM |
+| **Follow-up** | 报价/时间线/销售 | 是否流失、何时跟 | 建议 → Console 审批 → 企微/记录 |
+| **Closing** | 报价/互动史 | 成交策略 | 策略建议 → 审批 → 执行 |
 
-### 第二代 · 进入交付域
+### 第二代 · 交付与回款
 
-- **Scheduling Agent**：排班、资源协调
-- **Dispatch Agent**：派工、路线优化
-- **Procurement Agent**：材料采购、库存预测
-- **Collection Agent**：催款、回款预测
+Scheduling · Dispatch · Procurement · Collection（同上：先认知/决策，再执行）。
 
-### 第三代 · 跨 Agent 协作（完整闭环）
+### 第三代 · 跨域闭环
 
 ```text
-Qualification → Estimate → Follow-up → Closing → Dispatch → Collection
+认知更新 → 决策 → Agent 执行 → 事实回写 FSM → 认知再学习
 ```
 
-形成从线索到回款的完整业务闭环。
-
 ---
 
-## AOL Core（未来平台资产）
+## 战略切入点：Follow-up 楔子（Phase 1）
 
-真正的长期产品资产是支撑多 Agent 协作的运行时内核：
+愿景虽大，落地必须克制。正确做法：**选一个痛点极深、闭环极短、容错极高、收益可量化的场景先验证业务价值**。
 
-| 组件 | 职责 | 示例 |
-|------|------|------|
-| **Event Bus** | 业务事件总线 | `LeadCreated` / `QuoteSent` / `CustomerSilent` / `JobCompleted` / `PaymentReceived` |
-| **Memory** | 长期业务记忆 | 客户偏好、成交规律、历史案例、区域经验 |
-| **Workflow Engine** | Agent 协作编排 | Agent→Agent / Agent→Human / Human→Agent |
-| **Approval Engine** | 关键审批 | 大额报价、特殊折扣、退款申请 |
-| **Metrics Engine** | 衡量 Agent 价值 | 成交率、回访率、报价速度、回款周期 |
+我们选择的第一个楔子是 **Follow-up Skill（产品名仍可叫 Agent）**——用于验证：
 
----
-
-## 战略切入点：不要「毕其功于一役」
-
-愿景虽大，落地必须克制。企业级软件（B2B SaaS）的 Agent 化最忌讳宏大叙事——
-高昂的试错成本 + Agent 的不确定性，会迅速透支管理层的信任。
-
-正确做法：**选一个痛点极深、闭环极短、容错极高、收益可量化的场景先撕开口子**，
-用两周证明价值，再逐步沉淀底层资产。
-
-我们选择的第一个楔子是 **Follow-up Agent（跟进行动引擎）**。
+1. **业务价值**（转化、采纳率、流转时间）；
+2. **Business Harness 雏形**（enrich → 统一 Project Context）；
+3. **Cognitive 雏形**（情况判断 + 跟进方案）；
+4. **Trusted Execution 雏形**（Suggestion → Approval → Action → trace/outcome 归档）。
 
 ### 为什么是 Follow-up
 
-**1. 痛点极深、闭环极短（易于证明）**
+**1. 痛点极深、闭环极短**
 
-防水维修等现场服务行业，大量流失发生在**勘查/施工完毕后的「跟进真空期」**：
+防水维修等行业，大量流失发生在**勘查/施工完毕后的「跟进真空期」**——非结构化现场信息未转化为可跟进的决策。
 
-- **现状**：师傅上门看完、拍照、回去了。但核心信息——
-  *「建议注浆，但业主嫌贵想先观察」*、*「3 号裂缝涉及邻里纠纷，需物业协调」*
-  ——因为口音、字迹、遗忘，沉淀在系统角落，无人跟进。
-- **Agent 切入**：工单进入待签约/停滞的瞬间引擎启动，自动提取非结构化文本与系统查证，
-  生成精准的**下一步行动建议**（推进签约 / 自动起草二次报价 / 提醒协调邻里）。
-- **可量化闭环**：建议是否被采纳？二次触达转化率提升多少？工单流转缩短多少？
-  **一两周内就能用数据向公司证明转化与效率提升。**
+**2. 完美的 Human-in-the-Loop**
 
-**2. 完美的 Human-in-the-Loop 缓冲带**
+引擎只产出 `Suggestion`，人类点同意/拒绝/修改，**不直接联系客户**。对公司零「AI 乱说话」风险，对引擎高容错。
 
-引擎只在后台生成 `Suggestion`，由客服/销售/主管点「同意/发送/执行」，
-**不直接联系客户、不直接扣款**。
+### Follow-up 在路线图中的位置
 
-- **对公司**：零安全风险，高管不担心 AI 胡说得罪客户。
-- **对 Agent**：规划错了，人类一键拒绝即可，不造成业务灾难，容错率极高。
+Follow-up **不是**终局产品，而是 **Phase 1：验证业务价值与认知闭环** 的楔子。
 
-### Follow-up 是 AOL 的第一块拼图
+最小竖切仍可用工程语言描述（与实现对齐）：
 
-我们不是在做「防水维修跟进工具」，而是在用最接地气的业务，
-打磨 AOL 的最小可用内核：
+> 摄取 → **Harness**（enrich/上下文）→ **Cognitive+Decision**（JSON 建议）→ **Trusted Execution**（Console 审批 + 企微/追踪库）
 
-> 工单事件 = `Event` → AI 建议 = `Suggestion` → 人工点发送 = `Approval` → 系统执行 = `Action`
+工程四原语（Ingestion / Reasoning / Action Spec / Execution）分别映射 Harness、Cognitive、Trusted Execution 的 Phase 1 竖切，**不是**「AOL Kernel」品牌。
 
-这正是上文 AOL Core（Event Bus / Memory / Workflow / Approval / Metrics）的最小竖切。
-Follow-up 跑通后，同一套运行时即可接入 Qualification、Estimate、Closing 等后续 Agent，
-并最终复用到 CRM、招聘（面试后跟进）、医疗（出院随访）等所有服务行业。
+---
+
+## 开源策略（方向）
+
+| 开源（生态） | 闭源 / 商业（护城河） |
+|--------------|----------------------|
+| **Connector Layer**（Excel / Sheets / QuickBooks / FSM） | Cognitive Graph、行业 Ontology、Decision 模型与数据 |
+| **Event Schema**（`LeadCreated` / `QuoteViewed` …） | Hosted 认知平台、行业 Pack |
+| **Agent SDK**（`agent.execute(context)`） | Decision Intelligence、Benchmark 与运营数据 |
+
+**不先开源**：Agent Runtime、Workflow Engine、Memory 等易被平台原生的「Kernel 拼装层」。
 
 ---
 
 ## 终局判断
 
-再往前推 5～10 年，FS-AOL 的终局不是「AI 功能」，而是成为服务行业的「操作系统」：
+再往前推 5～10 年，FS-COS 的终局不是「又一个 AI 功能」或「Agent 应用商店」，而是：
 
-> **FSM 记录世界发生了什么，而 AOL 决定接下来应该发生什么。**
+> **FSM 记录发生了什么；Harness 组装上下文；Cognitive 理解并决策；Trusted Execution 在审批后执行并留痕；Skill/Model 均可替换。**
 
 ---
 
-## 衡量成功（Stage 0 → Stage 1）
+## 衡量成功（Phase 1 → Phase 2）
 
-- **业务指标**：AI 提醒的跟进，多捞回 X 个订单 / 提升 Y% 转化率 / 缩短 Z% 流转时间。
-- **信任指标**：业务部门主动要求「把这个建议接进我们的操作界面」。
-- **架构指标**：同一运行时能以最小改动接入第二个 Agent（验证 AOL 的可复用性）。
+- **业务指标**：跟进建议带来的转化/采纳/流转提升（Phase 1）。
+- **认知指标**：同一客户/项目画像可被多场景复用，决策可解释、可审计（Phase 2）。
+- **信任指标**：业务方在产品内处置建议，而非只翻群消息。
+- **架构指标**：新增一个执行型 Agent 时，**不必重写认知与决策核心**（验证分层正确）。

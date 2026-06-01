@@ -1,9 +1,8 @@
 # 07 · 产品脊柱与产品化纪律（Product Surface & Productization）
 
-> **核心命题**：AOL 是 **System of Action**，必须**可感知、可见**。
-> 一个跑在后台的 cron + 通知，不是产品；让用户**看见 Agent 在做什么、需要决策什么、
-> 带来了什么结果**的界面，才是产品。本文定义产品化纪律与产品脊柱（UI/UE/UX 交付物）。
-> 配套：[PUB-05-releases.md](PUB-05-releases.md)（版本与 OKR/KPI）· [PUB-02-architecture.md](PUB-02-architecture.md)（AOL Core）。
+> **核心命题**：FS-COS 是 **System of Cognition**，产品必须让用户**看见认知依据、决策建议、处置与结果**——可感知、可见。
+> 一个跑在后台的 cron + 通知，不是产品。本文定义产品化纪律与产品脊柱（UI/UE/UX 交付物）。
+> 配套：[PUB-05-releases.md](PUB-05-releases.md)（版本与 OKR/KPI）· [PUB-02-architecture.md](PUB-02-architecture.md)（FS-COS 分层）。
 
 ---
 
@@ -34,20 +33,22 @@
 
 ## 2. 产品脊柱（Product Spine）
 
-AOL 的「可见性」由六块界面承载。每个产品版本至少让其中一块从无到有或变厚。
+FS-COS 的「可见性」由六块界面承载；每块对应《认知机器》分层中的**可感知面**：
 
 ```text
-S1 Agent Console     ← 看：Agent 今天做了什么
-S2 Suggestion Inbox  ← 决策：同意 / 拒绝 / 修改
-S3 Trace / Run View  ← 信任：为什么这么建议
-S4 ROI Dashboard     ← 价值：带来了什么结果
-S5 Agent / Flow Studio ← 控制：配置 Agent 与编排
-S6 Tenant Admin      ← 规模：多租户 / 权限 / 计费
+S1 Console 总览      ← Trusted Execution：今天有哪些待处置
+S2 Suggestion Inbox  ← Trusted Execution：审批闸门（同意/拒绝/修改）
+S3 Trace / Run View  ← Harness + Cognitive：上下文与依据（为什么这么建议）
+S4 ROI Dashboard     ← Trusted Execution + Cognitive：采纳/转化/结果
+S5 Studio            ← Harness 模板 + Cognitive 规则/SOP + Skill 开关（非 Runtime 炫技）
+S6 Tenant Admin      ← Trusted Execution：多租户 / 审计 / 计费
 ```
 
-### S1 · Agent Console（总览）
+> 产品文案可保留「Agent」字样；架构上 S3 证明 **Harness**，S2/S4 证明 **Trusted Execution**。
 
-- **回答**：我的 Agent 今天处理了什么？哪些待我处理？
+### S1 · Console 总览
+
+- **回答**：今天有哪些建议待我处置？各 Skill 活动概况？
 - **要素**：今日活动流、按 Agent/状态筛选、待办计数、单条进入详情。
 - **可感知 KPI**：用户能在一屏内回答「今天发生了什么 + 我要做什么」。
 
@@ -57,11 +58,11 @@ S6 Tenant Admin      ← 规模：多租户 / 权限 / 计费
 - **要素**：建议卡片（原因摘要、优先级、主行动、沟通要点）、`同意 / 拒绝 / 修改` 操作、批量处理。
 - **可感知 KPI**：建议在产品内被处置的比例（而非靠翻群）；审批时延中位数。
 
-### S3 · Trace / Run View（信任）
+### S3 · Trace / Run View（信任 · Harness 面）
 
-- **回答**：Agent 为什么这么建议？依据是什么？
+- **回答**：为什么这么建议？**Harness 拼装了哪些上下文**？
 - **要素**：推理轨（enrich 查证 → LLM → 后处理）、引用证据可点开、失败可见。
-- **可感知 KPI**：建议附查证可见率；「看得懂为什么」满意度。
+- **可感知 KPI**：建议附查证可见率；用户能指出「依据来自哪条业务事实」。
 
 ### S4 · ROI Dashboard（价值）
 
@@ -69,11 +70,11 @@ S6 Tenant Admin      ← 规模：多租户 / 权限 / 计费
 - **要素**：采纳率、响应率、转化提升、报价时延、回款周期；周报在产品内生成。
 - **可感知 KPI**：管理层每周实际查看 / 引用看板的次数。
 
-### S5 · Agent / Flow Studio（控制）
+### S5 · Studio（控制 · Harness / Cognitive）
 
-- **回答**：我能不能自己调 Agent、规则、SOP、编排？
-- **要素**：Agent 注册/开关、规则与 SOP 配置、多 Agent flow 可视化与干预。
-- **可感知 KPI**：非工程人员能在产品内调一条规则/话术并生效。
+- **回答**：我能不能调上下文来源、规则、SOP、Skill 开关？
+- **要素**：Harness 模板、Cognitive 规则/SOP、Skill 注册/开关（**不是**通用 Workflow 编辑器优先）。
+- **可感知 KPI**：非工程人员能改一条 SOP/规则并生效。
 
 ### S6 · Tenant Admin（规模）
 

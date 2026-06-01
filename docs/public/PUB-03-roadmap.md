@@ -1,229 +1,205 @@
 # 03 · 路线图与当下进展
 
-> 我们的路线不是「做一个更好的 FSM」，而是：
-> **从一个内部 FSM 增强系统，演化为行业级 Agent Operating Layer（AOL）平台，
-> 并通过分层开源形成生态扩张。**
+> 我们的路线不是「做一个更好的 FSM」，也不是「先造 Agent Runtime 再开源 Kernel」。
+>
+> **路径**：Follow-up 验证业务价值 → 建立 Cognitive Layer → Decision Engine → Agent 化执行 → 开放 Connector + SDK。
 
-## 核心判断：路径不是「Build → Open Source → Adoption」
+工程仓库与包名仍为 **fs-aol**；路线图阶段编号 **Phase 1–5** 与早期文档中的 Stage 0–3 对照见文末。
+
+---
+
+## 核心判断：路径修正
 
 ```text
-Build (vertical wedge)
-  → Internal compounding (data + workflow + agents)
-    → Productization (AOL core)
-      → Selective open source (infra layer)
-        → Ecosystem expansion (industry packs + marketplace)
+旧（危险）:
+  Follow-up Agent → AOL Runtime → AOL Kernel → Open Source Kernel
+
+新（推荐）:
+  Phase 1  Follow-up Agent        验证业务价值
+  Phase 2  Cognitive Layer      统一画像与认知图谱
+  Phase 3  Decision Engine      「下一步应该做什么」
+  Phase 4  Agent 化执行           手脚层扩展
+  Phase 5  Connector + SDK 开源   生态，不开放认知核心
 ```
 
-> **不能一开始开源，也不能一开始平台化。必须先赢一个「闭环业务系统」。**
+> **不能一开始平台化，更不能先开源 Kernel。** 必须先赢一个「闭环业务指标 + 可沉淀认知」。
 
 ```mermaid
 flowchart LR
-    S0["Stage 0 · 闭环系统<br/>0-3 月<br/>Agent→FSM→结果"]
-    S1["Stage 1 · Agent Runtime<br/>3-9 月<br/>从功能到运行时"]
-    S2["Stage 2 · AOL Core<br/>9-18 月<br/>Product→Platform"]
-    S3["Stage 3 · 开放生态<br/>18-36 月<br/>开源 + Marketplace"]
-    S0 --> S1 --> S2 --> S3
+    P1["Phase 1<br/>Follow-up 楔子<br/>验证价值"]
+    P2["Phase 2<br/>Cognitive Layer<br/>统一画像"]
+    P3["Phase 3<br/>Decision Engine<br/>决策智能"]
+    P4["Phase 4<br/>Agent 执行面<br/>多场景执行"]
+    P5["Phase 5<br/>Connector + SDK<br/>开源生态"]
+    P1 --> P2 --> P3 --> P4 --> P5
 ```
 
 ---
 
-## Stage 0 · 闭环系统（现在 ~ 3 个月）
+## Phase 1 · Follow-up Skill（现在 ~ 3 个月）
 
-**目标**：把 FSM + Agent 变成「可运行的闭环系统」。
+**目标**：用跟进行为 **Skill** 验证业务价值，并跑通《认知机器》最小竖切：
 
-> 当前最重要的不是 Agent 数量，而是：**是否已形成「Agent → FSM → 结果」的闭环数据流。**
+```text
+Business Systems → Harness（enrich）→ Cognitive（建议）→ Trusted Execution（审批+执行+审计）
+```
 
-> 🎯 **唯一产品退出 KPI（可感知）**：管家能在**产品界面（Console）内看见并处置 Follow-up 建议**，
-> App 内处置率 ≥70%（不再靠翻群）。对应产品轨 **v1.0 console-mvp**（产品脊柱 S1+S2）。
-> 在此之前的 `poc-followup` 仅是 headless 引擎，不算 Stage 0 退出。
+产品界面可仍称 Follow-up Agent。
+
+> 对应早期 **Stage 0**；产品退出 KPI 不变：管家在 **Console** 内看见并处置建议，App 内处置率 ≥70%。
 
 ### 核心建设
 
-**1. FSM 稳定化（System of Record）**
+**1. FSM 接入（只读事实）**
 
-- Lead / Quote / Job / Payment 状态机清晰；
-- 所有状态可追踪（event-sourced 更好）；
-- **可被外部系统替换**（很重要——FSM 要走向 commodity layer）。
+- 工单状态可追踪；领域语义边界清晰（[PUB-04](PUB-04-domain-semantics.md)）。
+- FSM 保持 **commodity**，不堆业务逻辑。
 
-**2. Follow-up Agent（第一个生产级 Agent）**
-
-选它的原因：ROI 最直接（减少流失）、数据最容易验证、不依赖复杂行业知识。
+**2. Follow-up（第一个决策楔子）**
 
 ```text
-触发事件：QuoteSent / NoResponse（当前实现：206 待签约停滞）
-  ↓ 判断客户状态
-  ↓ 生成策略
-  ↓ 执行动作（微信 / 短信 / task）
-  ↓ 记录结果
+事件/停滞工单 → enrich 认知上下文 → 决策 JSON（情况判断 + 跟进方案）
+  → 人工审批 → 企微/追踪库执行
 ```
 
-**3. Event Layer（非常关键）**
+**3. Event Schema 雏形（为 Phase 5 开源铺路）**
 
-引入统一事件命名，否则未来无法抽象 AOL：
+统一命名：`QuoteSent` · `CustomerSilent` · `JobCompleted` …  
+**注意**：Schema 与 Connector 可开源；**认知与决策规则不先开源**。
 
-```text
-LeadCreated · QuoteCreated · QuoteViewed · CustomerSilent · JobCompleted
-```
+**4. Human-in-the-loop（必须）**
 
-> 对应版本线：POC 引擎 `poc-followup` → `poc-cron`，**产品退出 = v1.0 console-mvp**。
+`Suggestion` → Approve / Reject / Modify → `Action`。
+
+> 版本线：POC `poc-followup` → `v0.2.x` Console → **v0.3** 运营纪律 + UX；产品轨见 [PUB-05-releases.md](PUB-05-releases.md)。
 
 ---
 
-## Stage 1 · Agent Runtime（3 ~ 9 个月）
+## Phase 2 · Harness + Cognitive Layer（3 ~ 9 个月）
 
-**目标**：从「Agent 功能」变成「Agent Runtime」。
+**目标**：
 
-> 不再说「我们有 4 个 Agent」，而是「我们有一个 Agent Runtime，可以运行不同业务 Agent」。
+1. **Business Harness 产品化**：可复用的 `Project Context` 组装（客户/项目/时间线/销售），多 Skill 共享。
+2. **Cognitive Layer 加厚**：统一画像、Cognitive Graph、Business Memory。
 
-> 🎯 **唯一产品退出 KPI（可感知）**：在**同一 Console**内运行 ≥2 个 Agent，且推理/查证轨可见、
-> 管理层有 ROI 看板可引用——即用户能在产品里回答「为什么这么建议」与「带来了什么结果」。
-> 对应产品轨 **v1.1 trust → v1.2 proof → v1.3 多 Agent**（产品脊柱 S3+S4）。
+> 对应早期 Stage 1「Context Layer」，但 Harness 与 Cognitive **分责**：组装 vs 理解/决策。
 
 ### 关键模块
 
-**1. Agent Runtime（雏形 AOL 核心）**：Agent 注册 / 触发 / 状态管理 / 暂停恢复 / 日志。
+- Harness：跨源上下文模板、查证轨在 Console 可见（S3）。
+- Cognitive：客户/项目画像、行业 Ontology 可查询。
+- Trusted Execution：outcome 与审计轨支撑 ROI（S4）。
 
-**2. Context Layer（统一业务视图）**：
+> 产品轨：v1.1 trust → v1.2 proof → 多 Skill 共享同一 Harness/Cognitive。
 
-```text
-Customer Context · Opportunity Context · Job Context · Interaction Timeline
-```
-
-**3. Multi-Agent Flow（重点）**：不是独立 Agent，而是**可编排流程**。
-
-```text
-Qualification Agent → Estimate Agent → Follow-up Agent
-```
-
-**4. Human-in-the-loop（必须做）**：SMB 现实是老板要控关键决策、Agent 不能全自动执行，
-所以保留 `Approve / Reject / Modify`。
-
-> 对应版本线：产品 v1.1 trust → v1.2 proof → v1.3 qualification → v1.4 estimate → v1.5 flow（引擎 `poc-context` 支撑）。
+**明确不做为主目标**：通用 Agent Runtime 品牌。
 
 ---
 
-## Stage 2 · AOL Core（9 ~ 18 个月）
+## Phase 3 · Decision Engine（9 ~ 18 个月）
 
-**目标**：AOL Core 成型，可以对外扩展。这是关键分水岭——从 **Product** 变成 **Platform**。
+**目标**：系统化回答 **「下一步应该做什么」**——优先级、时机、策略、风险、置信度。
 
-> 🎯 **唯一产品退出 KPI（可感知）**：**非工程人员能在 UI（Studio）内配置一条规则/SOP/编排并生效**，
-> 且产品可被外部团队自托管运行。对应产品轨 **v2.0 studio → v2.1 self-host**（产品脊柱 S5）。
+> 对应早期 **Stage 2** 的 Decision Layer；**不是**先堆 Workflow Marketplace。
 
-### 核心系统
+### 关键模块
 
-**1. AOL Core（真正的平台）**
+- 可解释决策输出（与 Action Spec 协议对齐）。
+- 规则链 + 模型推理混合；SOP 与 [sops/](../../sops/README.md) 沉淀为决策资产。
+- ROI 看板：决策覆盖率、采纳率、转化 uplift、override 率。
 
-| 组件 | 职责 |
-|------|------|
-| Event Bus | 统一业务事件流 |
-| Agent Runtime | 运行所有 Agent |
-| Memory Layer | 客户 + 行为 + 历史 |
-| Workflow Engine | Agent 之间编排 |
-| Decision Layer | 优先级 + 推荐 + scoring |
-
-**2. Agent SDK（开源候选）**：开始定义「如何写一个 Agent」。
-
-```typescript
-onEvent("QuoteSent")
-  → loadContext()
-  → decide()
-  → act()
-  → return result
-```
-
-**3. Observability（商业化核心）**：Agent 成功率、conversion uplift、response time、revenue impact。
+> 产品轨：Studio 配置规则/SOP（非工程人员可配）→ 自托管。
 
 ---
 
-## Stage 3 · 开放生态（18 ~ 36 个月）
+## Phase 4 · 更多 Skill（与 Phase 3 部分重叠）
 
-**目标**：开源 Runtime + 商业化 Industry Pack / SaaS / Marketplace。
+**目标**：在 Harness / Cognitive / Trusted Execution 稳定后，接入 Estimate、Qualification 等 **Skill**。
 
-> 🎯 **唯一产品退出 KPI（可感知）**：外部团队能**自助开通并使用托管多租户产品**（含第三方 Agent 上架运行），
-> 而非只能跑脚本。对应产品轨 **v2.2 oss-core → v3.0 cloud-saas → v3.1 marketplace**（产品脊柱 S6）。
-
-### 分层开源策略（不是全开源）
-
-| 层 | 是否开源 | 内容 |
-|----|----------|------|
-| **AOL Core Runtime** | ✅ 必须开源 | Event system、Agent runtime、Workflow engine、Basic memory / orchestration（类比 Linux Kernel / Temporal Engine） |
-| **Industry Packs** | ❌ 商业护城河 | Field Service Pack、HVAC Pack、Roofing Pack |
-| **Data + Intelligence** | ❌ 商业护城河 | conversion benchmarks、pricing intelligence、response patterns |
-| **Hosted Platform** | ❌ 商业化 | SaaS 部署、监控、billing、marketplace |
-| **Agent Marketplace** | 🌱 生态层 | 第三方编写 Estimate / Dispatch / CRM Agent，挂在 AOL 上运行 |
+- 新 Skill **只**增加领域提示与策略映射，**复用** Harness + Cognitive + Trusted Execution。
+- Workflow/Runtime 按需引入——基础设施，非品牌核心。
 
 ---
 
-## 终局形态（36 个月 +）
+## Phase 5 · 开放 Connector + SDK（18 个月 +）
 
-系统不再是 `FSM + AI`，也不是 `CRM with Agents`，而是：
+**目标**：生态扩张，**不开放认知与决策护城河**。
+
+| 层 | 开源 | 闭源 / 商业 |
+|----|------|-------------|
+| **Connector**（Excel / Sheets / QuickBooks / FSM） | ✅ | — |
+| **Event Schema** | ✅ | — |
+| **Agent SDK** | ✅ | — |
+| **Cognitive Graph + Ontology + Decision** | ❌ | ✅ 核心资产 |
+| **Hosted FS-COS** | — | ✅ SaaS / 行业 Pack |
+
+**不做终局叙事**：Agent Marketplace 作为公司核心价值（Agent 本身会越来越便宜）。
+
+### 终局形态
 
 ```text
-Field Service Operating System (FS-AOS)
-更准确：Agentic Operations Layer for SMB
+Field Service Cognitive Operating System（FS-COS）
+= System of Cognition for SMB field service
 ```
 
 ---
 
-## 最重要的战略判断（务必强调）
+## 与早期 Stage 0–3 对照
 
-1. **不要过早开源 Agent**。Agent = application，platform ≠ application。
-   过早开源 Agent 会让我们变成「工具公司」而不是「平台公司」。
-2. **必须先赢一个闭环业务指标**（follow-up 提转化 / estimate 提报价速度 / closing 提成交率）。
-   没有这个，**AOL 没有商业根**。
-3. **FSM 必须逐渐「商品化」**。FSM 不能是核心价值，否则会被 ServiceTitan / Salesforce FSM
-   压制在系统层。
+| 早期 Stage | 新 Phase | 叙事变化 |
+|------------|----------|----------|
+| Stage 0 闭环系统 | **Phase 1** | 强调业务价值验证，而非 Runtime |
+| Stage 1 Agent Runtime | **Phase 2** Cognitive Layer | Runtime 降为执行基础设施 |
+| Stage 2 AOL Core | **Phase 3–4** Decision + Agent 执行 | Kernel/Event Bus 非品牌核心 |
+| Stage 3 开源生态 | **Phase 5** Connector + SDK | 不先开源 Kernel |
 
-```text
-FSM  → commodity layer（系统层）
-AOL  → value layer（价值层）
-```
+---
+
+## 最重要的战略判断
+
+1. **不要把自己定义为 Agent Operating Layer**——Runtime / Workflow / Marketplace 易被平台原生化。
+2. **必须先赢闭环业务指标**（follow-up 转化、Console 采纳率），并沉淀**可复用认知与决策**。
+3. **FSM 商品化**；**认知与决策资产化**。
+4. **开源连接层与协议，闭源认知与决策智能**。
 
 ### 一句话定位
 
-> **FSM is the system of record. AOL is the system of action.
-> We are building the action layer for SMB service businesses.**
+> **FSM is the system of record. FS-COS is the system of cognition and decision.
+> Agents execute what humans approve.**
 
 ---
 
-## 当下进展（Stage 0 · POC）
+## 当下进展（Phase 1 · POC）
 
-POC 引擎已落地并跑通，作为 Stage 0 的最小竖切。详见仓库根 `README.md` 与
-[PUB-05-releases.md](PUB-05-releases.md) 版本线。
+POC 引擎与 Console 已落地。详见根 `README.md` 与 [PUB-05-releases.md](PUB-05-releases.md)。
 
 | 能力 | 状态 |
 |------|------|
-| DB 增量轮询工单（XLink `serviceAppointment`；v0.2 聚焦 206 待签约停滞） | ✅ 生产只读验证 |
-| 幂等水位线（追踪库去重，失败下轮重试） | ✅ |
-| `AGENT_MODE=steps` + 只读 enrich 业务查证（报价 B / 签约） | ✅ |
-| LLM 生成结构化建议（v0.2 中文 JSON，含启发式兜底） | ✅ |
-| 企微群机器人 Markdown 卡片推送 | ✅ DRY-RUN 已验证 |
-| GitHub Actions 定时触发 | ✅ workflow 就位 |
+| DB 增量轮询（XLink 206 待签约停滞） | ✅ 生产只读 |
+| 幂等水位线 + Turso 追踪 | ✅ |
+| enrich + v0.2 结构化建议 | ✅ |
+| 企微卡片 + Console 审批 | ✅ DRY-RUN / 试点 |
+| GHA + Cloudflare Worker 调度 | ✅ |
+| Turso `state_at` 迁移修复 | ✅（2026-06） |
 
-### 下一步（让 Stage 0 闭环产生业务数据）
+### 下一步（Phase 1 内）
 
-1. 完成 v0.2.0 生产只读验收（≥10 张卡片人工审），打 tag。
-2. **沉淀统一 Event 命名**（`QuoteSent` / `CustomerSilent` 等），为 Stage 1 Runtime 抽象铺路。
-3. 接入 Turso + GHA cron（v0.3），开始记录**采纳率 / 转化数据**这一闭环指标。
-4. **持续巩固领域语义 seam**：系统码（status / 区划码）隔离进唯一领域适配器，
-   引擎其余部分说领域语言（见 [PUB-04-domain-semantics](PUB-04-domain-semantics.md)）。
-5. 沉淀首版跟进 SOP，喂给 Reasoning（v0.4）。
+1. v0.3 运营纪律（run_summary、runbook、7 日 cron）+ UX wow。
+2. 沉淀 **Event Schema** 文档与命名（为 Phase 5 开源准备）。
+3. 记录采纳率 / 转化等闭环指标。
+4. 巩固领域语义 seam（[PUB-04](PUB-04-domain-semantics.md)）。
+5. SOP 喂给推理（v0.4+），为 Phase 2–3 认知/决策资产铺路。
 
 ### 已知待增强
 
-- 工单 `describe`（备注）偏稀疏 → 跟进文本素材有限，需关联 `workflowNode`
-  等补全（见私有文档 `docs/private/PRIV-xlink-data.md`）。
-- 当前 Action Spec 为扁平/中文 JSON，尚未演进到统一 Agent SDK 与 Generative UI 协议（Stage 1/2）。
-- 阻塞类型等关键上下文系统暂无字段，先「采集再分类」（见私有 ADR-011）。
+- 工单 `describe` 稀疏 → 需 workflowNode 等补全（`PRIV-xlink-data.md`）。
+- 阻塞类型等上下文先采集再分类。
+- Worker / PAT 运维：使用长期 `for-outside-scheduler` PAT，非临时 `gh auth token`。
 
 ---
 
-## 下一步建议（架构关键动作）
+## 架构文档
 
-把 **「AOL Core 技术架构」**（event bus / memory / agent runtime / workflow engine /
-approval / metrics）画成一张系统图——它会直接决定我们是不是「平台公司」。
-建议在 Stage 1 启动前完成，并落到 [PUB-02-architecture.md](PUB-02-architecture.md)。
+认知优先的系统图与模块定义见 [PUB-02-architecture.md](PUB-02-architecture.md)。
 
-> **产品化纪律**：每个 Stage 的退出都以「可感知产品 KPI」为准（见上文 🎯）。
-> 产品脊柱（S1–S6）与两轨纪律见 [PUB-07-product-surface.md](PUB-07-product-surface.md)；
-> 版本与 OKR/KPI 总表见 [PUB-05-releases.md](PUB-05-releases.md)。
+> **产品化纪律**：每 Phase 以可感知 KPI 退出；产品脊柱见 [PUB-07-product-surface.md](PUB-07-product-surface.md)；版本见 [PUB-05-releases.md](PUB-05-releases.md)。

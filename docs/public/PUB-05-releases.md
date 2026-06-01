@@ -1,10 +1,10 @@
 # 05 · 版本规划（产品化迭代 → Live）
 
-> **Scope 起点**：Follow-up（工单 → AI 跟进建议 → 人工采纳 → 执行），并沿 FS-AOL 愿景扩展。
+> **Scope 起点**：Follow-up（工单 → 认知/建议 → 人工采纳 → 执行），并沿 **FS-COS** 愿景扩展（见 [PUB-01-vision.md](PUB-01-vision.md)）。
 > **交付纪律**：每个正式版本必须 **完整闭环、可独立验证、可发布、且产品化**
 > （有 tag、有验收清单、有回滚方式、**有 UI/UE/UX**），禁止「半个功能」或「脚本即版本」。
 >
-> 与 [PUB-03-roadmap.md](PUB-03-roadmap.md) 的关系：03 是平台演进 **Stage 0→3**；本文是 **工程可执行版本切分**。  
+> 与 [PUB-03-roadmap.md](PUB-03-roadmap.md) 的关系：03 是平台演进 **Phase 1→5**（文中保留 Stage 0→3 对照）；本文是 **工程可执行版本切分**。  
 > 产品化纪律与产品脊柱（S1–S6）见 [PUB-07-product-surface.md](PUB-07-product-surface.md)。  
 > **版本摘要时间线**：[PUB-changelog.md](PUB-changelog.md)（对齐 business_3.0 的 `docs/changelog.md`）。
 
@@ -22,7 +22,7 @@
 ## 版本总览（两轨）
 
 > 阶段对应见 [PUB-03-roadmap.md](PUB-03-roadmap.md)：
-> **Stage 0** 闭环系统 · **Stage 1** Agent Runtime · **Stage 2** AOL Core · **Stage 3** 开源生态。
+> **Phase 1** Follow-up 楔子 · **Phase 2** Cognitive Layer · **Phase 3** Decision Engine · **Phase 4** Agent 执行 · **Phase 5** Connector/SDK 开源（旧 Stage 0→3 见 PUB-03 对照表）。
 
 ### A. POC / 引擎轨（headless，喂给产品轨，不单独对外发布）
 
@@ -156,7 +156,7 @@ flowchart LR
 
 ## v0.2.0 · follow-up-wedge（已发布 `v0.2.0`，2026-05-31）
 
-**目标**：对齐研讨 **Follow-up Action Engine** 切口——在 **wait → follow-up** 主战场产生可审批建议，
+**目标**：对齐研讨 **Follow-up Skill** 切口（Trusted Execution + Harness）——在 **wait → follow-up** 主战场产生可审批建议，
 用四位管家（刘沐泽、李小军、刘清瑞、李俊达）**生产只读**数据验证 ROI。
 
 > **封版说明**：`v0.2.0` 锚定楔子里程碑（206 + steps + Action Spec v0.2 + 试点管家 + 生产只读 DRY_RUN）。
@@ -509,19 +509,18 @@ python run_cron.py --reset-tracking
 
 ---
 
-## 引擎/平台能力：Stage 3（开放生态：开源 + Marketplace）
+## 引擎/平台能力：Phase 5（开放生态：Connector + SDK）
 
-> 支撑产品轨 v2.2 oss-core / v3.0 cloud-saas / v3.1 marketplace。
-> 分层开源纪律见 [PUB-03-roadmap.md](PUB-03-roadmap.md)：**只开源 AOL Core Runtime**；
-> Industry Packs / Data Intelligence / Hosted Platform 保持商业护城河。
+> 支撑产品轨 v2.2 oss-connectors / v3.0 cloud-saas 等；战略修订见 [PUB-03-roadmap.md](PUB-03-roadmap.md) Phase 5。
+> **开源**：Connector Layer、Event Schema、Agent SDK。**不先开源**：Cognitive Graph、Ontology、Decision Intelligence、Kernel Runtime。
 
 - 防水业务 → `bindings/xlink-wpf.yaml` + SOP 包（Industry Pack，不开源）。
-- **AOL Core Runtime（开源）**：`fs-aol-runtime`，含 Event Bus / Agent Runtime /
-  Workflow / 基础 Memory + 四原语（ingestion / reasoning / spec / execution）。
-- Agent SDK（`onEvent → loadContext → decide → act`）与 Generative UI 组件库独立 npm 包。
-- 远期：Agent Marketplace（第三方 Agent 挂载运行）。
+- **Connector + Event Schema（开源）**：FSM / Sheets / 消息等接入与标准事件命名。
+- **Agent SDK（开源）**：`agent.execute(context)`；Generative UI 组件库可独立 npm 包。
+- **闭源护城河**：认知层、决策引擎、行业 Ontology、Hosted FS-COS。
+- Agent Marketplace **非终局叙事**（执行型 Agent 趋于 commodity）。
 
-**验证**：第三方仓库用 mock binding 48h 内跑通同样链路。
+**验证**：第三方仓库用 mock Connector 48h 内跑通摄取 → 建议 → 审批链路。
 
 ---
 

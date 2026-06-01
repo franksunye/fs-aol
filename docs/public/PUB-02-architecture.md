@@ -1,24 +1,38 @@
-# 02 · 系统架构规格（FS-AOL System Architecture Specification v1.0）
+# 02 · 系统架构规格（FS-COS Architecture Specification v1.2）
 
-> **Field Service Agent Operating Layer（FS-AOL）**：运行在 Field Service FSM 之上的
-> **Agentic Business Execution Layer**。本文是架构 SSOT，描述**目标形态**；
-> 当前 POC 只实现其中最薄的一条竖切（见 [PUB-03-roadmap.md](PUB-03-roadmap.md) Stage 0），
-> 各组件均标注 **POC 现状**。愿景层见 [PUB-01-vision.md](PUB-01-vision.md)。
+> **Field Service Cognitive Operating System（FS-COS）**：运行在 Field Service FSM 之上的
+> **认知与决策层**；Agent 为执行面。工程实现仍在 **fs-aol** 仓库。
+>
+> 本文是架构 SSOT，描述**目标形态**；当前 POC 只实现其中最薄的一条竖切
+>（见 [PUB-03-roadmap.md](PUB-03-roadmap.md) Phase 1），各组件均标注 **POC 现状**。
+> 愿景与战略修正见 [PUB-01-vision.md](PUB-01-vision.md)。
 
 ---
 
 ## 1. 系统定位（System Definition）
 
 ```text
-FSM = System of Record（记录系统）
-AOL = System of Action（执行系统）
+Business Systems     FSM · Excel · 企微 …
+Trusted Execution    审批 · 执行 · 审计 · 回滚
+Cognitive Layer      认知 · 决策 · 本体 · 记忆
+Business Harness     跨源上下文组装 → Project Context
+Skill Layer          Follow-up · Estimate …（可替换）
+Model Layer          混元 / DeepSeek / Claude …（可替换）
 ```
 
-| | FSM 负责 | AOL 负责 |
-|---|----------|----------|
-| 职责 | 数据记录、状态存储、业务事实 | 业务决策、流程推进、自动执行、人机协同 |
+| 层 | 护城河 | 职责 |
+|----|--------|------|
+| Business Systems | — | 记录事实 |
+| **Trusted Execution** | ★ | 建议→审批→执行→记录；企业责任边界 |
+| **Cognitive** | ★ | 理解业务、决策「下一步做什么」 |
+| **Business Harness** | ★ | 模型不知道的 FSM/表格/微信事实 → 统一上下文 |
+| Skill / Model | — | 商品化趋势（Prompt/Workflow/Skill 可被平台原生化） |
 
-> **FSM tells you what happened. AOL decides and executes what happens next.**
+> **FSM records what happened. Harness assembles context. Cognitive decides. Trusted Execution runs after approval.**
+
+五层对照详见 [PUB-01-vision.md](PUB-01-vision.md) § 与《认知机器》五层对照。
+
+**刻意不做**：与模型公司争 Runtime；把 Follow-up/Estimate **Skill** 当作平台终局。
 
 ---
 
@@ -26,80 +40,147 @@ AOL = System of Action（执行系统）
 
 **2.1 业务目标**
 
-- 提升 lead → close 转化率
-- 缩短报价时间
-- 提高 follow-up 响应率
-- 提升整体 revenue efficiency
+- 提升 lead → close 转化率（通过**更好的决策**，而非更多自动化消息）
+- 缩短报价与跟进响应时间
+- 提高 follow-up 有效性与可解释性
 
 **2.2 系统目标**
 
-- 将 FSM 从「被动系统」变为「主动系统」
-- 将业务流程从「人工驱动」变为「Agent 驱动」
-- 实现 multi-agent 协同执行
+- 将「系统事实」升维为「业务认知」与「可执行决策」
+- Human-in-the-loop：决策建议可审、可拒、可改
+- 执行与认知解耦：换 LLM / 换 Agent 实现不推翻 Ontology 与决策资产
 
 **2.3 技术目标**
 
-- Event-driven architecture
-- Agent runtime abstraction
-- 可插拔 workflow engine
-- 可扩展行业 Agent SDK
-- 可观测 agent 行为与 ROI
+- 领域语义边界清晰（防腐层）；见 [PUB-04-domain-semantics.md](PUB-04-domain-semantics.md)
+- 可插拔 **Connector** 与 **Event Schema**（开源友好）
+- 可观测：认知输入、决策输出、执行结果、ROI
 
 ---
 
 ## 3. 总体架构（High-Level Architecture）
 
 ```mermaid
-flowchart TB
-    CH["Channels Layer<br/>Web / App / WhatsApp / 企微 / SMS"]
-    subgraph AOL["Agent Operating Layer (AOL)"]
-        A1["1. Event Bus"]
-        A2["2. Context Engine"]
-        A3["3. Agent Runtime"]
-        A4["4. Workflow Engine"]
-        A5["5. Decision Engine"]
-        A6["6. Memory Layer"]
-        A7["7. Action Engine"]
-        A8["8. Human-in-the-loop Engine"]
-    end
-    FSM["Field Service FSM（System of Record）<br/>Lead / Quote / Job / Invoice / Payment"]
-    EXT["External Systems<br/>CRM / ERP / Sheets / Messaging"]
+flowchart BT
+    BS["L0 Business Systems<br/>FSM · Excel · QuickBooks · 企微"]
+    TE["L1 Trusted Execution Layer ★<br/>Approval · Action · Audit · Rollback"]
+    COG["L2 Cognitive Layer ★<br/>Memory · Decision Engine · Ontology · Graph"]
+    HAR["L3 Business Harness ★<br/>Customer · Project · Timeline Context"]
+    SK["L4 Skill Layer<br/>Follow-up · Estimate · Dispatch"]
+    MD["L5 Model Layer<br/>Claude · GPT · 混元 · DeepSeek"]
 
-    CH --> AOL
-    AOL --> FSM
-    FSM --> EXT
-    EXT -.事件回流.-> A1
+    BS --> TE
+    TE --> COG
+    COG --> HAR
+    HAR --> SK
+    SK --> MD
 ```
 
-### 设计准则（贯穿全层）
+数据与责任**自下而上**：Business → Trusted Execution → Cognitive → Harness → Skill → Model。
 
-- **System of Action**：AOL 是 value layer，FSM 是 commodity layer（可替换）。
-- **解耦**：不把业务写死成「防水维修跟进引擎」，而是通用的事件驱动 Agent 运行时。
-- **确定性边界**：LLM 负责「模糊推理」；对业务系统的**写操作**必须经过带守卫
-  （Guardrails）和 SOP（Playbooks）的确定性工具。
-- **Human-in-the-Loop**：AI 产出 `Suggestion`，人类 `Approval`，系统才 `Action`。
+### 设计准则
+
+- **Harness 优先**：Claude 再强也不知道你的 FSM；价值在「拼装可推理的 Project Context」。
+- **Cognitive 优先**：价值在企业独有认知与决策，不在 Skill 本身。
+- **Trusted Execution 优先**：企业需要「建议→审批→执行→归档」，不是「建议完就结束」。
+- **Skill/Model 可替换**：换模型、换 Skill 实现，不推翻 Harness/Cognitive/Execution 资产。
+- **Ontology** 在 Cognitive 内：行业语义（Lead/Quote/Job 及「何谓危险 Quote」）是护城河的一部分。
 
 ---
 
-## 4. AOL Core 组件定义（Core System Modules）
+## 4. 核心模块（按《认知机器》分层）
 
-```mermaid
-flowchart TB
-    EB["1 Event Bus"] --> CTX["2 Context Engine"]
-    CTX --> RT["3 Agent Runtime"]
-    RT --> MEM["6 Memory Layer"]
-    RT --> DEC["5 Decision Engine"]
-    DEC --> WF["4 Workflow Engine"]
-    WF --> HITL["8 Human-in-the-loop"]
-    HITL --> ACT["7 Action Engine"]
-    ACT -->|确定性执行| EB
+### 4.1 Business Harness（业务上下文组装器）★ 护城河
+
+> 早期文档称 **Context Engine**；战略命名统一为 **Business Harness**（业务上下文组装器）。
+
+**职责**：从 FSM / Connector / 消息等源拼装 Skill 与 Model 所需的 **Project Context**——
+Claude 不知道「客户是谁、报价多少、多久没回复、销售是谁」，Harness 负责：
+
+```json
+{
+  "customer": {},
+  "quote": {},
+  "timeline": {},
+  "job": {},
+  "sales": {}
+}
 ```
 
-### 4.1 Event Bus（事件总线）
+**与 Cognitive 的边界**：Harness **组装事实与结构化上下文**；Cognitive **解释含义并决策**。
 
-**职责**：统一接收所有业务事件，作为系统驱动源。
+**POC 现状**：`packages/aol/aol/context/` enrich（报价 B / 签约 / 渠道部位）+ `domain.py` 防腐层；
+即 Harness + Ontology 边界的 Phase 1 实现。
 
-**Event Schema**
+### 4.2 Cognitive Layer（认知层）★ 护城河
+
+**职责**：企业独有认知与决策——**不是** Skill，**不是** Prompt。
+
+包含：**Business Ontology**（Lead→Quote→Job 及「何谓高价值 Lead / 危险 Quote」）、
+**Business Memory**、**Cognitive Graph**、**Decision Engine**。
+
+**输出示例**（认知 + 决策）
+
+```json
+{
+  "customer_profile": { "past_deals": 2, "typical_delay_days": 7, "price_sensitive": true },
+  "interpretation": "高概率成交客户，当前犹豫阶段",
+  "recommended_window_hours": 48,
+  "next_action": "FollowUpNow",
+  "confidence": 0.82
+}
+```
+
+**POC 现状**：v0.2「情况判断 + 跟进方案」+ 规则 polish；长期 Memory/Graph 属 Phase 2+。
+
+### 4.3 Decision Engine（归属 Cognitive Layer）
+
+**职责**：回答 **「下一步应该做什么」**——优先级、时机、策略、置信度、可解释依据。
+
+```json
+{
+  "next_action": "FollowUpNow",
+  "confidence": 0.82,
+  "reason": "customer silent 72h after formal quote",
+  "recommended_message": ""
+}
+```
+
+**POC 现状**：单轮 LLM + 规则 polish + 启发式兜底；系统化 scoring / 风险模型属 Phase 3。
+
+### 4.4 Trusted Execution Layer ★ 护城河
+
+> 合并早期分散的 **Action Engine + Approval + Audit** 叙事。
+
+**职责**：企业级「建议 → 审批 → 执行 → 记录 → 审计 →（回滚）」全链路。
+
+| 能力 | 说明 | POC |
+|------|------|-----|
+| **Approval** | Human-in-the-loop；折扣/报价等关键动作必须审批 | Console 同意/拒绝/修改 |
+| **Action** | 企微、任务、FSM 写回（guardrails 内） | 企微卡片 + `DRY_RUN` |
+| **Audit** | trace、outcome、幂等水位线 | Turso `reasoning_traces` / outcomes |
+| **Rollback** | 误执行恢复策略 | 规划（Phase 3+） |
+
+**POC 现状**：Console + 追踪库 + 企微；尚未产品化完整回滚。
+
+### 4.5 Skill Layer — 商品层
+
+**职责**：领域能力封装（Follow-up / Estimate / Dispatch）。调用链：
+
+```text
+Harness 组装上下文 → Cognitive/Decision 产出建议 → Trusted Execution 落盘
+→（可选）Model 生成自然语言
+```
+
+**POC 现状**：Follow-up Skill 单管线；产品 UI 仍可称「Agent」。
+
+### 4.6 Model Layer — 商品层
+
+混元 Lite 日常、DeepSeek 抽样等；见 [PUB-06-llm-providers.md](PUB-06-llm-providers.md)。**不绑定单一供应商。**
+
+### 4.7 Event Ingestion & Schema — 基础设施
+
+**职责**：从 FSM / Webhook / 轮询接收业务变化；统一 **Event Schema**（开源候选）。
 
 ```json
 {
@@ -111,117 +192,24 @@ flowchart TB
 }
 ```
 
-**核心事件**：`LeadCreated` · `CustomerContacted` · `QuoteCreated` · `QuoteSent` ·
-`QuoteViewed` · `CustomerSilent` · `FollowUpTriggered` · `JobScheduled` ·
-`JobCompleted` · `PaymentReceived`
+**定位**：重要，但**非护城河**（Temporal / Kafka / 云厂商可替代）。勿将「Event Bus」叙事为核心产品。
 
-**POC 现状**：尚无独立总线；以 DB 增量轮询 XLink `serviceAppointment`（v0.2 聚焦
-`206` 待签约停滞）模拟事件源。统一 Event Schema 是 Stage 1 的首要抽象。
+**POC 现状**：DB 增量轮询 XLink `serviceAppointment`（206 待签约停滞）模拟事件源。
 
-### 4.2 Context Engine（上下文引擎）
+### 4.8 Runtime / Workflow — 编排基础设施（commodity）
 
-**职责**：构建统一业务上下文（跨 FSM / CRM / external data）。
-
-**Context Types**：Customer / Opportunity / Quote / Job Context、Interaction Timeline。
-
-**输出（统一 JSON）**
-
-```json
-{
-  "customer_profile": {},
-  "history": [],
-  "current_state": {},
-  "risk_score": 0.72,
-  "last_interaction": ""
-}
-```
-
-**POC 现状**：`AGENT_MODE=steps` 的只读 enrich 已产出工单级上下文（报价 B / 签约 /
-渠道部位 / 业务提示）；这是 Context Engine 的雏形。**系统码→领域语义的翻译边界**
-见 [PUB-04-domain-semantics.md](PUB-04-domain-semantics.md)。
-
-### 4.3 Agent Runtime（Agent 运行时）
-
-**职责**：负责 agent 生命周期管理——registration / trigger / state / retry-rollback / logging。
-
-**Agent Interface**
-
-```typescript
-interface Agent {
-  onEvent(event, context)
-  decide(context)
-  act(decision)
-}
-```
-
-**POC 现状**：单 Agent（Follow-up）以函数式管线运行，`reasoning_traces` 落库全过程；
-正式 Runtime 抽象（多 Agent 注册/触发）属 Stage 1。
-
-### 4.4 Workflow Engine（工作流引擎）
-
-**职责**：支持 multi-agent orchestration。
-
-**Flow Types**：Sequential / Conditional / Parallel / Human-approval flow。
-
-**示例**：`Qualification → Estimate → Follow-up → Closing`
-
-**POC 现状**：主流程为薄编排单链路，见下文 §12 分支治理与升级门槛。
-
-### 4.5 Decision Engine（决策引擎）
-
-**职责**：生成业务决策建议——priority ranking / probability scoring /
-recommendation generation / risk detection。
-
-**示例输出**
-
-```json
-{
-  "next_action": "FollowUpNow",
-  "confidence": 0.82,
-  "reason": "customer silent 72h",
-  "recommended_message": ""
-}
-```
-
-**POC 现状**：单轮 LLM 生成 v0.2 中文结构化建议 + 启发式兜底；scoring/风险识别待引入。
-
-### 4.6 Memory Layer（记忆层）
-
-**职责**：长期 + 短期业务记忆存储。
-
-**分类**：Session Memory / Customer Memory / Business Pattern Memory / Agent Memory。
-
-**POC 现状**：仅 `reasoning_traces`（短期/审计）；客户与业务规律记忆属 Stage 1+。
-
-### 4.7 Action Engine（执行引擎）
-
-**职责**：执行所有外部动作——Send message（企微/SMS/Email）/ Create quote /
-Create job / Update FSM state / Notify human / Trigger workflow。
-
-**POC 现状**：企微群机器人推送 + Turso/sqlite 写处理记录（幂等）；默认 `DRY_RUN=true` 预览。
-
-### 4.8 Human-in-the-loop Engine
-
-**职责**：控制关键决策点。
-
-**Mechanism**：`Agent suggests → Human approves → System executes`。
-
-**Approval Types**：pricing / discount / escalation approval。
-
-**POC 现状**：以 `DRY_RUN` + 人工审阅卡片实现「建议不直发」；结构化审批回写属 v1.1。
+薄编排、cron、重试、多 Skill 注册；Temporal/LangGraph 可替代。**不作为品牌核心。**
 
 ---
 
-## 5. Agent Layer（业务 Agent）
+## 5. Skill 目录（应用层，非终局）
 
-| Agent | 输入 | 输出 | 状态 |
-|-------|------|------|------|
-| **Qualification** | Lead data / channel source / 首次互动 | lead score / priority / next step | 规划中 |
-| **Estimate** | job site data / images / FSM rules | quote / material list / cost breakdown | 规划中 |
-| **Follow-up** | quote status / silence duration / 互动历史 | follow-up plan / message / timing | **POC 已落地** |
-| **Closing** | quote history / engagement data | discount strategy / closing recommendation | 规划中 |
+| Skill | Harness 依赖 | 状态 |
+|-------|--------------|------|
+| **Follow-up** | 报价/时间线/工单上下文 | **POC 已落地** |
+| Estimate / Qualification / Closing | 现场/规范/线索 | 规划中 |
 
-> Follow-up Agent 是第一个生产级 Agent（ROI 直接、易验证、不依赖复杂行业知识）。
+> Follow-up 验证 **Harness + Cognitive + Trusted Execution** 闭环；Skill 本身可被平台内置。
 
 ---
 
@@ -229,165 +217,108 @@ Create job / Update FSM state / Notify human / Trigger workflow。
 
 **Entities**：Customer / Lead / Quote / Job / Invoice / Payment。
 
-**特性**：
-
-- immutable event log recommended（推荐事件溯源）
-- external replaceable（可被外部 FSM 替换）
-- **not business logic owner**（业务逻辑不归 FSM；FSM 走向 commodity layer）
+- external replaceable（commodity layer）
+- **not** business logic / cognition owner
 
 ---
 
-## 7. Integration Layer
+## 7. Integration Layer（Connector — 开源候选）
 
-**Supported Systems**：CRM（HubSpot 等）/ ERP / Excel·Sheets / Messaging systems /
-FSM systems（ServiceTitan-like）。
+**Supported Systems**：CRM / ERP / Excel·Sheets / Messaging / FSM（XLink 等）。
 
-**POC 现状**：仅接 XLink Mongo（只读）+ 企微 webhook。
+**POC 现状**：XLink Mongo（只读）+ 企微 webhook。
 
 ---
 
 ## 8. Analytics & Observability
 
-**业务 Metrics**：conversion rate uplift / follow-up response rate /
-quote speed reduction / revenue per lead / agent effectiveness score。
+**业务 Metrics**：conversion uplift、建议采纳率、跟进响应、决策覆盖度。
 
-**Agent Monitoring**：success rate / intervention rate / override rate / latency。
+**认知/决策 Monitoring**：依据可追溯（enrich 引用、trace、override 率）。
 
-**POC 现状**：`reasoning_traces` 提供逐步可审计轨；业务度量包属 v0.5 proof-metrics。
+**POC 现状**：`reasoning_traces`；业务度量包见 roadmap / releases。
 
 ---
 
 ## 9. Security & Multi-Tenant
 
-- RBAC、tenant isolation、audit log、encryption、permissioned agents。
-- **POC 现状**：单租户；只读账号最小权限；密钥不入库、日志脱敏 phone。多租户属 SaaS 阶段。
+RBAC、tenant isolation、audit、脱敏。POC：单租户、只读最小权限。
 
 ---
 
 ## 10. Deployment Model
 
-| 阶段 | 形态 | 对应 Stage（roadmap） |
-|------|------|----------------------|
-| Phase 1 | embedded in existing FSM | Stage 0 |
-| Phase 2 | standalone AOL layer | Stage 1–2 |
-| Phase 3 | full SaaS platform | Stage 2–3 |
-| Phase 4 | open ecosystem / marketplace | Stage 3 |
+| 阶段 | 形态 | 对应 Roadmap |
+|------|------|----------------|
+| Phase 1 | 嵌入现有 FSM + Console | Follow-up 楔子验证 |
+| Phase 2 | 统一认知层（画像/图谱） | Cognitive Layer |
+| Phase 3 | 决策引擎产品化 | Decision Intelligence |
+| Phase 4 | 多 Agent 执行面 | Agent 化执行 |
+| Phase 5 | Connector + SDK 开源 | 生态，不开放 Kernel |
 
 ---
 
-## 11. 开源策略（关键）
+## 11. 开源策略（修订）
 
-| 范围 | 内容 |
+| 范围 | 策略 |
 |------|------|
-| **Open（开源）** | Event Bus、Agent Runtime、Workflow Engine、Basic Memory Layer |
-| **Closed（护城河）** | Industry Packs、Agent Marketplace、Hosted platform、Data intelligence |
+| **开源** | Connector Layer、Event Schema、Agent SDK（`agent.execute(context)`） |
+| **不先开源** | Cognitive Graph、Ontology、Decision 模型、Runtime/Workflow「Kernel 拼装层」 |
+| **商业** | Hosted 认知平台、行业 Pack、Decision Intelligence 数据与基准 |
 
-> 纪律：先赢闭环业务指标，再平台化，最后才分层开源。详见 [PUB-03-roadmap.md](PUB-03-roadmap.md)。
+> 纪律：**先赢闭环业务与认知资产，再开放连接层与 SDK**；避免成为大模型平台的研发外包。
 
 ---
 
-## 12. 当前实现视角：四大原语 + 分支治理
+## 12. 当前实现视角：四大原语（工程映射）
 
-> 八大组件是**目标形态**；当前 POC 用四个可复用原语先把接口立住，
-> 它们正是 AOL Core 的最小实现切面：
-> Event Ingestion ≈ Event Bus + Context Engine；Reasoning ≈ Decision Engine；
-> Action Spec/UI ≈ Action Engine 的协议；Execution ≈ Action Engine 的派发。
+> 四大原语是 **Phase 1 工程竖切**，战略映射：
 
-### 12.1 Event Ingestion 事件摄取（= 领域防腐层落点）
+| 原语 | 战略层 | POC 现状 |
+|------|--------|----------|
+| Event Ingestion | Business Systems + Connector | XLink 206 轮询 |
+| Reasoning（enrich + LLM） | **Harness** + **Cognitive/Decision** | context/ + runtime/ |
+| Action Spec | Cognitive 输出协议 → Trusted Execution 输入 | v0.2 JSON / Console |
+| Execution | **Trusted Execution** | action/ + tracking/ + Console 审批 |
 
-- **关键职责**：**系统语义→领域语义的翻译边界**。原始 `serviceAppointment`、
-  `status` 码、区划码等系统黑话，必须在此翻译成领域语言（`WorkOrder` / 城市名…），
-  Agent 大脑之后只见领域对象。详见 [PUB-04-domain-semantics.md](PUB-04-domain-semantics.md)。
-- **POC 现状**：DB 增量轮询（XLink `serviceAppointment`，v0.2 聚焦 206 停滞）。
-
-### 12.2 Reasoning & Strategy Mapping 推理与策略映射
-
-- **关键**：**不要写死 If-Else**，积累「动态上下文检索 + LLM 规划」。
-- **POC 现状**：单轮 LLM 生成 JSON 建议 + steps enrich，启发式兜底。
-
-#### 分支治理（v0.2.x 起执行）
-
-- 主流程保持薄编排：`ingest -> enrich -> llm -> polish -> card/trace`。
-- 业务分叉优先表驱动（策略映射）而非嵌套 if/else：
-  - `event_type -> strategy`
-  - `blocker_type -> action template`
-  - `priority rules -> rule chain`
-- 任何新增分支需可观测（trace 可解释）且可单测。
-
-#### 何时从轻编排升级到 Workflow Engine（LangGraph/Temporal）
-
-满足以下任意两项，触发升级评审：
-
-1. 需要跨天等待的人机多轮状态（如阻塞回填超时重试）。
-2. 单工单存在并行子任务且要求失败恢复。
-3. 规则模块复杂度明显上升，主流程可维护性下降。
-4. 事故复盘中频繁出现「分支路径不可解释」。
-
-### 12.3 Action Spec & UI Generation 行动规范与 UI 生成
-
-- **最具开源价值的硬资产**：Agent 产出的不是大白话，而是 **Action Spec（行动规范协议）**，
-  前端读取该 JSON 自动渲染交互卡片（JSON 驱动的动态 Agent 审批 UI）。
-
-```json
-{
-  "action_type": "PROPOSAL_SEND",
-  "reasoning": "现场检测发现3处注浆点，业主因价格犹豫，需发送阶梯式降价方案",
-  "ui_component": "InteractiveApprovalCard",
-  "payload": {
-    "customer_id": "123",
-    "templates": ["方案A: 全面注浆", "方案B: 局部修补"],
-    "draft_text": "尊贵的业主，针对您家厨房的漏水..."
-  }
-}
-```
-
-- **POC 现状**：v0.2 中文结构化 JSON，渲染为企微 Markdown 卡片，是 Action Spec 的雏形。
-
-### 12.4 Execution & Webhook Router 执行与路由
-
-- **做什么**：人类点「同意」后派发确定性 Action——调企微 API、改 CRM 字段、写追踪库。
-- **POC 现状**：企微群机器人推送 + Turso/sqlite 幂等写。
+分支治理、何时升级 Workflow Engine（LangGraph/Temporal）等工程纪律**保持不变**——属于执行面复杂度管理，不改变「认知优先」定位。
 
 ---
 
 ## 13. 从 POC 到目标的演进映射
 
-| 原语 | POC / Stage 0（当前） | 目标形态（Stage 1→3） |
-|------|------------|----------|
-| Event Ingestion | DB 轮询 206 停滞工单 | 统一 Event Bus + Context Engine（多源 OCR / 通话 / Webhook） |
-| Reasoning | 单轮 LLM + 启发式 + steps enrich | Decision Engine：SOP 检索 + 规划 + scoring + 长程状态 |
-| Action Spec | 中文 v0.2 JSON → 企微卡片 | 强类型协议 + Agent SDK → Generative UI 组件库 |
-| Execution | 企微推送 + 追踪库 | Action Engine：MCP 工具 + Guardrails + 多系统派发 |
+| 能力 | Phase 1（当前） | 目标（Phase 2–5） |
+|------|-----------------|-------------------|
+| 认知 | 工单级 enrich + 情况判断 | 统一客户/项目/销售画像、Cognitive Graph |
+| 决策 | 单轮建议 + 规则 | Decision Engine、可解释策略库 |
+| 执行 | Follow-up + 企微 + Console | 多 Agent + MCP 工具 |
+| 连接 | XLink 只读 | 开源 Connector + 标准 Event Schema |
 
-> 演进节奏（Stage 0 闭环 → Stage 1 Runtime → Stage 2 AOL Core → Stage 3 开源生态）
-> 见 [PUB-03-roadmap.md](PUB-03-roadmap.md)。
+详见 [PUB-03-roadmap.md](PUB-03-roadmap.md)。
 
 ---
 
-## 14. 终局定义（System Definition）
+## 14. 终局定义
 
-> **FS-AOL is a multi-agent execution layer that sits above FSM systems,
-> transforming static field service records into autonomous revenue-driving workflows.**
+> **FS-COS is the cognitive and decision layer above FSM systems,
+> turning static field service records into understandable business situations
+> and actionable decisions—executed by agents only after human approval.**
 
 ### 一句话总结
 
-> **FSM tells you what happened. AOL decides and executes what happens next.**
+> **FSM records what happened. FS-COS understands what it means and decides what to do next. Agents execute.**
 
 ---
 
-## 15. 代码 ↔ AOL 层映射（Monorepo）
+## 15. 代码 ↔ 层映射（Monorepo）
 
-> 当前仓库布局（`apps/console` + `packages/aol` + `contracts/`）与 §4 八大组件 / §12 四大原语的对应关系。
+> 仓库布局与层的对应（命名保留 `aol` 包路径，战略叙事用 FS-COS）。
 
-| AOL 层 / 原语 | 目录 / 模块 | 职责 |
-|---------------|-------------|------|
-| **Integration（L1/L2）** | `packages/aol/aol/integration/` | XLink Mongo 只读摄取、`serviceAppointment` → `WorkOrder` |
-| **Context Engine（L2）** | `packages/aol/aol/context/` | 工单 enrich（报价/签约/渠道查证） |
-| **Domain ACL** | `packages/aol/aol/domain.py` | 系统码→领域语义翻译（唯一 XLink 耦合点） |
-| **Agent Runtime / Reasoning（L3）** | `packages/aol/aol/runtime/` | LLM / steps / heuristic 推理 + `reasoning_traces` |
-| **Decision Engine（L4）** | `packages/aol/aol/decision/` | 建议 polish、优先级规则 |
-| **Action Engine（L5）** | `packages/aol/aol/action/` | 企微 Markdown 卡片、webhook 推送 |
-| **Tracking / 链接层** | `packages/aol/aol/tracking/` + `contracts/aol_schema.sql` | 幂等水位线、trace、Console 审批回写 |
-| **Human-in-the-loop UI** | `apps/console/` | 读 Turso、展示 v0.2 建议、记录 approve/reject/modify |
-| **跨语言契约 SSOT** | `contracts/` | `aol_schema.sql` · `tables.json` · `suggestion.schema.json` |
-| **Cron 入口** | `run_cron.py` → `packages/aol/aol/app.py` | GHA 每小时增量轮询 |
+| 战略层 | 目录 / 模块 | 职责 |
+|--------|-------------|------|
+| **Business Systems / Connector** | `integration/` · `domain.py` | 摄取、系统码→领域语义 |
+| **Business Harness** | `context/` | enrich、Project Context 组装 |
+| **Cognitive + Decision** | `runtime/` · `decision/` | LLM 推理、polish、规则 |
+| **Trusted Execution** | `action/` · `tracking/` · `apps/console/` | 推送、幂等、审批、outcome、trace |
+| **Skill 编排** | `app.py` · `run_cron.py` | Follow-up 管线、cron |
+| **Model** | `runtime/` LLM 适配 | 混元 / 启发式 / DeepSeek |
