@@ -11,10 +11,14 @@ from ..context.enrich import (
     EnrichedContext,
     enrich_work_order_context,
     _CodeCache,
+    _SOURCE_TYPE,
     _fmt_time,
     _PAY_STATE,
     _QUOTE_B_MARKS,
+    _flatten_leak_codes,
+    _parse_bj_quote_row,
     _parse_order_doc,
+    _resolve_channel_path,
 )
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now
 
@@ -106,6 +110,8 @@ def _milestone_events_from_sa(
     work_order_id: str,
     dedupe_key: str,
     order_num: str,
+    codes: _CodeCache,
+    db: Any,
 ) -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
     exts = sa.get("exts") or {}
@@ -145,6 +151,7 @@ def _milestone_events_from_sa(
                 at_ms=appt_ms,
                 title="预约",
                 summary=f"预约勘察上门 · {when}" if when else "预约勘察上门",
+                payload=_appointment_payload(sa, codes, db),
             )
         )
 
@@ -230,6 +237,11 @@ def _quote_events_from_db(
                 "payState": 1,
                 "createTime": 1,
                 "bjProducts": 1,
+                "ownerName": 1,
+                "ownerPhone": 1,
+                "description": 1,
+                "depositRatio": 1,
+                "exts": 1,
             },
         )
         .sort("createTime", -1)
@@ -239,13 +251,12 @@ def _quote_events_from_db(
         if at_ms is None:
             continue
         parsed = _parse_order_doc(doc, codes)
+        payload = _quote_payload(doc, codes)
         amt = parsed.get("amount_yuan")
-        amt_s = f"{amt:.0f}元" if isinstance(amt, (int, float)) else "—"
-        pay = parsed.get("pay_state_label") or _PAY_STATE.get(
-            int(doc.get("payState") or 0), "未知"
-        )
-        pkgs = "、".join((parsed.get("package_names") or [])[:2])
-        summary = f"{amt_s} · {pay}"
+        amt_s = f"{amt:.0f}" if isinstance(amt, (int, float)) else "—"
+        pay = parsed.get("pay_state_label") or "—"
+        pkgs = "、".join(parsed.get("package_names") or [])
+        summary = f"{amt_s}元 · {pay}"
         if pkgs:
             summary += f" · {pkgs}"
         events.append(
@@ -258,6 +269,7 @@ def _quote_events_from_db(
                 title="报价",
                 summary=summary,
                 ref_id=str(doc.get("orderNumber") or doc.get("_id") or ""),
+                payload=payload,
             )
         )
     return events
@@ -289,6 +301,65 @@ def _event(
     }
 
 
+def _form_fields(pairs: List[tuple[str, str]]) -> List[Dict[str, str]]:
+    return [
+        {"label": label, "value": (value.strip() if value else "—")}
+        for label, value in pairs
+    ]
+
+
+def _region_label(codes: _CodeCache, doc: Dict[str, Any]) -> str:
+    parts = [
+        codes.label(doc.get("province")),
+        codes.label(doc.get("city")),
+        codes.label(doc.get("district")),
+    ]
+    return " / ".join(p for p in parts if p) or "—"
+
+
+def _collect_image_items(raw: Any) -> List[Dict[str, str]]:
+    """surveyDrawing / exts.images* → {url, name} 列表（去重）。"""
+    out: List[Dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add(item: Any) -> None:
+        if not isinstance(item, dict):
+            return
+        url = str(item.get("url") or item.get("path") or "").strip()
+        if not url or url in seen:
+            return
+        seen.add(url)
+        out.append({"url": url, "name": str(item.get("name") or "").strip()})
+
+    if isinstance(raw, list):
+        for x in raw:
+            add(x)
+    elif isinstance(raw, dict):
+        add(raw)
+
+    return out
+
+
+def _survey_images(doc: Dict[str, Any]) -> List[Dict[str, str]]:
+    images: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for batch in [_collect_image_items(doc.get("surveyDrawing"))]:
+        for img in batch:
+            if img["url"] not in seen:
+                seen.add(img["url"])
+                images.append(img)
+    exts = doc.get("exts") or {}
+    if isinstance(exts, dict):
+        for key in sorted(exts.keys()):
+            if not str(key).startswith("images"):
+                continue
+            for img in _collect_image_items(exts.get(key)):
+                if img["url"] not in seen:
+                    seen.add(img["url"])
+                    images.append(img)
+    return images[:24]
+
+
 def _survey_payload(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
     parts = doc.get("part") or []
     if not isinstance(parts, list):
@@ -303,18 +374,143 @@ def _survey_payload(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
             return "—"
         return str(v)
 
+    st = str(doc.get("sourceType") or "")
+    progress = doc.get("progress")
+    progress_s = f"{progress}%" if progress is not None and progress != "" else "—"
     return {
-        "surveyNum": str(doc.get("surveyNum") or "—"),
-        "partLabel": "、".join(part_names) or "—",
-        "surveyTime": str(doc.get("surveyTime") or "—"),
-        "address": str(doc.get("address") or "—"),
-        "supervisorName": str(doc.get("supervisorName") or "—"),
-        "planeArea": _num(doc.get("planeArea")),
-        "squareMeter": _num(doc.get("squareMeter")),
-        "memo": str(doc.get("memo") or "").strip() or "—",
-        "leakageCause": "、".join(str(c) for c in causes) or "—",
-        "createTime": _fmt_time(doc.get("createTime")),
-        "updateTime": _fmt_time(doc.get("updateTime")),
+        "fields": _form_fields(
+            [
+                ("勘察单号", str(doc.get("surveyNum") or "")),
+                ("客户姓名", str(doc.get("name") or "")),
+                ("联系电话", str(doc.get("phone") or "")),
+                ("勘察地址", str(doc.get("address") or "")),
+                ("省市区", _region_label(codes, doc)),
+                ("勘察部位", "、".join(part_names)),
+                ("渗漏原因", "、".join(str(c) for c in causes)),
+                ("勘察时间", str(doc.get("surveyTime") or "")),
+                ("施工面积", _num(doc.get("squareMeter"))),
+                ("平面尺寸", f"{_num(doc.get('length'))} × {_num(doc.get('width'))}"),
+                ("进度", progress_s),
+                ("服务类型", codes.label(doc.get("serviceType")) or str(doc.get("serviceType") or "")),
+                ("线索来源", _SOURCE_TYPE.get(st, st) if st else ""),
+                ("负责人", str(doc.get("supervisorName") or "")),
+                ("负责人电话", str(doc.get("supervisorPhone") or "")),
+                ("勘察单位", str(doc.get("orgName") or "")),
+                ("录入人", str(doc.get("createUserName") or "")),
+                ("备注", str(doc.get("memo") or "").strip()),
+                ("创建时间", _fmt_time(doc.get("createTime"))),
+                ("更新时间", _fmt_time(doc.get("updateTime"))),
+            ]
+        ),
+        "images": _survey_images(doc),
+    }
+
+
+def _appointment_payload(sa: Dict[str, Any], codes: _CodeCache, db: Any) -> Dict[str, Any]:
+    exts = sa.get("exts") or {}
+    prospect = str(exts.get("prospectingTimeStr") or "").strip()
+    if not prospect:
+        prospect = _fmt_time(exts.get("prospectingTime"))
+    subscribe = str(exts.get("subscribeTimeStr") or "").strip()
+    if not subscribe:
+        subscribe = _fmt_time(exts.get("subscribeTime"))
+    apply_s = str(exts.get("applyTimeStr") or "").strip() or _fmt_time(sa.get("applyTime"))
+    addr = str(sa.get("address") or exts.get("gpsAddr") or "").strip()
+    st = str(exts.get("sourceType") or "")
+    leak_raw = exts.get("leakagesite_copy") or exts.get("leakagesite")
+    leak_ids = _flatten_leak_codes(leak_raw)
+    leak_sites = "、".join(dict.fromkeys(codes.label(i) for i in leak_ids if codes.label(i)))
+    channel = _resolve_channel_path(db, sa.get("channel"))
+    return {
+        "fields": _form_fields(
+            [
+                ("工单号", str(sa.get("orderNum") or "")),
+                ("客户姓名", str(sa.get("name") or "")),
+                ("联系电话", str(sa.get("phone") or "")),
+                ("上门地址", addr),
+                ("渗漏部位", leak_sites),
+                ("获客渠道", channel),
+                ("线索来源", _SOURCE_TYPE.get(st, st) if st else ""),
+                ("服务类型", codes.label(sa.get("serviceType")) or str(sa.get("serviceType") or "")),
+                ("勘察上门时间", prospect),
+                ("预约提交时间", subscribe),
+                ("申请时间", apply_s),
+            ]
+        ),
+    }
+
+
+def _quote_lines(doc: Dict[str, Any], codes: _CodeCache) -> List[Dict[str, Any]]:
+    bp_raw = doc.get("bjProducts")
+    if not bp_raw:
+        return []
+    try:
+        bp = json.loads(bp_raw) if isinstance(bp_raw, str) else bp_raw
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(bp, dict):
+        return []
+    lines: List[Dict[str, Any]] = []
+    for item in bp.get("orderList") or []:
+        if not isinstance(item, dict):
+            continue
+        row = _parse_bj_quote_row(item, codes)
+        amt = row.get("line_amount_yuan")
+        lines.append(
+            {
+                "repairParts": "、".join(row.get("repair_parts") or []) or "—",
+                "constructionLocation": row.get("construction_location") or "—",
+                "partDescription": row.get("part_description") or "—",
+                "packageNames": "、".join(row.get("package_names") or []) or "—",
+                "warrantyLabel": row.get("warranty_label") or "—",
+                "maintainArea": row.get("maintain_area") or "—",
+                "amountYuan": f"{amt:.0f}" if isinstance(amt, (int, float)) else "—",
+            }
+        )
+    return lines
+
+
+def _quote_payload(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
+    parsed = _parse_order_doc(doc, codes)
+    exts = doc.get("exts") or {}
+    amt = parsed.get("amount_yuan")
+    amt_s = f"{amt:.0f}" if isinstance(amt, (int, float)) else "—"
+    deposit = doc.get("depositRatio")
+    deposit_s = f"{float(deposit) * 100:.0f}%" if isinstance(deposit, (int, float)) else "—"
+    mail_area = exts.get("mailArea") or exts.get("projectArea") or []
+    if isinstance(mail_area, list):
+        mail_region = " / ".join(
+            dict.fromkeys(codes.label(x) for x in mail_area if codes.label(x))
+        )
+    else:
+        mail_region = str(mail_area or "")
+    st = str(exts.get("sourceType") or "")
+    return {
+        "fields": _form_fields(
+            [
+                ("报价单号", str(doc.get("orderNumber") or doc.get("_id") or "")),
+                ("工单号", str(exts.get("serviceAppointmentNum") or "")),
+                ("报价金额", f"{amt_s} 元"),
+                ("支付状态", parsed.get("pay_state_label") or "—"),
+                ("客户姓名", str(exts.get("clientname") or doc.get("ownerName") or "")),
+                ("联系电话", str(exts.get("telphone") or doc.get("ownerPhone") or "")),
+                ("项目地址", str(exts.get("projectAddress") or "")),
+                ("邮寄地址", str(exts.get("mailAddress") or "")),
+                ("邮寄区域", mail_region),
+                ("方案套餐", "、".join(parsed.get("package_names") or [])),
+                ("维修部位", "、".join(parsed.get("repair_parts") or [])),
+                ("施工位置", parsed.get("construction_location") or ""),
+                ("部位说明", parsed.get("part_description") or ""),
+                ("质保", parsed.get("warranty_label") or ""),
+                ("维修面积", parsed.get("maintain_area") or ""),
+                ("定金比例", deposit_s),
+                ("服务类型", codes.label(exts.get("serviceType")) or str(exts.get("serviceType") or "")),
+                ("线索来源", _SOURCE_TYPE.get(st, st) if st else ""),
+                ("报价日期", parsed.get("quote_date") or ""),
+                ("备注", str(doc.get("description") or "").strip()),
+            ]
+        ),
+        "lines": _quote_lines(doc, codes),
     }
 
 
@@ -355,10 +551,14 @@ def _business_events(
                 {"_id": sa_id},
                 {
                     "orderNum": 1,
+                    "name": 1,
+                    "phone": 1,
+                    "address": 1,
+                    "applyTime": 1,
+                    "channel": 1,
+                    "serviceType": 1,
                     "createTime": 1,
-                    "exts.ServiceAppointmentCreateTime": 1,
-                    "exts.prospectingTime": 1,
-                    "exts.prospectingTimeStr": 1,
+                    "exts": 1,
                 },
             )
             if sa:
@@ -368,6 +568,8 @@ def _business_events(
                         work_order_id=wid,
                         dedupe_key=dedupe_key,
                         order_num=wo.order_num,
+                        codes=codes,
+                        db=db,
                     )
                 )
                 events.extend(
@@ -411,14 +613,28 @@ def _business_events(
                     {"sid": sa_id, "state": {"$ne": -1}},
                     {
                         "surveyNum": 1,
+                        "name": 1,
+                        "phone": 1,
                         "part": 1,
+                        "province": 1,
+                        "city": 1,
+                        "district": 1,
                         "surveyTime": 1,
                         "address": 1,
                         "supervisorName": 1,
-                        "planeArea": 1,
+                        "supervisorPhone": 1,
+                        "progress": 1,
+                        "length": 1,
+                        "width": 1,
+                        "orgName": 1,
+                        "createUserName": 1,
+                        "serviceType": 1,
+                        "sourceType": 1,
                         "squareMeter": 1,
                         "memo": 1,
                         "leakageCause": 1,
+                        "surveyDrawing": 1,
+                        "exts": 1,
                         "createTime": 1,
                         "updateTime": 1,
                     },
@@ -433,6 +649,14 @@ def _business_events(
                     continue
                 sid = str(doc.get("_id"))
                 payload = _survey_payload(doc, codes)
+                part_s = next(
+                    (f["value"] for f in payload["fields"] if f["label"] == "勘察部位"),
+                    "—",
+                )
+                num_s = next(
+                    (f["value"] for f in payload["fields"] if f["label"] == "勘察单号"),
+                    "—",
+                )
                 events.append(
                     _event(
                         work_order_id=wid,
@@ -441,7 +665,7 @@ def _business_events(
                         kind="survey",
                         at_ms=at_ms,
                         title="勘察",
-                        summary=f"{payload['surveyNum']} · {payload['partLabel']}",
+                        summary=f"{num_s} · {part_s}",
                         ref_id=sid,
                         payload=payload,
                     )

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Database, Sparkles } from "lucide-react";
-import type { SurveyPayload, TimelineEvent } from "@/lib/timeline";
+import type {
+  AppointmentPayload,
+  QuotePayload,
+  SurveyPayload,
+  TimelineEvent,
+  TimelineFormField,
+} from "@/lib/timeline";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,41 +30,128 @@ function formatAt(at: string, atMs: number): string {
   return at || "—";
 }
 
-function SurveyDetailBody({ p }: { p: SurveyPayload }) {
-  const rows: { label: string; value: string }[] = [
-    { label: "勘察单号", value: p.surveyNum },
-    { label: "勘察部位", value: p.partLabel },
-    { label: "勘察时间", value: p.surveyTime },
-    { label: "地址", value: p.address },
-    { label: "负责人", value: p.supervisorName },
-    { label: "平面面积", value: p.planeArea },
-    { label: "施工面积", value: p.squareMeter },
-    { label: "渗漏原因", value: p.leakageCause },
-    { label: "备注", value: p.memo },
-    { label: "创建时间", value: p.createTime },
-    { label: "更新时间", value: p.updateTime },
-  ];
+function FormDetail({ fields }: { fields: TimelineFormField[] }) {
+  if (fields.length === 0) {
+    return <p className="text-muted-foreground text-sm">暂无表单数据</p>;
+  }
   return (
     <dl className="grid gap-2 text-sm">
-      {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[88px_1fr] gap-2">
-          <dt className="text-muted-foreground">{r.label}</dt>
-          <dd className="leading-relaxed">{r.value || "—"}</dd>
+      {fields.map((r) => (
+        <div key={r.label} className="grid grid-cols-[96px_1fr] gap-2">
+          <dt className="text-muted-foreground shrink-0">{r.label}</dt>
+          <dd className="leading-relaxed break-words">{r.value || "—"}</dd>
         </div>
       ))}
     </dl>
   );
 }
 
+function SurveyDetailBody({ p }: { p: SurveyPayload }) {
+  return (
+    <div className="space-y-4">
+      <FormDetail fields={p.fields} />
+      {p.images.length > 0 ? (
+        <div>
+          <p className="text-muted-foreground mb-2 text-xs">
+            现场照片（{p.images.length}）
+          </p>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {p.images.map((img) => (
+              <li key={img.url}>
+                <a
+                  href={img.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block overflow-hidden rounded-md border"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.url}
+                    alt={img.name || "现场照片"}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function QuoteDetailBody({ p }: { p: QuotePayload }) {
+  return (
+    <div className="space-y-4">
+      <FormDetail fields={p.fields} />
+      {p.lines.length > 0 ? (
+        <div>
+          <p className="text-muted-foreground mb-2 text-xs">报价明细行</p>
+          <ul className="space-y-3 text-sm">
+            {p.lines.map((line, i) => (
+              <li
+                key={i}
+                className="bg-muted/40 space-y-1 rounded-md border p-3"
+              >
+                <p className="font-medium">
+                  {line.packageNames !== "—"
+                    ? line.packageNames
+                    : `明细 ${i + 1}`}
+                  {line.amountYuan !== "—" ? ` · ${line.amountYuan} 元` : ""}
+                </p>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {[
+                    line.repairParts !== "—" ? `部位：${line.repairParts}` : "",
+                    line.constructionLocation !== "—"
+                      ? `位置：${line.constructionLocation}`
+                      : "",
+                    line.warrantyLabel !== "—"
+                      ? `质保：${line.warrantyLabel}`
+                      : "",
+                    line.maintainArea !== "—"
+                      ? `面积：${line.maintainArea}`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                {line.partDescription !== "—" ? (
+                  <p className="text-xs leading-relaxed">{line.partDescription}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type DetailModal =
+  | { type: "survey"; data: SurveyPayload }
+  | { type: "appointment"; data: AppointmentPayload }
+  | { type: "quote"; data: QuotePayload }
+  | null;
+
 function TimelineRow({
   ev,
-  onSurvey,
+  onOpen,
 }: {
   ev: TimelineEvent;
-  onSurvey: (p: SurveyPayload) => void;
+  onOpen: (m: DetailModal) => void;
 }) {
   const Icon = ev.lane === "business" ? Database : Sparkles;
-  const canSurvey = ev.kind === "survey" && ev.survey;
+  const detailLink =
+    ev.kind === "survey" && ev.survey
+      ? { label: "查看勘察表单", modal: { type: "survey" as const, data: ev.survey } }
+      : ev.kind === "appointment" && ev.appointment
+        ? {
+            label: "查看预约表单",
+            modal: { type: "appointment" as const, data: ev.appointment },
+          }
+        : ev.kind === "quote" && ev.quote
+          ? { label: "查看报价表单", modal: { type: "quote" as const, data: ev.quote } }
+          : null;
 
   return (
     <li className="relative flex gap-3 pb-5 last:pb-0">
@@ -87,14 +180,14 @@ function TimelineRow({
             {ev.summary}
           </p>
         ) : null}
-        {canSurvey ? (
+        {detailLink ? (
           <Button
             type="button"
             variant="link"
             className="h-auto px-0 py-0 text-xs"
-            onClick={() => ev.survey && onSurvey(ev.survey)}
+            onClick={() => onOpen(detailLink.modal)}
           >
-            查看勘察单
+            {detailLink.label}
           </Button>
         ) : null}
       </div>
@@ -103,7 +196,16 @@ function TimelineRow({
 }
 
 export function PlanTimelineSection({ events }: { events: TimelineEvent[] }) {
-  const [survey, setSurvey] = useState<SurveyPayload | null>(null);
+  const [modal, setModal] = useState<DetailModal>(null);
+
+  const title =
+    modal?.type === "survey"
+      ? "勘察表单"
+      : modal?.type === "appointment"
+        ? "预约表单"
+        : modal?.type === "quote"
+          ? "报价表单"
+          : "";
 
   return (
     <>
@@ -118,17 +220,23 @@ export function PlanTimelineSection({ events }: { events: TimelineEvent[] }) {
       ) : (
         <ol className="relative">
           {events.map((ev) => (
-            <TimelineRow key={ev.id} ev={ev} onSurvey={setSurvey} />
+            <TimelineRow key={ev.id} ev={ev} onOpen={setModal} />
           ))}
         </ol>
       )}
 
-      <Dialog open={survey != null} onOpenChange={(v) => !v && setSurvey(null)}>
-        <DialogContent className="max-w-md sm:max-w-lg">
+      <Dialog open={modal != null} onOpenChange={(v) => !v && setModal(null)}>
+        <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>勘察单</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          {survey ? <SurveyDetailBody p={survey} /> : null}
+          {modal?.type === "survey" ? (
+            <SurveyDetailBody p={modal.data} />
+          ) : null}
+          {modal?.type === "appointment" ? (
+            <FormDetail fields={modal.data.fields} />
+          ) : null}
+          {modal?.type === "quote" ? <QuoteDetailBody p={modal.data} /> : null}
         </DialogContent>
       </Dialog>
     </>
