@@ -79,7 +79,7 @@ export const INBOX_TAB_LABELS: Record<InboxBucket, string> = {
 export const ARCHIVE_REASON_LABELS: Record<string, string> = {
   has_outcome: "已有处置反馈",
   agent_no_follow: "Agent 判定无需跟进",
-  left_wedge: "已离开触发状态",
+  left_wedge: "已离开跟进楔子（非待签约等触发状态）",
   signed_contract: "已有生效签约",
   paid_and_signed: "已签约且已支付",
   mongo_missing: "Mongo 无此工单",

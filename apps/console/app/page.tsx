@@ -146,7 +146,7 @@ export default async function Page({
                 暂无待处置项。Turso 中另有{" "}
                 <strong>{tabCounts.archived}</strong> 条在「归档」、
                 <strong>{tabCounts.closed}</strong> 条在「已处置」，请点击上方标签查看
-                （多为已签约、已离 206 或 Agent 标为无需跟进）。
+                （多为已签约、已离开 206 楔子或 Agent 标为无需跟进）。
               </>
             ) : (
               <>
