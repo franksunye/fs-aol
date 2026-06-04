@@ -11,10 +11,8 @@ from ..config import Config
 from ..context.enrich import enrich_work_order_context
 from ..domain import FollowUpSuggestion, work_order_from_sa
 from ..integration.fsm_mongo import resolve_event_statuses
-from ..tracking.store import TrackingStore
-
 if TYPE_CHECKING:
-    from ..tracking.store import OutcomeRecord
+    from ..tracking.store import OutcomeRecord, TrackingStore
 
 logger = logging.getLogger("aol.inbox")
 
@@ -130,7 +128,7 @@ def _fetch_sa_docs(cfg: Config, work_order_ids: List[str]) -> Dict[str, Dict[str
 
 def run_inbox_sync(
     cfg: Config,
-    store: TrackingStore,
+    store: "TrackingStore",
     *,
     dry_run: bool = False,
     limit: Optional[int] = None,

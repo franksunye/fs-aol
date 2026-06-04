@@ -14,7 +14,6 @@ from ..config import Config
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now, work_order_from_sa
 from ..context.timeline import build_timeline_events
 from ..blocker_types import BLOCKER_LABELS
-from ..inbox.sync import initial_inbox_state
 from .schema import (
     SCHEMA,
     SCHEMA_BLOCKERS,
@@ -132,6 +131,20 @@ class TrackingStore:
                 turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN {col} {typ}")
 
     @staticmethod
+    def _migrate_logs_analyzed_stale_sqlite(conn: sqlite3.Connection) -> None:
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
+        if not cols or "analyzed_stale_days" in cols:
+            return
+        conn.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN analyzed_stale_days INTEGER")
+
+    @staticmethod
+    def _migrate_logs_analyzed_stale_turso(turso: Any) -> None:
+        cols = TrackingStore._turso_table_columns(turso, TABLE_LOGS)
+        if not cols or "analyzed_stale_days" in cols:
+            return
+        turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN analyzed_stale_days INTEGER")
+
+    @staticmethod
     def _migrate_sqlite_v02(conn: sqlite3.Connection) -> None:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
         if not cols:
@@ -188,6 +201,7 @@ class TrackingStore:
             self._migrate_sqlite_v02(self._conn)
             self._migrate_logs_state_at_sqlite(self._conn)
             self._migrate_logs_inbox_sqlite(self._conn)
+            self._migrate_logs_analyzed_stale_sqlite(self._conn)
             self._conn.execute(SCHEMA_TRACES)
             self._migrate_trace_columns(self._conn)
             self._ensure_extended_schema()
@@ -205,6 +219,7 @@ class TrackingStore:
             self._turso.execute(SCHEMA)
             self._migrate_logs_state_at_turso(self._turso)
             self._migrate_logs_inbox_turso(self._turso)
+            self._migrate_logs_analyzed_stale_turso(self._turso)
             self._turso.execute(SCHEMA_TRACES)
             self._ensure_extended_schema()
         else:
@@ -267,8 +282,23 @@ class TrackingStore:
         rows = self._fetchall_dicts(sql)
         return {str(r["dedupe_key"]) for r in rows if r.get("dedupe_key")}
 
+    def get_time_reprocessable_dedupe_keys(self) -> set[str]:
+        from ..reprocess.time_trigger import select_time_reprocess_keys
+
+        return select_time_reprocess_keys(self.cfg, self)
+
+    def get_follow_up_log(self, dedupe_key: str) -> Optional[Dict[str, Any]]:
+        return self._fetchone_dict(
+            f"SELECT * FROM {TABLE_LOGS} WHERE dedupe_key = ? LIMIT 1",
+            (dedupe_key,),
+        )
+
     def effective_processed_keys(self) -> set[str]:
-        return self.get_processed_dedupe_keys() - self.get_reprocessable_dedupe_keys()
+        reopen = (
+            self.get_reprocessable_dedupe_keys()
+            | self.get_time_reprocessable_dedupe_keys()
+        )
+        return self.get_processed_dedupe_keys() - reopen
 
     def get_latest_blocker(self, dedupe_key: str) -> Optional[BlockerFeedback]:
         row = self._fetchone_dict(
@@ -671,20 +701,25 @@ class TrackingStore:
             self._turso.execute(sql, list(args))
 
     def mark_processed(self, wo: WorkOrder, suggestion: FollowUpSuggestion, status: str) -> None:
+        from ..inbox.sync import initial_inbox_state
+
         now = bj_now().isoformat()
         payload = json.dumps(suggestion.to_dict(), ensure_ascii=False)
         state_at = (wo.completed_at or "").strip() or None
         init = initial_inbox_state(suggestion)
+        analyzed_stale = max(0, int(wo.stale_days or 0))
         row = (
             wo.dedupe_key, wo.work_order_id, wo.event_type, wo.order_num, wo.city,
             wo.housekeeper_id, payload, status, now, state_at,
             init.bucket, init.reason or "", now, "", "",
+            analyzed_stale,
         )
         sql = (
             f"INSERT OR REPLACE INTO {TABLE_LOGS} "
             "(dedupe_key, work_order_id, event_type, order_num, city, housekeeper_id, "
             "suggestion, status, processed_at, state_at, inbox_bucket, archive_reason, "
-            "reconciled_at, mongo_status, live_verdict) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            "reconciled_at, mongo_status, live_verdict, analyzed_stale_days) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         )
         if self._conn is not None:
             self._conn.execute(sql, row)

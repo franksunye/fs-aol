@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}follow_up_logs (
     archive_reason  TEXT,
     reconciled_at   TEXT,
     mongo_status    TEXT,
-    live_verdict    TEXT
+    live_verdict    TEXT,
+    analyzed_stale_days INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}reasoning_traces (

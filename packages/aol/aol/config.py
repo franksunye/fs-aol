@@ -68,6 +68,26 @@ class Config:
         default_factory=lambda: os.getenv("CONSOLE_BASE_URL", "").rstrip("/")
     )
 
+    # 时间触发再分析（停滞类事件：滞留变长 / 距上次推理过久则重新入池）
+    reanalyze_enabled: bool = field(
+        default_factory=lambda: env_bool("REANALYZE_ENABLED", True)
+    )
+    reanalyze_interval_days: int = field(
+        default_factory=lambda: int(os.getenv("REANALYZE_INTERVAL_DAYS", "3"))
+    )
+    reanalyze_stale_step_days: int = field(
+        default_factory=lambda: int(os.getenv("REANALYZE_STALE_STEP_DAYS", "7"))
+    )
+    reanalyze_max_per_run: int = field(
+        default_factory=lambda: int(os.getenv("REANALYZE_MAX_PER_RUN", "10"))
+    )
+    reanalyze_push: bool = field(
+        default_factory=lambda: env_bool("REANALYZE_PUSH", True)
+    )
+    reanalyze_push_on_same_priority: bool = field(
+        default_factory=lambda: env_bool("REANALYZE_PUSH_ON_SAME_PRIORITY", False)
+    )
+
     def resolved_llm(self) -> tuple[str, str, str, str, bool]:
         """返回 (provider_label, api_key, base_url, model, use_json_mode)。"""
         p = self.llm_provider

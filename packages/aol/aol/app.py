@@ -33,6 +33,11 @@ from .tracking.store import TrackingStore
 from .runtime.reasoner import reason_follow_up
 from .action.card import build_card_markdown, enrich_output_from_trace
 from .action.wecom import send_wecom_card
+from .reprocess.time_trigger import (
+    reanalysis_should_push,
+    resolve_analyzed_stale_days,
+    resolve_current_stale_days,
+)
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
@@ -67,14 +72,26 @@ def run(cfg: Optional[Config] = None) -> int:
     pilot_label = (cfg.pilot_housekeepers or cfg.pilot_housekeeper_ids or "全部").strip()
     logger.info(
         "启动 fs-aol | dry_run=%s fsm=%s tracking=%s llm=%s/%s | "
-        "events=%s max_age_days=%d stale_days=%d | pilot=%s | agent=%s",
+        "events=%s max_age_days=%d stale_days=%d | pilot=%s | agent=%s | "
+        "reanalyze=%s interval=%dd step=%dd cap=%d",
         cfg.dry_run, cfg.fsm_source, cfg.tracking_source, prov, model,
         ",".join(statuses), cfg.fsm_max_age_days, cfg.fsm_stale_days, pilot_label,
         cfg.agent_mode,
+        cfg.reanalyze_enabled,
+        cfg.reanalyze_interval_days,
+        cfg.reanalyze_stale_step_days,
+        cfg.reanalyze_max_per_run,
     )
 
     store = TrackingStore(cfg)
     try:
+        time_reprocess_keys = (
+            store.get_time_reprocessable_dedupe_keys()
+            if cfg.reanalyze_enabled
+            else set()
+        )
+        if time_reprocess_keys:
+            logger.info("时间触发再分析入池: %d 条", len(time_reprocess_keys))
         processed_keys = store.effective_processed_keys()
         work_orders = fetch_completed_work_orders(cfg, processed_keys)
 
@@ -83,10 +100,22 @@ def run(cfg: Optional[Config] = None) -> int:
             return 0
 
         success = 0
+        reanalyzed = 0
         for wo in work_orders:
             ref = wo.order_num or wo.work_order_id
+            is_time_reprocess = wo.dedupe_key in time_reprocess_keys
             try:
                 prior_context = store.build_prior_context(wo.dedupe_key)
+                if is_time_reprocess:
+                    old_log = store.get_follow_up_log(wo.dedupe_key)
+                    if old_log:
+                        prev_stale = resolve_analyzed_stale_days(old_log)
+                        cur_stale = max(wo.stale_days or 0, resolve_current_stale_days(old_log))
+                        prior_context = (
+                            f"{prior_context}\n\n## 时间上下文（再分析）\n"
+                            f"- 上次分析时滞留约 {prev_stale} 天，当前约 {cur_stale} 天\n"
+                            "- 请结合最新查证刷新优先级与跟进方案，勿照搬旧结论。"
+                        ).strip()
                 suggestion, trace = reason_follow_up(cfg, wo, prior_context=prior_context)
                 store.log_reasoning_trace(trace)  # 每次推理都落 trace（含失败）
 
@@ -105,41 +134,71 @@ def run(cfg: Optional[Config] = None) -> int:
                 )
 
                 if suggestion.needs_follow_up:
+                    old_log = (
+                        store.get_follow_up_log(wo.dedupe_key)
+                        if is_time_reprocess
+                        else None
+                    )
+                    push_card = (
+                        not is_time_reprocess
+                        or reanalysis_should_push(cfg, old_log, suggestion)
+                    )
                     enrich_out = (
                         enrich_output_from_trace(trace)
                         if cfg.agent_mode == "steps"
                         else None
                     )
                     blocker = store.get_latest_blocker(wo.dedupe_key)
-                    card = build_card_markdown(
-                        wo,
-                        suggestion,
-                        enrich_output=enrich_out,
-                        dedupe_key=wo.dedupe_key,
-                        console_base_url=cfg.console_base_url,
-                        blocker=blocker,
-                        compact=not cfg.dry_run,
-                    )
-                    sent = send_wecom_card(cfg, card, housekeeper_id=wo.housekeeper_id)
-                    status = "sent" if sent else "send_failed"
+                    sent = False
+                    if push_card:
+                        card = build_card_markdown(
+                            wo,
+                            suggestion,
+                            enrich_output=enrich_out,
+                            dedupe_key=wo.dedupe_key,
+                            console_base_url=cfg.console_base_url,
+                            blocker=blocker,
+                            compact=not cfg.dry_run,
+                        )
+                        sent = send_wecom_card(cfg, card, housekeeper_id=wo.housekeeper_id)
+                    if is_time_reprocess:
+                        if not push_card:
+                            status = "reanalyzed_no_push"
+                        elif sent:
+                            status = "reanalyzed"
+                        else:
+                            status = "reanalyzed_send_failed"
+                    else:
+                        status = "sent" if sent else "send_failed"
                 else:
-                    status = "skipped_no_follow_up"
+                    status = (
+                        "reanalyzed_skipped_no_follow_up"
+                        if is_time_reprocess
+                        else "skipped_no_follow_up"
+                    )
 
                 # 仅成功送达（或明确无需跟进）才记入水位线，
                 # 推送失败留待下轮重试 —— 天然的拉取式状态机。
-                if status != "send_failed":
+                if status not in ("send_failed", "reanalyzed_send_failed"):
                     store.mark_processed(wo, suggestion, status)
                     try:
                         store.refresh_timeline(cfg, wo, suggestion, trace)
                     except Exception:
                         logger.exception("工单 %s 时间轴物化失败（不影响主流程）。", ref)
                     success += 1
+                    if is_time_reprocess:
+                        reanalyzed += 1
                 else:
                     logger.warning("工单 %s 推送失败，下轮重试。", ref)
             except Exception:
                 logger.exception("工单 %s 处理异常，下轮重试。", ref)
 
-        logger.info("本轮完成：成功 %d / 共 %d", success, len(work_orders))
+        logger.info(
+            "本轮完成：成功 %d / 共 %d（其中时间再分析 %d）",
+            success,
+            len(work_orders),
+            reanalyzed,
+        )
         try:
             from .inbox.sync import run_inbox_sync
 

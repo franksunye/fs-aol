@@ -6,6 +6,7 @@ const INBOX_COLUMNS: { name: string; ddl: string }[] = [
   { name: "reconciled_at", ddl: "TEXT" },
   { name: "mongo_status", ddl: "TEXT" },
   { name: "live_verdict", ddl: "TEXT" },
+  { name: "analyzed_stale_days", ddl: "INTEGER" },
 ];
 
 let migrateReady: Promise<void> | undefined;

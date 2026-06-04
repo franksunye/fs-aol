@@ -13,6 +13,10 @@ export const STATUS_LABELS: Record<string, string> = {
   sent: "已推送",
   skipped_no_follow_up: "无需跟进",
   send_failed: "推送失败",
+  reanalyzed: "再分析已推送",
+  reanalyzed_no_push: "再分析未推送",
+  reanalyzed_send_failed: "再分析推送失败",
+  reanalyzed_skipped_no_follow_up: "再分析·无需跟进",
 };
 
 export function statusLabel(status: string): string {
