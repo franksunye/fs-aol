@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { listSuggestions, computeStats } from "@/lib/suggestions";
+import {
+  listSuggestions,
+  computeStats,
+  countInboxBuckets,
+} from "@/lib/suggestions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { isAuthEnabled } from "@/lib/auth";
@@ -48,10 +52,11 @@ export default async function Page({
   // URL ?hk= 优先，其次 cookie（便于深链与刷新）
   const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
   const pilots = loadPilotHousekeepers();
-  const rawRows = await listSuggestions({
-    inboxBucket: inboxTab,
-    ...(hkFilter ? { housekeeperId: hkFilter } : {}),
-  });
+  const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
+  const [rawRows, tabCounts] = await Promise.all([
+    listSuggestions({ inboxBucket: inboxTab, ...hkOpts }),
+    countInboxBuckets(hkOpts),
+  ]);
   const sortKey = parseSuggestionSortKey(sp.sort);
   const rows = sortSuggestions(rawRows, sortKey, pilots);
   const stats = inboxTab === "active" ? computeStats(rows) : null;
@@ -80,7 +85,7 @@ export default async function Page({
       </header>
 
       <Suspense fallback={null}>
-        <InboxTabs current={inboxTab} hk={hkFilter} />
+        <InboxTabs current={inboxTab} hk={hkFilter} counts={tabCounts} />
       </Suspense>
 
       {stats ? (
@@ -134,6 +139,15 @@ export default async function Page({
           emptyMessage={
             filteredLabel ? (
               `${filteredLabel} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
+            ) : inboxTab === "active" &&
+              rows.length === 0 &&
+              tabCounts.archived + tabCounts.closed > 0 ? (
+              <>
+                暂无待处置项。Turso 中另有{" "}
+                <strong>{tabCounts.archived}</strong> 条在「归档」、
+                <strong>{tabCounts.closed}</strong> 条在「已处置」，请点击上方标签查看
+                （多为已签约、已离 206 或 Agent 标为无需跟进）。
+              </>
             ) : (
               <>
                 暂无建议。先运行引擎填充数据：

@@ -20,7 +20,15 @@ function buildHref(
   return s ? `/?${s}` : "/";
 }
 
-export function InboxTabs({ current, hk }: { current: InboxBucket; hk?: string }) {
+export function InboxTabs({
+  current,
+  hk,
+  counts,
+}: {
+  current: InboxBucket;
+  hk?: string;
+  counts: Record<InboxBucket, number>;
+}) {
   const sp = useSearchParams();
   return (
     <nav
@@ -39,6 +47,9 @@ export function InboxTabs({ current, hk }: { current: InboxBucket; hk?: string }
           )}
         >
           {INBOX_TAB_LABELS[tab]}
+          <span className="text-muted-foreground ml-1.5 tabular-nums">
+            {counts[tab] ?? 0}
+          </span>
         </Link>
       ))}
     </nav>

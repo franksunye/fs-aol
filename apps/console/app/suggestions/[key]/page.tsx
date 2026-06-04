@@ -113,7 +113,7 @@ export default async function SuggestionDetail({
         <ArrowLeft className="h-4 w-4" /> 返回列表
       </Link>
 
-      {row.inboxBucket !== "active" ? (
+      {row.inboxBucket !== "active" || row.archiveReason || row.liveVerdict ? (
         <Card className="mb-4 border-amber-500/30 bg-amber-500/5 p-4 text-sm">
           <div className="font-medium">
             {INBOX_TAB_LABELS[row.inboxBucket]}

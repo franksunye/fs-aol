@@ -69,38 +69,31 @@ def reconcile_inbox_row(
     if sa_doc is None:
         return InboxState(BUCKET_ARCHIVED, REASON_MONGO_MISSING)
 
-    statuses = wedge_statuses if wedge_statuses is not None else resolve_event_statuses(cfg)
-    mongo_status = str(sa_doc.get("status") or "")
-    if statuses and mongo_status and mongo_status not in statuses:
-        return InboxState(
-            BUCKET_ARCHIVED,
-            REASON_LEFT_WEDGE,
-            mongo_status=mongo_status,
-        )
-
     wo = work_order_from_sa(sa_doc)
     wo.event_type = str(log.get("event_type") or wo.event_type or "")
     ctx = enrich_work_order_context(cfg, wo)
     verdict = (ctx.business_verdict or "").replace("【结论】", "").strip()
     live = verdict[:240] if verdict else ""
+    mongo_status = str(sa_doc.get("status") or "")
 
-    if ctx.has_signed_contract:
+    # Agent 快照仍标「需要跟进」→ 留在待处置，由人在 Console 处置；
+    # Mongo 已签约/离 wedge 等写在 live_verdict，避免整表被 sync 扫进归档后列表为空。
+    statuses = wedge_statuses if wedge_statuses is not None else resolve_event_statuses(cfg)
+    if statuses and mongo_status and mongo_status not in statuses:
         return InboxState(
-            BUCKET_ARCHIVED,
-            REASON_SIGNED_CONTRACT,
+            BUCKET_ACTIVE,
+            REASON_LEFT_WEDGE,
             mongo_status=mongo_status,
             live_verdict=live,
         )
 
-    if ctx.has_quote and ctx.quotes:
-        pay = str(ctx.quotes[0].get("pay_state_label") or "")
-        if pay == "已支付" and ctx.has_signed_contract:
-            return InboxState(
-                BUCKET_ARCHIVED,
-                REASON_PAID_AND_SIGNED,
-                mongo_status=mongo_status,
-                live_verdict=live,
-            )
+    if ctx.has_signed_contract:
+        return InboxState(
+            BUCKET_ACTIVE,
+            REASON_SIGNED_CONTRACT,
+            mongo_status=mongo_status,
+            live_verdict=live,
+        )
 
     return InboxState(BUCKET_ACTIVE, mongo_status=mongo_status, live_verdict=live)
 

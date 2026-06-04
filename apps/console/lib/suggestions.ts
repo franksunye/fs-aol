@@ -218,6 +218,45 @@ async function ensureInboxColumnsReady(): Promise<boolean> {
   return logsHasInboxColumns();
 }
 
+export type InboxBucketCounts = Record<InboxBucket, number>;
+
+export async function countInboxBuckets(options?: {
+  housekeeperId?: string;
+}): Promise<InboxBucketCounts> {
+  const hasInbox = await ensureInboxColumnsReady();
+  const hk = options?.housekeeperId?.trim();
+  const empty: InboxBucketCounts = { active: 0, closed: 0, archived: 0 };
+  if (!hasInbox) {
+    const sql = hk
+      ? `SELECT COUNT(*) AS c FROM ${TABLE_LOGS} WHERE housekeeper_id = ?`
+      : `SELECT COUNT(*) AS c FROM ${TABLE_LOGS}`;
+    const res = await db.execute({ sql, args: hk ? [hk] : [] });
+    const c = Number((res.rows as { c?: number }[])[0]?.c ?? 0);
+    return { active: c, closed: 0, archived: 0 };
+  }
+  const clauses: string[] = [];
+  const args: string[] = [];
+  if (hk) {
+    clauses.push("housekeeper_id = ?");
+    args.push(hk);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const res = await db.execute({
+    sql: `SELECT
+            SUM(CASE WHEN inbox_bucket IS NULL OR inbox_bucket = 'active' THEN 1 ELSE 0 END) AS active,
+            SUM(CASE WHEN inbox_bucket = 'closed' THEN 1 ELSE 0 END) AS closed,
+            SUM(CASE WHEN inbox_bucket = 'archived' THEN 1 ELSE 0 END) AS archived
+          FROM ${TABLE_LOGS} ${where}`,
+    args,
+  });
+  const row = (res.rows as { active?: number; closed?: number; archived?: number }[])[0];
+  return {
+    active: Number(row?.active ?? 0),
+    closed: Number(row?.closed ?? 0),
+    archived: Number(row?.archived ?? 0),
+  };
+}
+
 export async function listSuggestions(options?: {
   housekeeperId?: string;
   /** 默认 active（待处置）；归档/已处置用 closed | archived */
