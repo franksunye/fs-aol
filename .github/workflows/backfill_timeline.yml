@@ -1,0 +1,68 @@
+name: Backfill Timeline Events
+
+on:
+  workflow_dispatch:
+    inputs:
+      rewrite_all:
+        description: "Rewrite timeline for all processed orders (default only missing)"
+        type: boolean
+        default: false
+      order_num:
+        description: "Single order number, e.g. GD2026060809 (optional)"
+        type: string
+        default: ""
+      dedupe_key:
+        description: "Single dedupe_key (optional)"
+        type: string
+        default: ""
+      limit:
+        description: "Max orders to process (0 = no limit)"
+        type: number
+        default: 0
+
+concurrency:
+  group: backfill-timeline
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: pip install -e packages/aol
+
+      - name: Backfill timeline_events
+        env:
+          FSM_SOURCE: ${{ vars.FSM_SOURCE || 'mongo' }}
+          FSM_MONGO_URL: ${{ secrets.FSM_MONGO_URL }}
+          FSM_MONGO_DB: ${{ vars.FSM_MONGO_DB || 'xlinkdemo' }}
+          TRACKING_SOURCE: ${{ vars.TRACKING_SOURCE || 'cloud' }}
+          AOL_TABLE_PREFIX: ${{ vars.AOL_TABLE_PREFIX || 'aol_' }}
+          TURSO_URL: ${{ secrets.TURSO_DB_URL }}
+          TURSO_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${{ inputs.rewrite_all }}" = "true" ]; then
+            args+=(--all)
+          fi
+          if [ -n "${{ inputs.order_num }}" ]; then
+            args+=(--order-num "${{ inputs.order_num }}")
+          fi
+          if [ -n "${{ inputs.dedupe_key }}" ]; then
+            args+=(--dedupe-key "${{ inputs.dedupe_key }}")
+          fi
+          if [ "${{ inputs.limit }}" != "0" ]; then
+            args+=(--limit "${{ inputs.limit }}")
+          fi
+          python scripts/backfill_timeline.py "${args[@]}"

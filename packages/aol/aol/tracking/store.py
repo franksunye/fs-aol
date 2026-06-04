@@ -7,10 +7,11 @@ import logging
 import os
 import sqlite3
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from .. import domain
 from ..config import Config
-from ..domain import FollowUpSuggestion, WorkOrder, bj_now
+from ..domain import FollowUpSuggestion, WorkOrder, bj_now, work_order_from_sa
 from ..context.timeline import build_timeline_events
 from ..blocker_types import BLOCKER_LABELS
 from .schema import (
@@ -328,6 +329,171 @@ class TrackingStore:
         if not lines:
             return ""
         return "## 上一轮反馈（只读）\n" + "\n".join(lines)
+
+    def list_follow_up_logs(
+        self,
+        *,
+        missing_timeline_only: bool = False,
+        limit: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """已处理工单（follow_up_logs）；可选仅缺时间轴的行。"""
+        if missing_timeline_only:
+            sql = f"""
+                SELECT l.* FROM {TABLE_LOGS} l
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM {TABLE_TIMELINE} t
+                    WHERE t.work_order_id = l.work_order_id
+                )
+                ORDER BY l.processed_at DESC
+            """
+        else:
+            sql = f"SELECT * FROM {TABLE_LOGS} ORDER BY processed_at DESC"
+        rows = self._fetchall_dicts(sql)
+        if limit is not None and limit > 0:
+            rows = rows[:limit]
+        return rows
+
+    def get_latest_trace(self, work_order_id: str) -> Optional[ReasoningTrace]:
+        row = self._fetchone_dict(
+            f"""
+            SELECT * FROM {TABLE_TRACES}
+            WHERE work_order_id = ?
+            ORDER BY id DESC LIMIT 1
+            """,
+            (work_order_id,),
+        )
+        if not row:
+            return None
+        parsed_raw = row.get("parsed")
+        parsed: Optional[Dict[str, Any]] = None
+        if parsed_raw:
+            try:
+                parsed = json.loads(parsed_raw) if isinstance(parsed_raw, str) else parsed_raw
+            except json.JSONDecodeError:
+                parsed = None
+        return ReasoningTrace(
+            work_order_id=str(row.get("work_order_id") or ""),
+            mode=str(row.get("mode") or "unknown"),
+            event_type=str(row.get("event_type") or ""),
+            model=str(row.get("model") or ""),
+            prompt_system=str(row.get("prompt_system") or ""),
+            prompt_user=str(row.get("prompt_user") or ""),
+            raw_response=str(row.get("raw_response") or ""),
+            parsed=parsed,
+            prompt_tokens=int(row.get("prompt_tokens") or 0),
+            completion_tokens=int(row.get("completion_tokens") or 0),
+            total_tokens=int(row.get("total_tokens") or 0),
+            latency_ms=int(row.get("latency_ms") or 0),
+            status=str(row.get("status") or "ok"),
+            error=str(row.get("error") or ""),
+            steps_json=str(row.get("steps_json") or ""),
+            created_at=str(row.get("created_at") or ""),
+        )
+
+    def _work_order_for_backfill(
+        self, cfg: Config, log: Dict[str, Any]
+    ) -> WorkOrder:
+        """回填用：优先 Mongo 工单事实，否则用 logs 行拼最小 WorkOrder。"""
+        wid = str(log.get("work_order_id") or "")
+        event_type = str(log.get("event_type") or "")
+        state_at = str(log.get("state_at") or "").strip()
+
+        if cfg.fsm_source == "mongo" and cfg.fsm_mongo_url and wid:
+            try:
+                from pymongo import MongoClient
+
+                client = MongoClient(cfg.fsm_mongo_url, serverSelectionTimeoutMS=8000)
+                doc = client[cfg.fsm_mongo_db]["serviceAppointment"].find_one(
+                    {"_id": wid},
+                    projection=domain.SA_PROJECTION,
+                )
+                client.close()
+                if doc:
+                    wo = work_order_from_sa(doc)
+                    wo.event_type = event_type or wo.event_type
+                    if state_at:
+                        wo.completed_at = state_at
+                    return wo
+            except Exception:
+                logger.warning("回填拉 Mongo 工单 %s 失败，改用 logs 快照。", wid)
+
+        return WorkOrder(
+            work_order_id=wid,
+            order_num=str(log.get("order_num") or ""),
+            city=str(log.get("city") or ""),
+            housekeeper_id=str(log.get("housekeeper_id") or ""),
+            completed_at=state_at,
+            event_type=event_type,
+        )
+
+    def backfill_timeline_for_log(self, cfg: Config, log: Dict[str, Any]) -> bool:
+        """用已落库的 suggestion + trace 重物化时间轴（不重新推理、不推企微）。"""
+        dedupe_key = str(log.get("dedupe_key") or "")
+        wid = str(log.get("work_order_id") or "")
+        if not dedupe_key or not wid:
+            return False
+
+        raw_suggestion = log.get("suggestion")
+        if not raw_suggestion:
+            return False
+        try:
+            suggestion = FollowUpSuggestion.from_dict(
+                json.loads(raw_suggestion)
+                if isinstance(raw_suggestion, str)
+                else raw_suggestion
+            )
+        except (json.JSONDecodeError, TypeError, ValueError):
+            logger.warning("工单 %s suggestion JSON 无效，跳过回填。", wid)
+            return False
+
+        trace = self.get_latest_trace(wid)
+        if trace is None:
+            trace = ReasoningTrace(
+                work_order_id=wid,
+                mode="backfill",
+                event_type=str(log.get("event_type") or ""),
+                created_at=str(log.get("processed_at") or bj_now().isoformat()),
+            )
+
+        wo = self._work_order_for_backfill(cfg, log)
+        self.refresh_timeline(cfg, wo, suggestion, trace)
+        return True
+
+    def backfill_timelines(
+        self,
+        cfg: Config,
+        *,
+        missing_only: bool = True,
+        dedupe_key: Optional[str] = None,
+        order_num: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> Dict[str, int]:
+        """批量回填时间轴。默认仅处理尚无 timeline_events 的工单。"""
+        logs = self.list_follow_up_logs(
+            missing_timeline_only=missing_only and not (dedupe_key or order_num),
+            limit=None,
+        )
+        if dedupe_key:
+            logs = [r for r in logs if str(r.get("dedupe_key")) == dedupe_key]
+        if order_num:
+            logs = [r for r in logs if str(r.get("order_num")) == order_num]
+        if limit is not None and limit > 0:
+            logs = logs[:limit]
+
+        stats = {"total": len(logs), "ok": 0, "fail": 0}
+        for log in logs:
+            ref = log.get("order_num") or log.get("work_order_id")
+            try:
+                if self.backfill_timeline_for_log(cfg, log):
+                    stats["ok"] += 1
+                    logger.info("时间轴已回填: %s", ref)
+                else:
+                    stats["fail"] += 1
+                    logger.warning("时间轴回填跳过: %s", ref)
+            except Exception:
+                stats["fail"] += 1
+                logger.exception("时间轴回填失败: %s", ref)
+        return stats
 
     def refresh_timeline(
         self,

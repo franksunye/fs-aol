@@ -83,6 +83,7 @@ FSM_SOURCE=mock LLM_PROVIDER=heuristic DRY_RUN=true python run_cron.py
 
 - **Cloudflare Cron（已部署）**：[`fs-aol-scheduler.sunye.workers.dev`](https://fs-aol-scheduler.sunye.workers.dev) → 北京 08:00–22:00 hourly + `/trigger` 手动（见 `cloudflare-worker/README.md`）
 - **GHA 执行面**：`.github/workflows/agent_cron.yml` → `python run_cron.py`（仅 `workflow_dispatch`）
+- **时间轴回填**：`.github/workflows/backfill_timeline.yml` → Actions 页 **Run workflow**（默认只补尚无 `timeline_events` 的已处理工单；上线后执行一次）
 - **Vercel Console**：Root Directory = `apps/console`，配置 `LIBSQL_URL` / `LIBSQL_AUTH_TOKEN`
 
 ## Docs
