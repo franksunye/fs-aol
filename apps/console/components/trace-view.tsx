@@ -190,6 +190,14 @@ export function TraceView({ trace }: { trace: TraceRow | null }) {
               {trace.rawResponse || "—"}
             </pre>
           </div>
+          {trace.promptSystem ? (
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs">系统 Prompt</p>
+              <pre className="bg-muted/40 max-h-40 overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
+                {trace.promptSystem}
+              </pre>
+            </div>
+          ) : null}
           <div>
             <p className="text-muted-foreground mb-1 text-xs">用户 Prompt</p>
             <pre className="bg-muted/40 max-h-40 overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
