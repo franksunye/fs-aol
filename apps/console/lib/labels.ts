@@ -63,3 +63,33 @@ export function decisionClasses(decision?: string | null): string {
 export function encodeKey(key: string): string {
   return encodeURIComponent(key);
 }
+
+export type InboxBucket = "active" | "closed" | "archived";
+
+export const INBOX_TAB_LABELS: Record<InboxBucket, string> = {
+  active: "待处置",
+  closed: "已处置",
+  archived: "归档",
+};
+
+export const ARCHIVE_REASON_LABELS: Record<string, string> = {
+  has_outcome: "已有处置反馈",
+  agent_no_follow: "Agent 判定无需跟进",
+  left_wedge: "已离开触发状态",
+  signed_contract: "已有生效签约",
+  paid_and_signed: "已签约且已支付",
+  mongo_missing: "Mongo 无此工单",
+};
+
+export function archiveReasonLabel(reason?: string | null): string {
+  if (!reason) return "";
+  return ARCHIVE_REASON_LABELS[reason] || reason;
+}
+
+export function parseInboxBucket(
+  value?: string | null
+): InboxBucket | undefined {
+  const v = value?.trim();
+  if (v === "active" || v === "closed" || v === "archived") return v;
+  return undefined;
+}

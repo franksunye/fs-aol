@@ -1,0 +1,68 @@
+name: Sync Inbox Buckets
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_all:
+        description: "Scan all logs (default only active/NULL)"
+        type: boolean
+        default: false
+      order_num:
+        description: "Single order number (optional)"
+        type: string
+        default: ""
+      limit:
+        description: "Max rows (0 = no limit)"
+        type: number
+        default: 0
+      dry_run:
+        description: "Dry run only"
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-inbox
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: pip install -e packages/aol
+
+      - name: Sync inbox_bucket
+        env:
+          FSM_SOURCE: ${{ vars.FSM_SOURCE || 'mongo' }}
+          FSM_MONGO_URL: ${{ secrets.FSM_MONGO_URL }}
+          FSM_MONGO_DB: ${{ vars.FSM_MONGO_DB || 'xlinkdemo' }}
+          TRACKING_SOURCE: ${{ vars.TRACKING_SOURCE || 'cloud' }}
+          AOL_TABLE_PREFIX: ${{ vars.AOL_TABLE_PREFIX || 'aol_' }}
+          TURSO_URL: ${{ secrets.TURSO_DB_URL }}
+          TURSO_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${{ inputs.scan_all }}" = "true" ]; then
+            args+=(--all)
+          fi
+          if [ -n "${{ inputs.order_num }}" ]; then
+            args+=(--order-num "${{ inputs.order_num }}")
+          fi
+          if [ "${{ inputs.limit }}" != "0" ]; then
+            args+=(--limit "${{ inputs.limit }}")
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          python scripts/sync_inbox.py "${args[@]}"

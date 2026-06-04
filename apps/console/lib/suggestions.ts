@@ -1,5 +1,6 @@
 import { db, ensureSchema, TABLE_LOGS, TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS } from "./db";
 import type { BlockerType } from "./blockers";
+import type { InboxBucket } from "./labels";
 
 export type Decision = "approved" | "rejected" | "modified" | "followed_up";
 
@@ -61,6 +62,11 @@ export interface SuggestionRow {
   suggestion: SuggestionDoc;
   outcome: OutcomeRow | null;
   blocker: BlockerRow | null;
+  inboxBucket: InboxBucket;
+  archiveReason: string;
+  reconciledAt: string | null;
+  mongoStatus: string;
+  liveVerdict: string;
 }
 
 export interface TraceStep {
@@ -170,6 +176,12 @@ async function latestBlockersForKeys(
   return map;
 }
 
+function resolveInboxBucket(raw: unknown): InboxBucket {
+  const v = str(raw).trim();
+  if (v === "closed" || v === "archived") return v;
+  return "active";
+}
+
 function mapSuggestion(
   row: Record<string, unknown>,
   outcomes: Map<string, OutcomeRow>,
@@ -189,21 +201,40 @@ function mapSuggestion(
     suggestion: parseJson<SuggestionDoc>(row.suggestion, {}),
     outcome: outcomes.get(dedupeKey) ?? null,
     blocker: blockers.get(dedupeKey) ?? null,
+    inboxBucket: resolveInboxBucket(row.inbox_bucket),
+    archiveReason: str(row.archive_reason),
+    reconciledAt: str(row.reconciled_at).trim() || null,
+    mongoStatus: str(row.mongo_status),
+    liveVerdict: str(row.live_verdict),
   };
 }
 
 export async function listSuggestions(options?: {
   housekeeperId?: string;
+  /** 默认 active（待处置）；归档/已处置用 closed | archived */
+  inboxBucket?: InboxBucket;
   /** 默认 100；移动收件箱传 30 */
   limit?: number;
 }): Promise<SuggestionRow[]> {
   await ensureSchema();
   const hk = options?.housekeeperId?.trim();
+  const bucket = options?.inboxBucket ?? "active";
   const limit = Math.min(Math.max(options?.limit ?? 100, 1), 500);
-  const sql = hk
-    ? `SELECT * FROM ${TABLE_LOGS} WHERE housekeeper_id = ? ORDER BY processed_at DESC LIMIT ?`
-    : `SELECT * FROM ${TABLE_LOGS} ORDER BY processed_at DESC LIMIT ?`;
-  const args = hk ? [hk, limit] : [limit];
+  const bucketClause =
+    bucket === "active"
+      ? "(inbox_bucket IS NULL OR inbox_bucket = 'active')"
+      : "inbox_bucket = ?";
+  const where: string[] = [bucketClause];
+  const args: (string | number)[] =
+    bucket === "active" ? [] : [bucket];
+  if (hk) {
+    where.push("housekeeper_id = ?");
+    args.push(hk);
+  }
+  args.push(limit);
+  const sql = `SELECT * FROM ${TABLE_LOGS} WHERE ${where.join(
+    " AND "
+  )} ORDER BY processed_at DESC LIMIT ?`;
   const res = await db.execute({ sql, args });
   const logRows = res.rows as unknown as Record<string, unknown>[];
   const keys = logRows.map((r) => str(r.dedupe_key)).filter(Boolean);
@@ -370,6 +401,7 @@ export async function recordOutcome(input: {
   modifiedSuggestion?: SuggestionDoc | null;
 }): Promise<void> {
   await ensureSchema();
+  const now = new Date().toISOString();
   await db.execute({
     sql: `INSERT INTO ${TABLE_OUTCOMES}
       (dedupe_key, work_order_id, decision, note, operator, modified_suggestion, created_at)
@@ -383,8 +415,14 @@ export async function recordOutcome(input: {
       input.modifiedSuggestion
         ? JSON.stringify(input.modifiedSuggestion)
         : null,
-      new Date().toISOString(),
+      now,
     ],
+  });
+  await db.execute({
+    sql: `UPDATE ${TABLE_LOGS}
+      SET inbox_bucket = 'closed', archive_reason = 'has_outcome', reconciled_at = ?
+      WHERE dedupe_key = ?`,
+    args: [now, input.dedupeKey],
   });
 }
 

@@ -17,6 +17,8 @@ import {
   decisionLabel,
   priorityClasses,
   decisionClasses,
+  INBOX_TAB_LABELS,
+  archiveReasonLabel,
 } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +112,35 @@ export default async function SuggestionDetail({
       >
         <ArrowLeft className="h-4 w-4" /> 返回列表
       </Link>
+
+      {row.inboxBucket !== "active" ? (
+        <Card className="mb-4 border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+          <div className="font-medium">
+            {INBOX_TAB_LABELS[row.inboxBucket]}
+            {row.archiveReason
+              ? ` · ${archiveReasonLabel(row.archiveReason)}`
+              : null}
+          </div>
+          {row.mongoStatus ? (
+            <div className="text-muted-foreground mt-1">
+              Mongo status: <span className="font-mono">{row.mongoStatus}</span>
+            </div>
+          ) : null}
+          {row.liveVerdict ? (
+            <p className="text-muted-foreground mt-2 leading-relaxed">
+              现场结论：{row.liveVerdict}
+            </p>
+          ) : null}
+          {row.reconciledAt ? (
+            <div className="text-muted-foreground mt-2 text-xs">
+              同步于 {row.reconciledAt}
+            </div>
+          ) : null}
+          <p className="text-muted-foreground mt-2 text-xs">
+            上方卡片为 Agent 快照；处置与归档以本栏及 Mongo 现状为准。
+          </p>
+        </Card>
+      ) : null}
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">

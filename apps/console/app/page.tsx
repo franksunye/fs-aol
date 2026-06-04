@@ -10,6 +10,11 @@ import { HousekeeperFilter, HOUSEKEEPER_FILTER_COOKIE } from "@/components/house
 import { SuggestionInboxTable } from "@/components/suggestion-inbox-table";
 import { SuggestionSort } from "@/components/suggestion-sort";
 import {
+  InboxTabs,
+  inboxTabFromSearchParams,
+} from "@/components/inbox-tabs";
+import { INBOX_TAB_LABELS } from "@/lib/labels";
+import {
   parseSuggestionSortKey,
   sortSuggestions,
 } from "@/lib/suggestion-sorting";
@@ -37,20 +42,22 @@ function Stat({
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ hk?: string; sort?: string }>;
+  searchParams: Promise<{ hk?: string; sort?: string; tab?: string }>;
 }) {
   const sp = await searchParams;
+  const inboxTab = inboxTabFromSearchParams(sp);
   const cookieStore = await cookies();
   const hkFromCookie = cookieStore.get(HOUSEKEEPER_FILTER_COOKIE)?.value?.trim();
   // URL ?hk= 优先，其次 cookie（便于深链与刷新）
   const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
   const pilots = loadPilotHousekeepers();
-  const rawRows = await listSuggestions(
-    hkFilter ? { housekeeperId: hkFilter } : undefined
-  );
+  const rawRows = await listSuggestions({
+    inboxBucket: inboxTab,
+    ...(hkFilter ? { housekeeperId: hkFilter } : {}),
+  });
   const sortKey = parseSuggestionSortKey(sp.sort);
   const rows = sortSuggestions(rawRows, sortKey, pilots);
-  const stats = computeStats(rows);
+  const stats = inboxTab === "active" ? computeStats(rows) : null;
   const filteredLabel = hkFilter
     ? housekeeperName(pilots, hkFilter)
     : null;
@@ -75,35 +82,47 @@ export default async function Page({
         </div>
       </header>
 
-      <section className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="待跟进建议" value={stats.needFollow} hint={`共 ${stats.total} 条记录`} />
-        <Stat label="待反馈" value={stats.pending} hint="尚未同意/拒绝/修改/已跟进" />
-        <Stat
-          label="App 内反馈率"
-          value={`${stats.handledRate}%`}
-          hint={`同意 ${stats.approved} · 已跟进 ${stats.followedUp} · 修改 ${stats.modified}`}
-        />
-        <Stat
-          label="高优先级"
-          value={stats.byPriority["高"] ?? 0}
-          hint={`中 ${stats.byPriority["中"] ?? 0} · 低 ${stats.byPriority["低"] ?? 0}`}
-        />
-      </section>
+      <Suspense fallback={null}>
+        <InboxTabs current={inboxTab} hk={hkFilter} />
+      </Suspense>
 
-      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="曝光" value={stats.exposureCount} hint="需跟进建议条数" />
-        <Stat label="采纳率" value={`${stats.adoptionRate}%`} hint="同意/修改/已跟进" />
-        <Stat
-          label="卡点采集率"
-          value={`${stats.blockerCaptureRate}%`}
-          hint="已回填 A/B/C/D"
-        />
-        <Stat
-          label="UNKNOWN 占比"
-          value={`${stats.unknownBlockerRate}%`}
-          hint="尚未采集卡点"
-        />
-      </section>
+      {stats ? (
+        <>
+          <section className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="待跟进建议" value={stats.needFollow} hint={`共 ${stats.total} 条记录`} />
+            <Stat label="待反馈" value={stats.pending} hint="尚未同意/拒绝/修改/已跟进" />
+            <Stat
+              label="App 内反馈率"
+              value={`${stats.handledRate}%`}
+              hint={`同意 ${stats.approved} · 已跟进 ${stats.followedUp} · 修改 ${stats.modified}`}
+            />
+            <Stat
+              label="高优先级"
+              value={stats.byPriority["高"] ?? 0}
+              hint={`中 ${stats.byPriority["中"] ?? 0} · 低 ${stats.byPriority["低"] ?? 0}`}
+            />
+          </section>
+
+          <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="曝光" value={stats.exposureCount} hint="需跟进建议条数" />
+            <Stat label="采纳率" value={`${stats.adoptionRate}%`} hint="同意/修改/已跟进" />
+            <Stat
+              label="卡点采集率"
+              value={`${stats.blockerCaptureRate}%`}
+              hint="已回填 A/B/C/D"
+            />
+            <Stat
+              label="UNKNOWN 占比"
+              value={`${stats.unknownBlockerRate}%`}
+              hint="尚未采集卡点"
+            />
+          </section>
+        </>
+      ) : (
+        <p className="text-muted-foreground mb-6 text-sm">
+          {INBOX_TAB_LABELS[inboxTab]} · 共 {rows.length} 条（统计仅针对待处置）
+        </p>
+      )}
 
       <div className="mb-3">
         <Suspense fallback={null}>
@@ -117,7 +136,7 @@ export default async function Page({
           pilots={pilots}
           emptyMessage={
             filteredLabel ? (
-              `${filteredLabel} 暂无跟进建议（Turso 中无匹配 housekeeper_id 的记录）`
+              `${filteredLabel} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
             ) : (
               <>
                 暂无建议。先运行引擎填充数据：

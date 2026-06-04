@@ -14,6 +14,7 @@ from ..config import Config
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now, work_order_from_sa
 from ..context.timeline import build_timeline_events
 from ..blocker_types import BLOCKER_LABELS
+from ..inbox.sync import initial_inbox_state
 from .schema import (
     SCHEMA,
     SCHEMA_BLOCKERS,
@@ -101,6 +102,36 @@ class TrackingStore:
         turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN state_at TEXT")
 
     @staticmethod
+    def _migrate_logs_inbox_sqlite(conn: sqlite3.Connection) -> None:
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
+        if not cols:
+            return
+        for col, typ in (
+            ("inbox_bucket", "TEXT"),
+            ("archive_reason", "TEXT"),
+            ("reconciled_at", "TEXT"),
+            ("mongo_status", "TEXT"),
+            ("live_verdict", "TEXT"),
+        ):
+            if col not in cols:
+                conn.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN {col} {typ}")
+
+    @staticmethod
+    def _migrate_logs_inbox_turso(turso: Any) -> None:
+        cols = TrackingStore._turso_table_columns(turso, TABLE_LOGS)
+        if not cols:
+            return
+        for col, typ in (
+            ("inbox_bucket", "TEXT"),
+            ("archive_reason", "TEXT"),
+            ("reconciled_at", "TEXT"),
+            ("mongo_status", "TEXT"),
+            ("live_verdict", "TEXT"),
+        ):
+            if col not in cols:
+                turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN {col} {typ}")
+
+    @staticmethod
     def _migrate_sqlite_v02(conn: sqlite3.Connection) -> None:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
         if not cols:
@@ -156,6 +187,7 @@ class TrackingStore:
             self._conn.execute(SCHEMA)
             self._migrate_sqlite_v02(self._conn)
             self._migrate_logs_state_at_sqlite(self._conn)
+            self._migrate_logs_inbox_sqlite(self._conn)
             self._conn.execute(SCHEMA_TRACES)
             self._migrate_trace_columns(self._conn)
             self._ensure_extended_schema()
@@ -172,6 +204,7 @@ class TrackingStore:
             self._turso = create_client_sync(url=turso_url, auth_token=cfg.turso_token)
             self._turso.execute(SCHEMA)
             self._migrate_logs_state_at_turso(self._turso)
+            self._migrate_logs_inbox_turso(self._turso)
             self._turso.execute(SCHEMA_TRACES)
             self._ensure_extended_schema()
         else:
@@ -558,18 +591,100 @@ class TrackingStore:
                     ],
                 )
 
+    def list_logs_for_inbox_sync(
+        self,
+        *,
+        only_active: bool = True,
+        limit: Optional[int] = None,
+        order_num: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        clauses: List[str] = []
+        args: List[Any] = []
+        if order_num:
+            clauses.append("order_num = ?")
+            args.append(order_num)
+        elif only_active:
+            clauses.append("(inbox_bucket IS NULL OR inbox_bucket = 'active')")
+        sql = f"SELECT * FROM {TABLE_LOGS}"
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " ORDER BY processed_at DESC"
+        rows = self._fetchall_dicts(sql, tuple(args))
+        if limit is not None and limit > 0:
+            rows = rows[:limit]
+        return rows
+
+    def get_outcomes_for_dedupe_keys(
+        self, dedupe_keys: List[str]
+    ) -> Dict[str, OutcomeRecord]:
+        if not dedupe_keys:
+            return {}
+        ph = ",".join("?" * len(dedupe_keys))
+        sql = f"""
+            SELECT o.* FROM {TABLE_OUTCOMES} o
+            INNER JOIN (
+                SELECT dedupe_key, MAX(id) AS mid FROM {TABLE_OUTCOMES}
+                WHERE dedupe_key IN ({ph}) GROUP BY dedupe_key
+            ) m ON o.id = m.mid
+        """
+        out: Dict[str, OutcomeRecord] = {}
+        for row in self._fetchall_dicts(sql, tuple(dedupe_keys)):
+            dk = str(row.get("dedupe_key") or "")
+            if not dk:
+                continue
+            out[dk] = OutcomeRecord(
+                dedupe_key=dk,
+                work_order_id=str(row.get("work_order_id") or ""),
+                decision=str(row.get("decision") or ""),
+                note=str(row.get("note") or ""),
+                operator=str(row.get("operator") or ""),
+                created_at=str(row.get("created_at") or ""),
+            )
+        return out
+
+    def update_inbox_state(
+        self,
+        dedupe_key: str,
+        *,
+        bucket: str,
+        archive_reason: str = "",
+        mongo_status: str = "",
+        live_verdict: str = "",
+    ) -> None:
+        now = bj_now().isoformat()
+        args = (
+            bucket,
+            archive_reason or "",
+            now,
+            mongo_status or "",
+            live_verdict or "",
+            dedupe_key,
+        )
+        sql = (
+            f"UPDATE {TABLE_LOGS} SET inbox_bucket = ?, archive_reason = ?, "
+            "reconciled_at = ?, mongo_status = ?, live_verdict = ? WHERE dedupe_key = ?"
+        )
+        if self._conn is not None:
+            self._conn.execute(sql, args)
+            self._conn.commit()
+        else:
+            self._turso.execute(sql, list(args))
+
     def mark_processed(self, wo: WorkOrder, suggestion: FollowUpSuggestion, status: str) -> None:
         now = bj_now().isoformat()
         payload = json.dumps(suggestion.to_dict(), ensure_ascii=False)
         state_at = (wo.completed_at or "").strip() or None
+        init = initial_inbox_state(suggestion)
         row = (
             wo.dedupe_key, wo.work_order_id, wo.event_type, wo.order_num, wo.city,
             wo.housekeeper_id, payload, status, now, state_at,
+            init.bucket, init.reason or "", now, "", "",
         )
         sql = (
             f"INSERT OR REPLACE INTO {TABLE_LOGS} "
             "(dedupe_key, work_order_id, event_type, order_num, city, housekeeper_id, "
-            "suggestion, status, processed_at, state_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
+            "suggestion, status, processed_at, state_at, inbox_bucket, archive_reason, "
+            "reconciled_at, mongo_status, live_verdict) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         )
         if self._conn is not None:
             self._conn.execute(sql, row)

@@ -11,7 +11,12 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}follow_up_logs (
     suggestion      TEXT,
     status          TEXT,
     processed_at    TEXT,
-    state_at        TEXT
+    state_at        TEXT,
+    inbox_bucket    TEXT,
+    archive_reason  TEXT,
+    reconciled_at   TEXT,
+    mongo_status    TEXT,
+    live_verdict    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}reasoning_traces (

@@ -90,14 +90,32 @@ def _parse_at_ms(value: Any) -> Optional[int]:
     return _parse_bj_wall_ms(value)
 
 
+def _format_duration_seconds(raw: Any) -> str:
+    try:
+        total = int(float(raw))
+    except (TypeError, ValueError):
+        return ""
+    if total < 0:
+        return ""
+    if total < 60:
+        return f"{total}秒"
+    minutes, seconds = divmod(total, 60)
+    if minutes < 60:
+        return f"{minutes}分钟" if seconds == 0 else f"{minutes}分{seconds}秒"
+    hours, minutes = divmod(minutes, 60)
+    if seconds == 0:
+        return f"{hours}小时{minutes}分" if minutes else f"{hours}小时"
+    return f"{hours}小时{minutes}分{seconds}秒"
+
+
 def _call_summary(doc: Dict[str, Any]) -> str:
     parts: List[str] = []
     col = str(doc.get("colName") or "").strip()
     if col:
         parts.append(col)
-    dur = doc.get("bizDuration")
-    if dur not in (None, ""):
-        parts.append(f"{dur}秒")
+    dur = _format_duration_seconds(doc.get("bizDuration"))
+    if dur:
+        parts.append(f"通话{dur}")
     result = str(doc.get("result") or "").strip()
     if result and not result.startswith(("[", "{")):
         parts.append(result[:48])

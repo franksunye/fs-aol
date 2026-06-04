@@ -4,6 +4,7 @@ import {
   tableNames,
   tablePrefix,
 } from "./contracts";
+import { migrateInboxColumns } from "./migrate-inbox-columns";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -55,6 +56,7 @@ export function ensureSchema(): Promise<void> {
       for (const stmt of trackingBootstrapStatements(TABLE_PREFIX)) {
         await db.execute(stmt);
       }
+      await migrateInboxColumns();
     })();
   }
   return globalThis.__aolSchemaReady;

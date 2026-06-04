@@ -140,6 +140,13 @@ def run(cfg: Optional[Config] = None) -> int:
                 logger.exception("工单 %s 处理异常，下轮重试。", ref)
 
         logger.info("本轮完成：成功 %d / 共 %d", success, len(work_orders))
+        try:
+            from .inbox.sync import run_inbox_sync
+
+            inbox_stats = run_inbox_sync(cfg, store, only_active=True)
+            logger.info("收件箱同步: %s", inbox_stats)
+        except Exception:
+            logger.exception("收件箱同步失败（不影响主流程）。")
         return 0
     finally:
         store.close()
