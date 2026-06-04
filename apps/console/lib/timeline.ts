@@ -11,7 +11,7 @@ export interface TimelineEvent {
   title: string;
   summary: string;
   refId: string;
-  payload: Record<string, string> | null;
+  survey: SurveyPayload | null;
 }
 
 export interface SurveyPayload {
@@ -32,13 +32,27 @@ function str(value: unknown): string {
   return value == null ? "" : String(value);
 }
 
-function parsePayload(raw: unknown): Record<string, string> | null {
+function parseSurveyPayload(raw: unknown): SurveyPayload | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
+  let obj: Record<string, unknown>;
   try {
-    return JSON.parse(raw) as Record<string, string>;
+    obj = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return null;
   }
+  return {
+    surveyNum: str(obj.surveyNum) || "—",
+    partLabel: str(obj.partLabel) || "—",
+    surveyTime: str(obj.surveyTime) || "—",
+    address: str(obj.address) || "—",
+    supervisorName: str(obj.supervisorName) || "—",
+    planeArea: str(obj.planeArea) || "—",
+    squareMeter: str(obj.squareMeter) || "—",
+    memo: str(obj.memo) || "—",
+    leakageCause: str(obj.leakageCause) || "—",
+    createTime: str(obj.createTime) || "—",
+    updateTime: str(obj.updateTime) || "—",
+  };
 }
 
 export async function getTimelineEvents(
@@ -62,6 +76,9 @@ export async function getTimelineEvents(
     title: str(row.title),
     summary: str(row.summary),
     refId: str(row.ref_id),
-    payload: parsePayload(row.payload_json),
+    survey:
+      str(row.kind) === "survey"
+        ? parseSurveyPayload(row.payload_json)
+        : null,
   }));
 }

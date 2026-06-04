@@ -58,7 +58,7 @@ function TimelineRow({
   onSurvey: (p: SurveyPayload) => void;
 }) {
   const Icon = ev.lane === "business" ? Database : Sparkles;
-  const canSurvey = ev.kind === "survey" && ev.payload;
+  const canSurvey = ev.kind === "survey" && ev.survey;
 
   return (
     <li className="relative flex gap-3 pb-5 last:pb-0">
@@ -92,7 +92,7 @@ function TimelineRow({
             type="button"
             variant="link"
             className="h-auto px-0 py-0 text-xs"
-            onClick={() => onSurvey(ev.payload as SurveyPayload)}
+            onClick={() => ev.survey && onSurvey(ev.survey)}
           >
             查看勘察单
           </Button>
