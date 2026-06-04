@@ -245,33 +245,9 @@ def _flatten_leak_codes(raw: Any) -> List[str]:
 
 
 def _parse_bj_quote_row(item: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
-    repair_ids = item.get("repairParts") or []
-    if isinstance(repair_ids, str):
-        repair_ids = [repair_ids]
-    repair_parts = [codes.label(i) for i in repair_ids if codes.label(i)]
+    from .quote_products import parse_bj_quote_row
 
-    packages: List[str] = []
-    pp = item.get("projPackages")
-    if isinstance(pp, dict):
-        for pkg in pp.get("data") or []:
-            if isinstance(pkg, dict) and pkg.get("name"):
-                packages.append(str(pkg["name"]))
-
-    ag = item.get("agelimit")
-    ag_max = item.get("agelimitMax")
-    warranty = ""
-    if ag is not None:
-        warranty = f"{ag}年" if ag == ag_max or ag_max is None else f"{ag}-{ag_max}年"
-
-    return {
-        "repair_parts": repair_parts,
-        "construction_location": str(item.get("constructionLocation") or ""),
-        "part_description": str(item.get("partDescription") or ""),
-        "package_names": packages,
-        "warranty_label": warranty,
-        "maintain_area": str(item.get("maintainAreaNum") or ""),
-        "line_amount_yuan": _money(item.get("totalAmount")),
-    }
+    return parse_bj_quote_row(item, codes)
 
 
 def _parse_order_doc(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
@@ -282,6 +258,7 @@ def _parse_order_doc(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
         "quote_date": _fmt_time(doc.get("createTime")),
         "repair_parts": [],
         "construction_location": "",
+        "construction_site": "",
         "part_description": "",
         "package_names": [],
         "warranty_label": "",

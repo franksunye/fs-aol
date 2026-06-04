@@ -4,12 +4,23 @@ import { useState } from "react";
 import { Database, Sparkles } from "lucide-react";
 import type {
   AppointmentPayload,
+  QuoteDetailItem,
+  QuoteLinePayload,
+  QuotePackageDetail,
   QuotePayload,
   SurveyPayload,
   TimelineEvent,
   TimelineFormField,
 } from "@/lib/timeline";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -80,45 +91,140 @@ function SurveyDetailBody({ p }: { p: SurveyPayload }) {
   );
 }
 
+function isDash(v: string): boolean {
+  return !v || v === "—";
+}
+
+function QuoteItemsTable({ items }: { items: QuoteDetailItem[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="text-muted-foreground text-xs">暂无项目明细行</p>
+    );
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[52px]">类型</TableHead>
+          <TableHead>名称</TableHead>
+          <TableHead className="w-[72px]">规格</TableHead>
+          <TableHead className="w-[48px] text-right">数量</TableHead>
+          <TableHead className="w-[40px]">单位</TableHead>
+          <TableHead className="w-[56px] text-right">单价</TableHead>
+          <TableHead className="w-[56px] text-right">金额</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((it, idx) => (
+          <TableRow key={`${it.category}-${it.name}-${idx}`}>
+            <TableCell className="text-muted-foreground text-xs">
+              {it.category}
+            </TableCell>
+            <TableCell>
+              <div className="font-medium">{it.name}</div>
+              {!isDash(it.note) ? (
+                <div className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
+                  {it.note}
+                </div>
+              ) : null}
+            </TableCell>
+            <TableCell className="text-xs">{it.spec}</TableCell>
+            <TableCell className="text-right text-xs">{it.quantity}</TableCell>
+            <TableCell className="text-xs">{it.unit}</TableCell>
+            <TableCell className="text-right text-xs">{it.unitPrice}</TableCell>
+            <TableCell className="text-right text-xs">{it.amount}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function QuotePackageBlock({ pkg }: { pkg: QuotePackageDetail }) {
+  const meta = [
+    !isDash(pkg.skuCode) ? `编码 ${pkg.skuCode}` : "",
+    !isDash(pkg.quantity) ? `数量 ${pkg.quantity}` : "",
+    !isDash(pkg.unit) ? pkg.unit : "",
+    !isDash(pkg.packageAmount) ? `小计 ${pkg.packageAmount} 元` : "",
+  ].filter(Boolean);
+  return (
+    <div className="space-y-2">
+      <div>
+        <p className="text-sm font-medium">{pkg.name}</p>
+        {meta.length > 0 ? (
+          <p className="text-muted-foreground text-xs">{meta.join(" · ")}</p>
+        ) : null}
+      </div>
+      <QuoteItemsTable items={pkg.items} />
+    </div>
+  );
+}
+
+function QuoteLineBlock({ line, index }: { line: QuoteLinePayload; index: number }) {
+  const title =
+    line.packageNames !== "—" ? line.packageNames : `方案行 ${index + 1}`;
+  const summary = [
+    line.repairParts !== "—" ? `维修部位：${line.repairParts}` : "",
+    line.constructionLocation !== "—"
+      ? `施工位置：${line.constructionLocation}`
+      : "",
+    line.constructionSite !== "—" && line.constructionSite !== line.constructionLocation
+      ? `施工部位：${line.constructionSite}`
+      : "",
+    line.warrantyLabel !== "—" ? `质保：${line.warrantyLabel}` : "",
+    line.maintainArea !== "—" ? `面积：${line.maintainArea}` : "",
+    line.amountYuan !== "—" ? `行金额 ${line.amountYuan} 元` : "",
+  ].filter(Boolean);
+
+  const hasPackages = line.packages.some((p) => p.items.length > 0);
+  const hasLineItems = line.lineItems.length > 0;
+
+  return (
+    <li className="bg-muted/40 space-y-3 rounded-md border p-3">
+      <div>
+        <p className="font-medium text-sm">{title}</p>
+        {summary.length > 0 ? (
+          <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+            {summary.join(" · ")}
+          </p>
+        ) : null}
+        {line.partDescription !== "—" ? (
+          <p className="mt-1 text-xs leading-relaxed">{line.partDescription}</p>
+        ) : null}
+      </div>
+      {hasPackages ? (
+        <div className="space-y-4">
+          <p className="text-muted-foreground text-xs font-medium">项目明细（套餐）</p>
+          {line.packages.map((pkg, pi) => (
+            <QuotePackageBlock key={`${pkg.name}-${pi}`} pkg={pkg} />
+          ))}
+        </div>
+      ) : null}
+      {hasLineItems ? (
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-xs font-medium">
+            项目明细（行级材料/工序/措施）
+          </p>
+          <QuoteItemsTable items={line.lineItems} />
+        </div>
+      ) : null}
+      {!hasPackages && !hasLineItems ? (
+        <p className="text-muted-foreground text-xs">暂无项目明细表数据</p>
+      ) : null}
+    </li>
+  );
+}
+
 function QuoteDetailBody({ p }: { p: QuotePayload }) {
   return (
     <div className="space-y-4">
       <FormDetail fields={p.fields} />
       {p.lines.length > 0 ? (
         <div>
-          <p className="text-muted-foreground mb-2 text-xs">报价明细行</p>
-          <ul className="space-y-3 text-sm">
+          <p className="text-muted-foreground mb-2 text-xs">报价方案与项目明细</p>
+          <ul className="space-y-3">
             {p.lines.map((line, i) => (
-              <li
-                key={i}
-                className="bg-muted/40 space-y-1 rounded-md border p-3"
-              >
-                <p className="font-medium">
-                  {line.packageNames !== "—"
-                    ? line.packageNames
-                    : `明细 ${i + 1}`}
-                  {line.amountYuan !== "—" ? ` · ${line.amountYuan} 元` : ""}
-                </p>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  {[
-                    line.repairParts !== "—" ? `部位：${line.repairParts}` : "",
-                    line.constructionLocation !== "—"
-                      ? `位置：${line.constructionLocation}`
-                      : "",
-                    line.warrantyLabel !== "—"
-                      ? `质保：${line.warrantyLabel}`
-                      : "",
-                    line.maintainArea !== "—"
-                      ? `面积：${line.maintainArea}`
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                {line.partDescription !== "—" ? (
-                  <p className="text-xs leading-relaxed">{line.partDescription}</p>
-                ) : null}
-              </li>
+              <QuoteLineBlock key={i} line={line} index={i} />
             ))}
           </ul>
         </div>
@@ -226,7 +332,7 @@ export function PlanTimelineSection({ events }: { events: TimelineEvent[] }) {
       )}
 
       <Dialog open={modal != null} onOpenChange={(v) => !v && setModal(null)}>
-        <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>

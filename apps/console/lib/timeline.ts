@@ -19,14 +19,37 @@ export interface AppointmentPayload {
   fields: TimelineFormField[];
 }
 
+export interface QuoteDetailItem {
+  category: string;
+  name: string;
+  spec: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  amount: string;
+  note: string;
+}
+
+export interface QuotePackageDetail {
+  name: string;
+  skuCode: string;
+  unit: string;
+  quantity: string;
+  packageAmount: string;
+  items: QuoteDetailItem[];
+}
+
 export interface QuoteLinePayload {
   repairParts: string;
   constructionLocation: string;
+  constructionSite: string;
   partDescription: string;
   packageNames: string;
   warrantyLabel: string;
   maintainArea: string;
   amountYuan: string;
+  packages: QuotePackageDetail[];
+  lineItems: QuoteDetailItem[];
 }
 
 export interface QuotePayload {
@@ -81,6 +104,44 @@ function parseImages(raw: unknown): TimelineImage[] {
     .filter((x): x is TimelineImage => x != null);
 }
 
+function parseQuoteDetailItems(raw: unknown): QuoteDetailItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const o = (item && typeof item === "object" ? item : {}) as Record<
+      string,
+      unknown
+    >;
+    return {
+      category: str(o.category) || "—",
+      name: str(o.name) || "—",
+      spec: str(o.spec) || "—",
+      quantity: str(o.quantity) || "—",
+      unit: str(o.unit) || "—",
+      unitPrice: str(o.unitPrice) || "—",
+      amount: str(o.amount) || "—",
+      note: str(o.note) || "—",
+    };
+  });
+}
+
+function parseQuotePackages(raw: unknown): QuotePackageDetail[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const o = (item && typeof item === "object" ? item : {}) as Record<
+      string,
+      unknown
+    >;
+    return {
+      name: str(o.name) || "方案套餐",
+      skuCode: str(o.skuCode) || "—",
+      unit: str(o.unit) || "—",
+      quantity: str(o.quantity) || "—",
+      packageAmount: str(o.packageAmount) || "—",
+      items: parseQuoteDetailItems(o.items),
+    };
+  });
+}
+
 function parseQuoteLines(raw: unknown): QuoteLinePayload[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((item) => {
@@ -91,11 +152,14 @@ function parseQuoteLines(raw: unknown): QuoteLinePayload[] {
     return {
       repairParts: str(o.repairParts) || "—",
       constructionLocation: str(o.constructionLocation) || "—",
+      constructionSite: str(o.constructionSite) || "—",
       partDescription: str(o.partDescription) || "—",
       packageNames: str(o.packageNames) || "—",
       warrantyLabel: str(o.warrantyLabel) || "—",
       maintainArea: str(o.maintainArea) || "—",
       amountYuan: str(o.amountYuan) || "—",
+      packages: parseQuotePackages(o.packages),
+      lineItems: parseQuoteDetailItems(o.lineItems),
     };
   });
 }

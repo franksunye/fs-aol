@@ -21,6 +21,7 @@ from ..context.enrich import (
     _resolve_channel_path,
 )
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now
+from .quote_products import quote_line_to_payload
 
 _BJ_TZ = timezone(timedelta(hours=8))
 _UTC = timezone.utc
@@ -473,18 +474,7 @@ def _quote_lines(doc: Dict[str, Any], codes: _CodeCache) -> List[Dict[str, Any]]
         if not isinstance(item, dict):
             continue
         row = _parse_bj_quote_row(item, codes)
-        amt = row.get("line_amount_yuan")
-        lines.append(
-            {
-                "repairParts": "、".join(row.get("repair_parts") or []) or "—",
-                "constructionLocation": row.get("construction_location") or "—",
-                "partDescription": row.get("part_description") or "—",
-                "packageNames": "、".join(row.get("package_names") or []) or "—",
-                "warrantyLabel": row.get("warranty_label") or "—",
-                "maintainArea": row.get("maintain_area") or "—",
-                "amountYuan": f"{amt:.0f}" if isinstance(amt, (int, float)) else "—",
-            }
-        )
+        lines.append(quote_line_to_payload(row))
     return lines
 
 
@@ -518,6 +508,12 @@ def _quote_payload(doc: Dict[str, Any], codes: _CodeCache) -> Dict[str, Any]:
                 ("方案套餐", "、".join(parsed.get("package_names") or [])),
                 ("维修部位", "、".join(parsed.get("repair_parts") or [])),
                 ("施工位置", parsed.get("construction_location") or ""),
+                (
+                    "施工部位",
+                    parsed.get("construction_site")
+                    or parsed.get("construction_location")
+                    or "",
+                ),
                 ("部位说明", parsed.get("part_description") or ""),
                 ("质保", parsed.get("warranty_label") or ""),
                 ("维修面积", parsed.get("maintain_area") or ""),
