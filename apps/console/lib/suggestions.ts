@@ -1,6 +1,8 @@
 import { db, ensureSchema, TABLE_LOGS, TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS } from "./db";
 import type { BlockerType } from "./blockers";
 import type { InboxBucket } from "./labels";
+import { logsHasInboxColumns } from "./logs-schema";
+import { migrateInboxColumns } from "./migrate-inbox-columns";
 
 export type Decision = "approved" | "rejected" | "modified" | "followed_up";
 
@@ -209,6 +211,13 @@ function mapSuggestion(
   };
 }
 
+async function ensureInboxColumnsReady(): Promise<boolean> {
+  await ensureSchema();
+  if (await logsHasInboxColumns()) return true;
+  await migrateInboxColumns();
+  return logsHasInboxColumns();
+}
+
 export async function listSuggestions(options?: {
   housekeeperId?: string;
   /** 默认 active（待处置）；归档/已处置用 closed | archived */
@@ -216,25 +225,31 @@ export async function listSuggestions(options?: {
   /** 默认 100；移动收件箱传 30 */
   limit?: number;
 }): Promise<SuggestionRow[]> {
-  await ensureSchema();
+  const hasInbox = await ensureInboxColumnsReady();
   const hk = options?.housekeeperId?.trim();
   const bucket = options?.inboxBucket ?? "active";
   const limit = Math.min(Math.max(options?.limit ?? 100, 1), 500);
-  const bucketClause =
-    bucket === "active"
-      ? "(inbox_bucket IS NULL OR inbox_bucket = 'active')"
-      : "inbox_bucket = ?";
-  const where: string[] = [bucketClause];
-  const args: (string | number)[] =
-    bucket === "active" ? [] : [bucket];
+  const where: string[] = [];
+  const args: (string | number)[] = [];
+  if (hasInbox) {
+    if (bucket === "active") {
+      where.push("(inbox_bucket IS NULL OR inbox_bucket = 'active')");
+    } else {
+      where.push("inbox_bucket = ?");
+      args.push(bucket);
+    }
+  }
   if (hk) {
     where.push("housekeeper_id = ?");
     args.push(hk);
   }
   args.push(limit);
-  const sql = `SELECT * FROM ${TABLE_LOGS} WHERE ${where.join(
-    " AND "
-  )} ORDER BY processed_at DESC LIMIT ?`;
+  const sql =
+    where.length > 0
+      ? `SELECT * FROM ${TABLE_LOGS} WHERE ${where.join(
+          " AND "
+        )} ORDER BY processed_at DESC LIMIT ?`
+      : `SELECT * FROM ${TABLE_LOGS} ORDER BY processed_at DESC LIMIT ?`;
   const res = await db.execute({ sql, args });
   const logRows = res.rows as unknown as Record<string, unknown>[];
   const keys = logRows.map((r) => str(r.dedupe_key)).filter(Boolean);
@@ -400,7 +415,7 @@ export async function recordOutcome(input: {
   operator?: string;
   modifiedSuggestion?: SuggestionDoc | null;
 }): Promise<void> {
-  await ensureSchema();
+  await ensureInboxColumnsReady();
   const now = new Date().toISOString();
   await db.execute({
     sql: `INSERT INTO ${TABLE_OUTCOMES}

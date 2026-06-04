@@ -176,8 +176,10 @@ function QuoteLineBlock({ line, index }: { line: QuoteLinePayload; index: number
     line.amountYuan !== "—" ? `行金额 ${line.amountYuan} 元` : "",
   ].filter(Boolean);
 
-  const hasPackages = line.packages.some((p) => p.items.length > 0);
-  const hasLineItems = line.lineItems.length > 0;
+  const packages = line.packages ?? [];
+  const lineItems = line.lineItems ?? [];
+  const hasPackages = packages.some((p) => (p.items ?? []).length > 0);
+  const hasLineItems = lineItems.length > 0;
 
   return (
     <li className="bg-muted/40 space-y-3 rounded-md border p-3">
@@ -195,7 +197,7 @@ function QuoteLineBlock({ line, index }: { line: QuoteLinePayload; index: number
       {hasPackages ? (
         <div className="space-y-4">
           <p className="text-muted-foreground text-xs font-medium">项目明细（套餐）</p>
-          {line.packages.map((pkg, pi) => (
+          {packages.map((pkg, pi) => (
             <QuotePackageBlock key={`${pkg.name}-${pi}`} pkg={pkg} />
           ))}
         </div>
@@ -205,7 +207,7 @@ function QuoteLineBlock({ line, index }: { line: QuoteLinePayload; index: number
           <p className="text-muted-foreground text-xs font-medium">
             项目明细（行级材料/工序/措施）
           </p>
-          <QuoteItemsTable items={line.lineItems} />
+          <QuoteItemsTable items={lineItems} />
         </div>
       ) : null}
       {!hasPackages && !hasLineItems ? (

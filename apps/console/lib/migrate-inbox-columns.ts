@@ -1,4 +1,5 @@
 import { db, TABLE_LOGS } from "./db";
+import { logsTableColumnNames } from "./logs-schema";
 
 const INBOX_COLUMNS: { name: string; ddl: string }[] = [
   { name: "inbox_bucket", ddl: "TEXT" },
@@ -15,15 +16,17 @@ let migrateReady: Promise<void> | undefined;
 export function migrateInboxColumns(): Promise<void> {
   if (!migrateReady) {
     migrateReady = (async () => {
-      const info = await db.execute(`PRAGMA table_info(${TABLE_LOGS})`);
-      const existing = new Set(
-        (info.rows as { name?: string }[]).map((r) => String(r.name ?? ""))
-      );
-      for (const col of INBOX_COLUMNS) {
-        if (existing.has(col.name)) continue;
-        await db.execute(
-          `ALTER TABLE ${TABLE_LOGS} ADD COLUMN ${col.name} ${col.ddl}`
-        );
+      try {
+        const existing = await logsTableColumnNames();
+        for (const col of INBOX_COLUMNS) {
+          if (existing.has(col.name)) continue;
+          await db.execute(
+            `ALTER TABLE ${TABLE_LOGS} ADD COLUMN ${col.name} ${col.ddl}`
+          );
+        }
+      } catch (err) {
+        migrateReady = undefined;
+        throw err;
       }
     })();
   }
