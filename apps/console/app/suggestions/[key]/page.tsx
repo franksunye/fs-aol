@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getSuggestion, type SuggestionDoc } from "@/lib/suggestions";
+import { getTimelineEvents } from "@/lib/timeline";
 import { TracePanelLazy } from "@/components/trace-panel-lazy";
+import { PlanTimelineSection } from "@/components/plan-timeline-section";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -98,6 +100,7 @@ export default async function SuggestionDetail({
 
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
+  const timelineEvents = await getTimelineEvents(row.workOrderId);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-8">
@@ -155,6 +158,7 @@ export default async function SuggestionDetail({
         <TabsList>
           <TabsTrigger value="plan">跟进方案</TabsTrigger>
           <TabsTrigger value="trace">推理与查证</TabsTrigger>
+          <TabsTrigger value="timeline">业务时间轴</TabsTrigger>
         </TabsList>
         <TabsContent value="plan" className="pt-2">
           <Card className="p-5">
@@ -170,6 +174,11 @@ export default async function SuggestionDetail({
         <TabsContent value="trace" className="pt-2">
           <Card className="p-5">
             <TracePanelLazy workOrderId={row.workOrderId} />
+          </Card>
+        </TabsContent>
+        <TabsContent value="timeline" className="pt-2">
+          <Card className="p-5">
+            <PlanTimelineSection events={timelineEvents} />
           </Card>
         </TabsContent>
       </Tabs>

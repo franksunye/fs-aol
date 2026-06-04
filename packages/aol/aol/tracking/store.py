@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 
 from ..config import Config
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now
+from ..context.timeline import build_timeline_events
 from ..blocker_types import BLOCKER_LABELS
 from .schema import (
     SCHEMA,
@@ -18,10 +19,13 @@ from .schema import (
     SCHEMA_BLOCKERS_INDEX,
     SCHEMA_OUTCOMES,
     SCHEMA_OUTCOMES_INDEX,
+    SCHEMA_TIMELINE,
+    SCHEMA_TIMELINE_INDEX,
     SCHEMA_TRACES,
     TABLE_BLOCKERS,
     TABLE_LOGS,
     TABLE_OUTCOMES,
+    TABLE_TIMELINE,
     TABLE_TRACES,
 )
 from .trace import ReasoningTrace
@@ -130,6 +134,8 @@ class TrackingStore:
             SCHEMA_OUTCOMES_INDEX,
             SCHEMA_BLOCKERS,
             SCHEMA_BLOCKERS_INDEX,
+            SCHEMA_TIMELINE,
+            SCHEMA_TIMELINE_INDEX,
         )
         if self._conn is not None:
             for stmt in stmts:
@@ -323,6 +329,69 @@ class TrackingStore:
             return ""
         return "## 上一轮反馈（只读）\n" + "\n".join(lines)
 
+    def refresh_timeline(
+        self,
+        cfg: Config,
+        wo: WorkOrder,
+        suggestion: FollowUpSuggestion,
+        trace: ReasoningTrace,
+    ) -> None:
+        """跑单后物化时间轴（纯 A：Console 只读此表）。"""
+        events = build_timeline_events(cfg, wo, suggestion, trace, self)
+        if self._conn is not None:
+            self._conn.execute(
+                f"DELETE FROM {TABLE_TIMELINE} WHERE work_order_id = ?",
+                (wo.work_order_id,),
+            )
+            sql = (
+                f"INSERT INTO {TABLE_TIMELINE} "
+                "(work_order_id, dedupe_key, lane, kind, at, at_ms, title, summary, ref_id, payload_json) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?)"
+            )
+            for ev in events:
+                self._conn.execute(
+                    sql,
+                    (
+                        ev["work_order_id"],
+                        ev["dedupe_key"],
+                        ev["lane"],
+                        ev["kind"],
+                        ev["at"],
+                        ev["at_ms"],
+                        ev["title"],
+                        ev["summary"] or "",
+                        ev["ref_id"] or "",
+                        ev["payload_json"],
+                    ),
+                )
+            self._conn.commit()
+        else:
+            self._turso.execute(
+                f"DELETE FROM {TABLE_TIMELINE} WHERE work_order_id = ?",
+                [wo.work_order_id],
+            )
+            sql = (
+                f"INSERT INTO {TABLE_TIMELINE} "
+                "(work_order_id, dedupe_key, lane, kind, at, at_ms, title, summary, ref_id, payload_json) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?)"
+            )
+            for ev in events:
+                self._turso.execute(
+                    sql,
+                    [
+                        ev["work_order_id"],
+                        ev["dedupe_key"],
+                        ev["lane"],
+                        ev["kind"],
+                        ev["at"],
+                        ev["at_ms"],
+                        ev["title"],
+                        ev["summary"] or "",
+                        ev["ref_id"] or "",
+                        ev["payload_json"],
+                    ],
+                )
+
     def mark_processed(self, wo: WorkOrder, suggestion: FollowUpSuggestion, status: str) -> None:
         now = bj_now().isoformat()
         payload = json.dumps(suggestion.to_dict(), ensure_ascii=False)
@@ -366,12 +435,12 @@ class TrackingStore:
         if self._conn is None:
             raise RuntimeError("clear_all_data 仅支持 TRACKING_SOURCE=local")
         total = 0
-        for table in (TABLE_LOGS, TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS):
+        for table in (TABLE_LOGS, TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS, TABLE_TIMELINE):
             cur = self._conn.execute(f"DELETE FROM {table}")
             total += cur.rowcount
         self._conn.execute(
-            "DELETE FROM sqlite_sequence WHERE name IN (?, ?, ?)",
-            (TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS),
+            "DELETE FROM sqlite_sequence WHERE name IN (?, ?, ?, ?)",
+            (TABLE_TRACES, TABLE_OUTCOMES, TABLE_BLOCKERS, TABLE_TIMELINE),
         )
         self._conn.commit()
         return total

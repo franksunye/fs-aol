@@ -397,6 +397,7 @@ def enrich_work_order_context(cfg: "Config", wo: "WorkOrder") -> EnrichedContext
                 "contract_num": str(c.get("contractNum") or ""),
                 "amount_yuan": _money(c.get("afterRefundMoney")),
                 "maintain_part": str(c.get("maintainPart") or ""),
+                "signed_at": c.get("createTime"),
             }
             for c in contract_docs
         ]

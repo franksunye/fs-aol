@@ -61,3 +61,21 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}blocker_feedback (
 
 CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}blocker_feedback_dedupe
     ON {{AOL_TABLE_PREFIX}}blocker_feedback(dedupe_key);
+
+-- 工单时间轴（Python 跑单时物化；Console 只读）
+CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}timeline_events (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_order_id   TEXT NOT NULL,
+    dedupe_key      TEXT,
+    lane            TEXT NOT NULL,
+    kind            TEXT NOT NULL,
+    at              TEXT NOT NULL,
+    at_ms           INTEGER NOT NULL,
+    title           TEXT NOT NULL,
+    summary         TEXT,
+    ref_id          TEXT,
+    payload_json    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}timeline_events_wo
+    ON {{AOL_TABLE_PREFIX}}timeline_events(work_order_id);

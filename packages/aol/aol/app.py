@@ -129,6 +129,10 @@ def run(cfg: Optional[Config] = None) -> int:
                 # 推送失败留待下轮重试 —— 天然的拉取式状态机。
                 if status != "send_failed":
                     store.mark_processed(wo, suggestion, status)
+                    try:
+                        store.refresh_timeline(cfg, wo, suggestion, trace)
+                    except Exception:
+                        logger.exception("工单 %s 时间轴物化失败（不影响主流程）。", ref)
                     success += 1
                 else:
                     logger.warning("工单 %s 推送失败，下轮重试。", ref)
