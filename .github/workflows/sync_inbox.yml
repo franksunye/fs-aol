@@ -46,6 +46,8 @@ jobs:
           FSM_SOURCE: ${{ vars.FSM_SOURCE || 'mongo' }}
           FSM_MONGO_URL: ${{ secrets.FSM_MONGO_URL }}
           FSM_MONGO_DB: ${{ vars.FSM_MONGO_DB || 'xlinkdemo' }}
+          # 与 agent_cron 一致：楔子状态（生产 206=待签约停滞）；缺省会导致离 wedge 判定错误
+          FSM_EVENT_STATUSES: ${{ vars.FSM_EVENT_STATUSES || '206' }}
           TRACKING_SOURCE: ${{ vars.TRACKING_SOURCE || 'cloud' }}
           AOL_TABLE_PREFIX: ${{ vars.AOL_TABLE_PREFIX || 'aol_' }}
           TURSO_URL: ${{ secrets.TURSO_DB_URL }}
