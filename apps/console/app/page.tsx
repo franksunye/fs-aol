@@ -9,11 +9,8 @@ import { LogoutButton } from "@/components/logout-button";
 import { HousekeeperFilter, HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
 import { SuggestionInboxTable } from "@/components/suggestion-inbox-table";
 import { SuggestionSort } from "@/components/suggestion-sort";
-import {
-  InboxTabs,
-  inboxTabFromSearchParams,
-} from "@/components/inbox-tabs";
-import { INBOX_TAB_LABELS } from "@/lib/labels";
+import { InboxTabs } from "@/components/inbox-tabs";
+import { INBOX_TAB_LABELS, inboxTabFromSearchParams } from "@/lib/labels";
 import {
   parseSuggestionSortKey,
   sortSuggestions,

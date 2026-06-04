@@ -97,3 +97,10 @@ export function parseInboxBucket(
   if (v === "active" || v === "closed" || v === "archived") return v;
   return undefined;
 }
+
+/** 首页 searchParams → 收件箱 tab（须在 Server Component 使用，勿放在 client 文件）。 */
+export function inboxTabFromSearchParams(sp: {
+  tab?: string;
+}): InboxBucket {
+  return parseInboxBucket(sp.tab) ?? "active";
+}

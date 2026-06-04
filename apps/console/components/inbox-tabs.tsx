@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  INBOX_TAB_LABELS,
-  type InboxBucket,
-  parseInboxBucket,
-} from "@/lib/labels";
+import { INBOX_TAB_LABELS, type InboxBucket } from "@/lib/labels";
 
 const TABS: InboxBucket[] = ["active", "closed", "archived"];
 
@@ -47,10 +43,4 @@ export function InboxTabs({ current, hk }: { current: InboxBucket; hk?: string }
       ))}
     </nav>
   );
-}
-
-export function inboxTabFromSearchParams(
-  sp: { tab?: string }
-): InboxBucket {
-  return parseInboxBucket(sp.tab) ?? "active";
 }
