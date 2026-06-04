@@ -386,6 +386,7 @@ def enrich_work_order_context(cfg: "Config", wo: "WorkOrder") -> EnrichedContext
                     "afterRefundMoney": 1,
                     "maintainPart": 1,
                     "exts.contractStatus": 1,
+                    "createTime": 1,
                 },
             )
             .limit(2)

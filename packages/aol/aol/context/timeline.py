@@ -3,12 +3,22 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from ..blocker_types import BLOCKER_LABELS
-from ..context.enrich import EnrichedContext, enrich_work_order_context, _CodeCache, _fmt_time
+from ..context.enrich import (
+    EnrichedContext,
+    enrich_work_order_context,
+    _CodeCache,
+    _fmt_time,
+    _PAY_STATE,
+    _QUOTE_B_MARKS,
+    _parse_order_doc,
+)
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now
+
+_BJ_TZ = timezone(timedelta(hours=8))
 
 if TYPE_CHECKING:
     from ..config import Config
@@ -24,21 +34,200 @@ _DECISION_LABELS = {
 
 
 def _parse_at_ms(value: Any) -> Optional[int]:
+    """Mongo 时间为北京本地 naive；日期字符串按北京 0 点解析。"""
     if value is None:
         return None
     if isinstance(value, datetime):
-        ms = int(value.timestamp() * 1000)
-        return ms
+        d = value if value.tzinfo else value.replace(tzinfo=_BJ_TZ)
+        return int(d.timestamp() * 1000)
     s = str(value).strip()
     if not s:
         return None
+    if len(s) == 10 and s[4] == "-" and s[7] == "-":
+        try:
+            d = datetime.strptime(s, "%Y-%m-%d").replace(tzinfo=_BJ_TZ)
+            return int(d.timestamp() * 1000)
+        except ValueError:
+            return None
     try:
         if "T" not in s and len(s) >= 19:
             s = s[:19].replace(" ", "T")
-        d = datetime.fromisoformat(s.replace("Z", "+00:00") if s.endswith("Z") else s)
+        if s.endswith("Z"):
+            d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        else:
+            d = datetime.fromisoformat(s).replace(tzinfo=_BJ_TZ)
         return int(d.timestamp() * 1000)
     except ValueError:
         return None
+
+
+def _call_summary(doc: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    col = str(doc.get("colName") or "").strip()
+    if col:
+        parts.append(col)
+    dur = doc.get("bizDuration")
+    if dur not in (None, ""):
+        parts.append(f"{dur}秒")
+    result = str(doc.get("result") or "").strip()
+    if result:
+        parts.append(result[:48])
+    return " · ".join(parts) if parts else "通话记录"
+
+
+def _milestone_events_from_sa(
+    sa: Dict[str, Any],
+    *,
+    work_order_id: str,
+    dedupe_key: str,
+    order_num: str,
+) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
+    exts = sa.get("exts") or {}
+
+    created_at = sa.get("createTime") or exts.get("ServiceAppointmentCreateTime")
+    created_ms = _parse_at_ms(created_at)
+    if created_ms is not None:
+        on = order_num or str(sa.get("orderNum") or "")
+        events.append(
+            _event(
+                work_order_id=work_order_id,
+                dedupe_key=dedupe_key,
+                lane="business",
+                kind="created",
+                at_ms=created_ms,
+                title="建单",
+                summary=f"工单 {on}" if on else "工单创建",
+            )
+        )
+
+    appt_at = exts.get("prospectingTime")
+    appt_ms = _parse_at_ms(appt_at)
+    if appt_ms is not None:
+        when = str(exts.get("prospectingTimeStr") or _fmt_time(appt_at)).strip()
+        events.append(
+            _event(
+                work_order_id=work_order_id,
+                dedupe_key=dedupe_key,
+                lane="business",
+                kind="appointment",
+                at_ms=appt_ms,
+                title="预约",
+                summary=f"预约勘察上门 · {when}" if when else "预约勘察上门",
+            )
+        )
+
+    return events
+
+
+def _phone_call_events(
+    db: Any,
+    sa_id: str,
+    *,
+    work_order_id: str,
+    dedupe_key: str,
+) -> List[Dict[str, Any]]:
+    calls = list(
+        db["speechText"]
+        .find(
+            {"serviceAppointmentId": sa_id, "state": {"$ne": -1}},
+            {
+                "callCreateTime": 1,
+                "createTime": 1,
+                "colName": 1,
+                "bizDuration": 1,
+                "result": 1,
+            },
+        )
+        .sort("callCreateTime", 1)
+        .limit(20)
+    )
+    if not calls:
+        return []
+
+    first = calls[0]
+    at_ms = _parse_at_ms(first.get("callCreateTime") or first.get("createTime"))
+    if at_ms is None:
+        return []
+
+    n = len(calls)
+    if n == 1:
+        summary = _call_summary(first)
+    else:
+        last = calls[-1]
+        last_when = _fmt_time(last.get("callCreateTime") or last.get("createTime"))
+        summary = f"共 {n} 次 · 最近 {last_when} · {_call_summary(last)}"
+
+    return [
+        _event(
+            work_order_id=work_order_id,
+            dedupe_key=dedupe_key,
+            lane="business",
+            kind="phone",
+            at_ms=at_ms,
+            title="电话联系",
+            summary=summary,
+        )
+    ]
+
+
+def _quote_events_from_db(
+    db: Any,
+    sa_id: str,
+    codes: _CodeCache,
+    *,
+    work_order_id: str,
+    dedupe_key: str,
+) -> List[Dict[str, Any]]:
+    sa_match = {
+        "$or": [
+            {"serviceAppointmentId": sa_id},
+            {"serviceAppointmentIds": sa_id},
+        ],
+    }
+    b_filter = {"state": {"$ne": -1}, "type": 1, "$and": [sa_match, _QUOTE_B_MARKS]}
+    events: List[Dict[str, Any]] = []
+    for doc in (
+        db["order"]
+        .find(
+            b_filter,
+            {
+                "orderNumber": 1,
+                "totalPrice": 1,
+                "payState": 1,
+                "createTime": 1,
+                "bjProducts": 1,
+            },
+        )
+        .sort("createTime", -1)
+        .limit(5)
+    ):
+        at_ms = _parse_at_ms(doc.get("createTime"))
+        if at_ms is None:
+            continue
+        parsed = _parse_order_doc(doc, codes)
+        amt = parsed.get("amount_yuan")
+        amt_s = f"{amt:.0f}元" if isinstance(amt, (int, float)) else "—"
+        pay = parsed.get("pay_state_label") or _PAY_STATE.get(
+            int(doc.get("payState") or 0), "未知"
+        )
+        pkgs = "、".join((parsed.get("package_names") or [])[:2])
+        summary = f"{amt_s} · {pay}"
+        if pkgs:
+            summary += f" · {pkgs}"
+        events.append(
+            _event(
+                work_order_id=work_order_id,
+                dedupe_key=dedupe_key,
+                lane="business",
+                kind="quote",
+                at_ms=at_ms,
+                title="报价",
+                summary=summary,
+                ref_id=str(doc.get("orderNumber") or doc.get("_id") or ""),
+            )
+        )
+    return events
 
 
 def _event(
@@ -129,6 +318,34 @@ def _business_events(
             codes = _CodeCache(db)
             sa_id = wo.work_order_id
 
+            sa = db["serviceAppointment"].find_one(
+                {"_id": sa_id},
+                {
+                    "orderNum": 1,
+                    "createTime": 1,
+                    "exts.ServiceAppointmentCreateTime": 1,
+                    "exts.prospectingTime": 1,
+                    "exts.prospectingTimeStr": 1,
+                },
+            )
+            if sa:
+                events.extend(
+                    _milestone_events_from_sa(
+                        sa,
+                        work_order_id=wid,
+                        dedupe_key=dedupe_key,
+                        order_num=wo.order_num,
+                    )
+                )
+                events.extend(
+                    _phone_call_events(
+                        db,
+                        sa_id,
+                        work_order_id=wid,
+                        dedupe_key=dedupe_key,
+                    )
+                )
+
             for wn in (
                 db["workflowNode"]
                 .find(
@@ -190,33 +407,25 @@ def _business_events(
                         lane="business",
                         kind="survey",
                         at_ms=at_ms,
-                        title="勘察单",
-                        summary=f"{payload['surveyNum']} · 勘察部位 {payload['partLabel']}",
+                        title="勘察",
+                        summary=f"{payload['surveyNum']} · {payload['partLabel']}",
                         ref_id=sid,
                         payload=payload,
                     )
                 )
+
+            events.extend(
+                _quote_events_from_db(
+                    db,
+                    sa_id,
+                    codes,
+                    work_order_id=wid,
+                    dedupe_key=dedupe_key,
+                )
+            )
             client.close()
         except Exception:
             pass
-
-    for q in ctx.quotes[:5]:
-        at_ms = _parse_at_ms(q.get("quote_date"))
-        if at_ms is None:
-            continue
-        amt = q.get("amount_yuan")
-        amt_s = f"{amt:.0f}元" if isinstance(amt, (int, float)) else "—"
-        events.append(
-            _event(
-                work_order_id=wid,
-                dedupe_key=dedupe_key,
-                lane="business",
-                kind="quote",
-                at_ms=at_ms,
-                title="正式报价",
-                summary=f"{amt_s} · {q.get('pay_state_label', '—')}",
-            )
-        )
 
     for c in ctx.contracts[:5]:
         at_ms = _parse_at_ms(c.get("signed_at"))
