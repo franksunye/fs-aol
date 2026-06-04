@@ -60,5 +60,12 @@ jobs:
           WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
           WECOM_WEBHOOK_MAP: ${{ vars.WECOM_WEBHOOK_MAP }}
           CONSOLE_BASE_URL: ${{ vars.CONSOLE_BASE_URL || 'https://console-sunye.vercel.app' }}
+          # 时间触发再分析（停滞类；默认开启，见 packages/aol/aol/reprocess/time_trigger.py）
+          REANALYZE_ENABLED: ${{ vars.REANALYZE_ENABLED || 'true' }}
+          REANALYZE_INTERVAL_DAYS: ${{ vars.REANALYZE_INTERVAL_DAYS || '3' }}
+          REANALYZE_STALE_STEP_DAYS: ${{ vars.REANALYZE_STALE_STEP_DAYS || '7' }}
+          REANALYZE_MAX_PER_RUN: ${{ vars.REANALYZE_MAX_PER_RUN || '10' }}
+          REANALYZE_PUSH: ${{ vars.REANALYZE_PUSH || 'true' }}
+          REANALYZE_PUSH_ON_SAME_PRIORITY: ${{ vars.REANALYZE_PUSH_ON_SAME_PRIORITY || 'false' }}
         run: |
           python run_cron.py
