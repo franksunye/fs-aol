@@ -1,0 +1,19 @@
+{
+  "at": "2026-06-01T07:19:42.911Z",
+  "libsql": "libsql://xlink-xlink.aws-ap-northeast-1.turso.io",
+  "sampleDedupeKey": "STALE_SIGN_PENDING:5973042966711386893",
+  "iterations": 8,
+  "msAvg": {
+    "mobileGetSuggestion": 508,
+    "legacyDetailPlusTrace": 1209,
+    "traceLiteLazy": 611
+  },
+  "bytesAvg": {
+    "traceFull": 11169,
+    "traceLite": 5097
+  },
+  "improvement": {
+    "mobileVsLegacySsr": "57.9%",
+    "tracePayloadReduction": "54.4%"
+  }
+}

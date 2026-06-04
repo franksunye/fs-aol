@@ -1,0 +1,61 @@
+{
+  "at": "2026-06-01T07:13:03.923Z",
+  "libsql": "file:/tmp/fs-aol-dev.db",
+  "sampleDedupeKey": "STALE_SIGN_PENDING:SA-MOCK-206-004",
+  "housekeeperId": "6008853770681798301",
+  "iterations": 8,
+  "paths": {
+    "legacy": {
+      "detailFirstPaint": {
+        "msAvg": 0,
+        "bytesAvg": 993,
+        "note": "getSuggestion 等价 DB（不含 trace）"
+      },
+      "trace": {
+        "msAvg": 0,
+        "bytesAvg": 3039,
+        "note": "getTrace SELECT *（首屏阻塞）"
+      },
+      "mobileFirstPaint": {
+        "msAvg": 0,
+        "bytesAvg": 993,
+        "note": "处置页首屏 = detail only（trace 懒加载）"
+      },
+      "listInbox": {
+        "msAvg": 0,
+        "bytesAvg": 6,
+        "note": "LIMIT 500 + 全表 outcomes/blockers"
+      }
+    },
+    "optimized": {
+      "detailFirstPaint": {
+        "msAvg": 0,
+        "bytesAvg": 993,
+        "note": "getSuggestion 等价 DB（不含 trace）"
+      },
+      "trace": {
+        "msAvg": 0,
+        "bytesAvg": 997,
+        "note": "getTraceLite 列投影（可懒加载）"
+      },
+      "mobileFirstPaint": {
+        "msAvg": 0,
+        "bytesAvg": 993,
+        "note": "处置页首屏 = detail only（trace 懒加载）"
+      },
+      "listInbox": {
+        "msAvg": 0,
+        "bytesAvg": 2,
+        "note": "LIMIT 30 + IN dedupe_keys"
+      }
+    }
+  },
+  "comparison": {
+    "detailFirstPaintMs": "—",
+    "detailFirstPaintBytes": "-0.0%",
+    "traceBytes": "-67.2%",
+    "mobileFirstPaintMs": "—",
+    "listInboxMs": "—",
+    "listInboxBytes": "-66.7%"
+  }
+}

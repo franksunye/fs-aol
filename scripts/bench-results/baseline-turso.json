@@ -1,0 +1,61 @@
+{
+  "at": "2026-06-01T07:13:31.282Z",
+  "libsql": "libsql://xlink-xlink.aws-ap-northeast-1.turso.io",
+  "sampleDedupeKey": "STALE_SIGN_PENDING:5973042966711386893",
+  "housekeeperId": "6008853770681798301",
+  "iterations": 10,
+  "paths": {
+    "legacy": {
+      "detailFirstPaint": {
+        "msAvg": 984,
+        "bytesAvg": 2928,
+        "note": "getSuggestion 等价 DB（不含 trace）"
+      },
+      "trace": {
+        "msAvg": 742,
+        "bytesAvg": 10075,
+        "note": "getTrace SELECT *（首屏阻塞）"
+      },
+      "mobileFirstPaint": {
+        "msAvg": 984,
+        "bytesAvg": 2928,
+        "note": "处置页首屏 = detail only（trace 懒加载）"
+      },
+      "listInbox": {
+        "msAvg": 698,
+        "bytesAvg": 905,
+        "note": "LIMIT 500 + 全表 outcomes/blockers"
+      }
+    },
+    "optimized": {
+      "detailFirstPaint": {
+        "msAvg": 1625,
+        "bytesAvg": 2252,
+        "note": "getSuggestion 等价 DB（不含 trace）"
+      },
+      "trace": {
+        "msAvg": 661,
+        "bytesAvg": 2152,
+        "note": "getTraceLite 列投影（可懒加载）"
+      },
+      "mobileFirstPaint": {
+        "msAvg": 1625,
+        "bytesAvg": 2252,
+        "note": "处置页首屏 = detail only（trace 懒加载）"
+      },
+      "listInbox": {
+        "msAvg": 719,
+        "bytesAvg": 2,
+        "note": "LIMIT 30 + IN dedupe_keys"
+      }
+    }
+  },
+  "comparison": {
+    "detailFirstPaintMs": "+65.1%",
+    "detailFirstPaintBytes": "-23.1%",
+    "traceBytes": "-78.6%",
+    "mobileFirstPaintMs": "+65.1%",
+    "listInboxMs": "+3.0%",
+    "listInboxBytes": "-99.8%"
+  }
+}
