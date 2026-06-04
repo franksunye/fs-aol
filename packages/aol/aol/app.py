@@ -95,12 +95,10 @@ def run(cfg: Optional[Config] = None) -> int:
         processed_keys = store.effective_processed_keys()
         work_orders = fetch_completed_work_orders(cfg, processed_keys)
 
-        if not work_orders:
-            logger.info("本轮无待跟进事件，结束。")
-            return 0
-
         success = 0
         reanalyzed = 0
+        if not work_orders:
+            logger.info("本轮无待跟进事件。")
         for wo in work_orders:
             ref = wo.order_num or wo.work_order_id
             is_time_reprocess = wo.dedupe_key in time_reprocess_keys
@@ -193,12 +191,13 @@ def run(cfg: Optional[Config] = None) -> int:
             except Exception:
                 logger.exception("工单 %s 处理异常，下轮重试。", ref)
 
-        logger.info(
-            "本轮完成：成功 %d / 共 %d（其中时间再分析 %d）",
-            success,
-            len(work_orders),
-            reanalyzed,
-        )
+        if work_orders:
+            logger.info(
+                "本轮完成：成功 %d / 共 %d（其中时间再分析 %d）",
+                success,
+                len(work_orders),
+                reanalyzed,
+            )
         try:
             from .inbox.sync import run_inbox_sync
 
