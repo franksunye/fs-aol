@@ -19,6 +19,7 @@ from ..context.enrich import (
 from ..domain import FollowUpSuggestion, WorkOrder, bj_now
 
 _BJ_TZ = timezone(timedelta(hours=8))
+_UTC = timezone.utc
 
 if TYPE_CHECKING:
     from ..config import Config
@@ -33,13 +34,10 @@ _DECISION_LABELS = {
 }
 
 
-def _parse_at_ms(value: Any) -> Optional[int]:
-    """Mongo 时间为北京本地 naive；日期字符串按北京 0 点解析。"""
+def _parse_bj_wall_ms(value: Any) -> Optional[int]:
+    """exts.*Str 或引擎 bj_now ISO：墙上时间为北京时间。"""
     if value is None:
         return None
-    if isinstance(value, datetime):
-        d = value if value.tzinfo else value.replace(tzinfo=_BJ_TZ)
-        return int(d.timestamp() * 1000)
     s = str(value).strip()
     if not s:
         return None
@@ -61,6 +59,33 @@ def _parse_at_ms(value: Any) -> Optional[int]:
         return None
 
 
+def _parse_utc_naive_ms(value: Any) -> Optional[int]:
+    """Mongo DateTime / 工单 updateTime 等：naive 实为 UTC（与 *Str 差 8h）。"""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        d = value.replace(tzinfo=_UTC) if not value.tzinfo else value.astimezone(_UTC)
+        return int(d.timestamp() * 1000)
+    s = str(value).strip()
+    if not s:
+        return None
+    try:
+        if "T" not in s and len(s) >= 19:
+            s = s[:19].replace(" ", "T")
+        if s.endswith("Z"):
+            d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        else:
+            d = datetime.fromisoformat(s).replace(tzinfo=_UTC)
+        return int(d.timestamp() * 1000)
+    except ValueError:
+        return None
+
+
+def _parse_at_ms(value: Any) -> Optional[int]:
+    """Agent 轨时间戳（trace / outcome / blocker）。"""
+    return _parse_bj_wall_ms(value)
+
+
 def _call_summary(doc: Dict[str, Any]) -> str:
     parts: List[str] = []
     col = str(doc.get("colName") or "").strip()
@@ -70,7 +95,7 @@ def _call_summary(doc: Dict[str, Any]) -> str:
     if dur not in (None, ""):
         parts.append(f"{dur}秒")
     result = str(doc.get("result") or "").strip()
-    if result:
+    if result and not result.startswith(("[", "{")):
         parts.append(result[:48])
     return " · ".join(parts) if parts else "通话记录"
 
@@ -85,8 +110,11 @@ def _milestone_events_from_sa(
     events: List[Dict[str, Any]] = []
     exts = sa.get("exts") or {}
 
-    created_at = sa.get("createTime") or exts.get("ServiceAppointmentCreateTime")
-    created_ms = _parse_at_ms(created_at)
+    created_ms = _parse_bj_wall_ms(exts.get("ServiceAppointmentCreateTimeStr"))
+    if created_ms is None:
+        created_ms = _parse_utc_naive_ms(
+            sa.get("createTime") or exts.get("ServiceAppointmentCreateTime")
+        )
     if created_ms is not None:
         on = order_num or str(sa.get("orderNum") or "")
         events.append(
@@ -101,10 +129,13 @@ def _milestone_events_from_sa(
             )
         )
 
-    appt_at = exts.get("prospectingTime")
-    appt_ms = _parse_at_ms(appt_at)
+    when = str(exts.get("prospectingTimeStr") or "").strip()
+    appt_ms = _parse_bj_wall_ms(when) if when else None
+    if appt_ms is None:
+        appt_ms = _parse_utc_naive_ms(exts.get("prospectingTime"))
     if appt_ms is not None:
-        when = str(exts.get("prospectingTimeStr") or _fmt_time(appt_at)).strip()
+        if not when:
+            when = _fmt_time(exts.get("prospectingTime"))
         events.append(
             _event(
                 work_order_id=work_order_id,
@@ -146,7 +177,9 @@ def _phone_call_events(
         return []
 
     first = calls[0]
-    at_ms = _parse_at_ms(first.get("callCreateTime") or first.get("createTime"))
+    at_ms = _parse_utc_naive_ms(
+        first.get("callCreateTime") or first.get("createTime")
+    )
     if at_ms is None:
         return []
 
@@ -202,7 +235,7 @@ def _quote_events_from_db(
         .sort("createTime", -1)
         .limit(5)
     ):
-        at_ms = _parse_at_ms(doc.get("createTime"))
+        at_ms = _parse_utc_naive_ms(doc.get("createTime"))
         if at_ms is None:
             continue
         parsed = _parse_order_doc(doc, codes)
@@ -294,7 +327,7 @@ def _business_events(
     events: List[Dict[str, Any]] = []
     wid = wo.work_order_id
 
-    state_ms = _parse_at_ms(wo.completed_at)
+    state_ms = _parse_utc_naive_ms(wo.completed_at)
     if state_ms:
         stale = f" · 停留 {wo.stale_days} 天" if wo.stale_days else ""
         events.append(
@@ -355,7 +388,7 @@ def _business_events(
                 .sort("createTime", -1)
                 .limit(15)
             ):
-                at_ms = _parse_at_ms(wn.get("createTime"))
+                at_ms = _parse_utc_naive_ms(wn.get("createTime"))
                 if at_ms is None:
                     continue
                 name = str(wn.get("nodeName") or wn.get("name") or "流程节点")
@@ -393,7 +426,7 @@ def _business_events(
                 .sort("createTime", -1)
                 .limit(8)
             ):
-                at_ms = _parse_at_ms(doc.get("createTime")) or _parse_at_ms(
+                at_ms = _parse_utc_naive_ms(doc.get("createTime")) or _parse_utc_naive_ms(
                     doc.get("updateTime")
                 )
                 if at_ms is None:
@@ -428,7 +461,7 @@ def _business_events(
             pass
 
     for c in ctx.contracts[:5]:
-        at_ms = _parse_at_ms(c.get("signed_at"))
+        at_ms = _parse_utc_naive_ms(c.get("signed_at"))
         if at_ms is None:
             continue
         amt = c.get("amount_yuan")
