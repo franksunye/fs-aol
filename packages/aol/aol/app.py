@@ -180,7 +180,11 @@ def run(cfg: Optional[Config] = None) -> int:
                 if status not in ("send_failed", "reanalyzed_send_failed"):
                     store.mark_processed(wo, suggestion, status)
                     try:
-                        store.refresh_timeline(cfg, wo, suggestion, trace)
+                        log_row = store.get_follow_up_log(wo.dedupe_key)
+                        if log_row:
+                            store.refresh_timeline_for_log(cfg, log_row)
+                        else:
+                            store.refresh_timeline(cfg, wo, suggestion, trace)
                     except Exception:
                         logger.exception("工单 %s 时间轴物化失败（不影响主流程）。", ref)
                     success += 1
@@ -199,12 +203,14 @@ def run(cfg: Optional[Config] = None) -> int:
                 reanalyzed,
             )
         try:
-            from .inbox.sync import run_inbox_sync
+            from .inbox.sync import run_inbox_sync, run_timeline_refresh
 
             inbox_stats = run_inbox_sync(cfg, store, only_active=True)
             logger.info("收件箱同步: %s", inbox_stats)
+            timeline_stats = run_timeline_refresh(cfg, store, only_active=False)
+            logger.info("时间轴同步: %s", timeline_stats)
         except Exception:
-            logger.exception("收件箱同步失败（不影响主流程）。")
+            logger.exception("收件箱/时间轴同步失败（不影响主流程）。")
         return 0
     finally:
         store.close()

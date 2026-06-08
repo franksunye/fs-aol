@@ -38,6 +38,29 @@ _DECISION_LABELS = {
     "followed_up": "已跟进",
 }
 
+_INBOX_BUCKET_LABELS = {
+    "active": "待处置",
+    "closed": "已处置",
+    "archived": "归档",
+}
+
+_ARCHIVE_REASON_LABELS = {
+    "has_outcome": "已有处置反馈",
+    "agent_no_follow": "Agent 判定无需跟进",
+    "left_wedge": "已离开跟进楔子（非待签约等触发状态）",
+    "signed_contract": "已有生效签约",
+    "paid_and_signed": "已签约且已支付",
+    "mongo_missing": "Mongo 无此工单",
+}
+
+_LOG_STATUS_LABELS = {
+    "sent": "已推送",
+    "reanalyzed": "再分析已推送",
+    "reanalyzed_no_push": "再分析未推送企微",
+    "reanalyzed_send_failed": "再分析推送失败",
+    "reanalyzed_skipped_no_follow_up": "再分析·无需跟进",
+}
+
 
 def _parse_bj_wall_ms(value: Any) -> Optional[int]:
     """exts.*Str 或引擎 bj_now ISO：墙上时间为北京时间。"""
@@ -719,18 +742,18 @@ def _business_events(
     return events
 
 
-def _agent_events(
-    wo: WorkOrder,
+def _events_for_trace(
+    wid: str,
     dedupe_key: str,
-    suggestion: FollowUpSuggestion,
     trace: "ReasoningTrace",
-    store: "TrackingStore",
+    index: int,
 ) -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
-    wid = wo.work_order_id
     trace_ms = _parse_at_ms(trace.created_at) or _parse_at_ms(bj_now().isoformat())
     if trace_ms is None:
         trace_ms = 0
+
+    is_reanalysis = index > 0 or "reanaly" in (trace.mode or "").lower()
 
     if trace.steps_json:
         try:
@@ -748,26 +771,152 @@ def _agent_events(
                         lane="agent",
                         kind="enrich",
                         at_ms=trace_ms,
-                        title="系统查证",
+                        title="系统查证" if not is_reanalysis else "再分析 · 系统查证",
                         summary=verdict[:200] if verdict else "已完成业务查证",
                     )
                 )
                 break
 
-    primary = (suggestion.action_plan.primary_action or suggestion.reason_summary or "")[
-        :120
-    ]
+    parsed = trace.parsed if isinstance(trace.parsed, dict) else {}
+    priority = str(parsed.get("优先级") or parsed.get("priority") or "").strip()
+    reason = str(parsed.get("原因摘要") or "").strip()
+    primary = str(
+        (parsed.get("跟进方案") or {}).get("主行动")
+        or parsed.get("主行动")
+        or reason
+        or ""
+    ).strip()[:120]
+
+    summary_parts: List[str] = []
+    if priority:
+        summary_parts.append(f"优先级 {priority}")
+    if primary:
+        summary_parts.append(primary)
+    elif reason:
+        summary_parts.append(reason[:100])
+    mode_hint = trace.mode or ""
+    if mode_hint and is_reanalysis:
+        summary_parts.append(f"({mode_hint})")
+
     events.append(
         _event(
             work_order_id=wid,
             dedupe_key=dedupe_key,
             lane="agent",
-            kind="suggestion",
+            kind="reanalysis" if is_reanalysis else "suggestion",
             at_ms=trace_ms,
-            title="生成跟进建议",
-            summary=primary or f"优先级 {suggestion.priority}",
+            title="再分析 · 跟进建议" if is_reanalysis else "生成跟进建议",
+            summary=" · ".join(summary_parts) or "—",
         )
     )
+    return events
+
+
+def _inbox_events(
+    log_row: Dict[str, Any],
+    *,
+    work_order_id: str,
+    dedupe_key: str,
+) -> List[Dict[str, Any]]:
+    bucket = str(log_row.get("inbox_bucket") or "active").strip() or "active"
+    reason = str(log_row.get("archive_reason") or "").strip()
+    if bucket == "active" and not reason:
+        return []
+
+    at_ms = _parse_at_ms(log_row.get("reconciled_at"))
+    if at_ms is None:
+        at_ms = _parse_at_ms(bj_now().isoformat()) or 0
+
+    bucket_label = _INBOX_BUCKET_LABELS.get(bucket, bucket)
+    parts: List[str] = []
+    if reason:
+        parts.append(_ARCHIVE_REASON_LABELS.get(reason, reason))
+    mongo_status = str(log_row.get("mongo_status") or "").strip()
+    if mongo_status:
+        parts.append(f"Mongo status {mongo_status}")
+    live = str(log_row.get("live_verdict") or "").replace("【结论】", "").strip()
+    if live:
+        parts.append(live[:160])
+
+    return [
+        _event(
+            work_order_id=work_order_id,
+            dedupe_key=dedupe_key,
+            lane="agent",
+            kind="inbox",
+            at_ms=at_ms,
+            title=f"收件箱 · {bucket_label}",
+            summary=" · ".join(parts) if parts else bucket_label,
+        )
+    ]
+
+
+def _stale_snapshot_event(
+    cfg: "Config",
+    log_row: Dict[str, Any],
+    *,
+    work_order_id: str,
+    dedupe_key: str,
+    outcome: Any,
+) -> Optional[Dict[str, Any]]:
+    from ..reprocess.time_trigger import (
+        resolve_analyzed_stale_days,
+        resolve_current_stale_days,
+        should_time_reprocess_log,
+    )
+
+    bucket = str(log_row.get("inbox_bucket") or "active").strip() or "active"
+    if bucket != "active":
+        return None
+
+    now_ms = _parse_at_ms(log_row.get("reconciled_at"))
+    if now_ms is None:
+        now_ms = _parse_at_ms(bj_now().isoformat()) or 0
+
+    current = resolve_current_stale_days(log_row)
+    analyzed = resolve_analyzed_stale_days(log_row)
+    parts = [f"当前滞留 {current} 天", f"上次 Agent 分析时 {analyzed} 天"]
+    processed_at = str(log_row.get("processed_at") or "").strip()
+    if processed_at:
+        parts.append(f"分析于 {processed_at[:16].replace('T', ' ')}")
+    log_status = str(log_row.get("status") or "").strip()
+    if log_status:
+        parts.append(_LOG_STATUS_LABELS.get(log_status, log_status))
+
+    pending = should_time_reprocess_log(cfg, log_row, outcome)
+    if pending:
+        parts.append("已达再分析条件，等待下轮 Agent 入池")
+
+    return _event(
+        work_order_id=work_order_id,
+        dedupe_key=dedupe_key,
+        lane="agent",
+        kind="reanalyze_pending" if pending else "stale_snapshot",
+        at_ms=now_ms,
+        title="待再次分析" if pending else "滞留快照",
+        summary=" · ".join(parts),
+    )
+
+
+def _agent_events(
+    wo: WorkOrder,
+    dedupe_key: str,
+    suggestion: FollowUpSuggestion,
+    trace: "ReasoningTrace",
+    store: "TrackingStore",
+    *,
+    cfg: Optional["Config"] = None,
+    log_row: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
+    wid = wo.work_order_id
+
+    traces = store.list_traces_for_work_order(wid)
+    if not traces:
+        traces = [trace]
+
+    for idx, t in enumerate(traces):
+        events.extend(_events_for_trace(wid, dedupe_key, t, idx))
 
     outcome = store.get_latest_outcome(dedupe_key)
     if outcome and outcome.decision:
@@ -805,6 +954,24 @@ def _agent_events(
                 )
             )
 
+    if log_row and cfg:
+        snap = _stale_snapshot_event(
+            cfg,
+            log_row,
+            work_order_id=wid,
+            dedupe_key=dedupe_key,
+            outcome=outcome,
+        )
+        if snap:
+            events.append(snap)
+        events.extend(
+            _inbox_events(
+                log_row,
+                work_order_id=wid,
+                dedupe_key=dedupe_key,
+            )
+        )
+
     return events
 
 
@@ -814,9 +981,22 @@ def build_timeline_events(
     suggestion: FollowUpSuggestion,
     trace: "ReasoningTrace",
     store: "TrackingStore",
+    *,
+    log_row: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
+    dedupe_key = wo.dedupe_key or str((log_row or {}).get("dedupe_key") or "")
     ctx = enrich_work_order_context(cfg, wo)
-    events = _business_events(cfg, wo, wo.dedupe_key, ctx)
-    events.extend(_agent_events(wo, wo.dedupe_key, suggestion, trace, store))
+    events = _business_events(cfg, wo, dedupe_key, ctx)
+    events.extend(
+        _agent_events(
+            wo,
+            dedupe_key,
+            suggestion,
+            trace,
+            store,
+            cfg=cfg,
+            log_row=log_row,
+        )
+    )
     events.sort(key=lambda e: e["at_ms"], reverse=True)
     return events

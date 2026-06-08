@@ -416,17 +416,7 @@ class TrackingStore:
             rows = rows[:limit]
         return rows
 
-    def get_latest_trace(self, work_order_id: str) -> Optional[ReasoningTrace]:
-        row = self._fetchone_dict(
-            f"""
-            SELECT * FROM {TABLE_TRACES}
-            WHERE work_order_id = ?
-            ORDER BY id DESC LIMIT 1
-            """,
-            (work_order_id,),
-        )
-        if not row:
-            return None
+    def _row_to_reasoning_trace(self, row: Dict[str, Any]) -> ReasoningTrace:
         parsed_raw = row.get("parsed")
         parsed: Optional[Dict[str, Any]] = None
         if parsed_raw:
@@ -452,6 +442,41 @@ class TrackingStore:
             steps_json=str(row.get("steps_json") or ""),
             created_at=str(row.get("created_at") or ""),
         )
+
+    def get_latest_trace(self, work_order_id: str) -> Optional[ReasoningTrace]:
+        row = self._fetchone_dict(
+            f"""
+            SELECT * FROM {TABLE_TRACES}
+            WHERE work_order_id = ?
+            ORDER BY id DESC LIMIT 1
+            """,
+            (work_order_id,),
+        )
+        if not row:
+            return None
+        trace = self._row_to_reasoning_trace(row)
+        trace.latency_ms = int(row.get("latency_ms") or 0)
+        return trace
+
+    def list_traces_for_work_order(
+        self, work_order_id: str, *, limit: int = 30
+    ) -> List[ReasoningTrace]:
+        """按时间正序返回推理 trace（用于时间轴展示再分析历史）。"""
+        rows = self._fetchall_dicts(
+            f"""
+            SELECT * FROM {TABLE_TRACES}
+            WHERE work_order_id = ?
+            ORDER BY id ASC
+            LIMIT ?
+            """,
+            (work_order_id, max(1, limit)),
+        )
+        out: List[ReasoningTrace] = []
+        for row in rows:
+            trace = self._row_to_reasoning_trace(row)
+            trace.latency_ms = int(row.get("latency_ms") or 0)
+            out.append(trace)
+        return out
 
     def _work_order_for_backfill(
         self, cfg: Config, log: Dict[str, Any]
@@ -489,8 +514,8 @@ class TrackingStore:
             event_type=event_type,
         )
 
-    def backfill_timeline_for_log(self, cfg: Config, log: Dict[str, Any]) -> bool:
-        """用已落库的 suggestion + trace 重物化时间轴（不重新推理、不推企微）。"""
+    def refresh_timeline_for_log(self, cfg: Config, log: Dict[str, Any]) -> bool:
+        """用 Mongo 最新事实 + logs/trace/outcomes 重物化时间轴（不跑 LLM）。"""
         dedupe_key = str(log.get("dedupe_key") or "")
         wid = str(log.get("work_order_id") or "")
         if not dedupe_key or not wid:
@@ -506,7 +531,7 @@ class TrackingStore:
                 else raw_suggestion
             )
         except (json.JSONDecodeError, TypeError, ValueError):
-            logger.warning("工单 %s suggestion JSON 无效，跳过回填。", wid)
+            logger.warning("工单 %s suggestion JSON 无效，跳过时间轴刷新。", wid)
             return False
 
         trace = self.get_latest_trace(wid)
@@ -519,8 +544,12 @@ class TrackingStore:
             )
 
         wo = self._work_order_for_backfill(cfg, log)
-        self.refresh_timeline(cfg, wo, suggestion, trace)
+        self.refresh_timeline(cfg, wo, suggestion, trace, log_row=log)
         return True
+
+    def backfill_timeline_for_log(self, cfg: Config, log: Dict[str, Any]) -> bool:
+        """兼容旧名：等同 refresh_timeline_for_log。"""
+        return self.refresh_timeline_for_log(cfg, log)
 
     def backfill_timelines(
         self,
@@ -564,9 +593,13 @@ class TrackingStore:
         wo: WorkOrder,
         suggestion: FollowUpSuggestion,
         trace: ReasoningTrace,
+        *,
+        log_row: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """跑单后物化时间轴（纯 A：Console 只读此表）。"""
-        events = build_timeline_events(cfg, wo, suggestion, trace, self)
+        """跑单或同步后物化时间轴（纯 A：Console 只读此表）。"""
+        events = build_timeline_events(
+            cfg, wo, suggestion, trace, self, log_row=log_row
+        )
         if self._conn is not None:
             self._conn.execute(
                 f"DELETE FROM {TABLE_TIMELINE} WHERE work_order_id = ?",

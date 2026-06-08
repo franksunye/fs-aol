@@ -65,7 +65,9 @@ def polish_suggestion(
     if enrich_ctx and enrich_ctx.has_quote and _has_high_value_part(enrich_ctx):
         if amt and amt >= 15000 and s.priority == "中":
             s.priority = "高"
-    if stale >= 7 and s.priority == "低":
+    if stale >= 7 and s.priority in ("低", "中"):
+        s.priority = "高"
+    elif stale >= 3 and s.priority == "低":
         s.priority = "中"
 
     # 客户情绪：默认中性，除非查证文本有明确证据

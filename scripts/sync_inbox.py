@@ -30,7 +30,7 @@ logger = logging.getLogger("sync_inbox")
 
 def main() -> int:
     from aol.config import Config
-    from aol.inbox.sync import run_inbox_sync
+    from aol.inbox.sync import run_inbox_sync, run_timeline_refresh
     from aol.tracking.store import TrackingStore
 
     parser = argparse.ArgumentParser(description="同步收件箱资格 inbox_bucket")
@@ -42,21 +42,42 @@ def main() -> int:
     parser.add_argument("--order-num", help="指定工单号")
     parser.add_argument("--limit", type=int, default=0, help="最多处理 N 条")
     parser.add_argument("--dry-run", action="store_true", help="只打印不落库")
+    parser.add_argument(
+        "--refresh-timelines",
+        action="store_true",
+        help="同步后刷新全部工单时间轴（默认仅 cron 自动刷新）",
+    )
+    parser.add_argument(
+        "--timelines-only",
+        action="store_true",
+        help="仅刷新时间轴，不跑 inbox_bucket 同步",
+    )
     args = parser.parse_args()
 
     limit = args.limit if args.limit > 0 else None
     cfg = Config()
     store = TrackingStore(cfg)
     try:
-        stats = run_inbox_sync(
-            cfg,
-            store,
-            dry_run=args.dry_run,
-            limit=limit,
-            order_num=args.order_num,
-            only_active=not args.all and not args.order_num,
-        )
-        logger.info("完成: %s", stats)
+        if not args.timelines_only:
+            stats = run_inbox_sync(
+                cfg,
+                store,
+                dry_run=args.dry_run,
+                limit=limit,
+                order_num=args.order_num,
+                only_active=not args.all and not args.order_num,
+            )
+            logger.info("inbox 完成: %s", stats)
+        if args.refresh_timelines or args.timelines_only:
+            tl = run_timeline_refresh(
+                cfg,
+                store,
+                dry_run=args.dry_run,
+                limit=limit,
+                order_num=args.order_num,
+                only_active=False,
+            )
+            logger.info("时间轴完成: %s", tl)
     finally:
         store.close()
     return 0

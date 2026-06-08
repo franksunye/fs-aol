@@ -67,4 +67,5 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             args+=(--dry-run)
           fi
+          args+=(--refresh-timelines)
           python scripts/sync_inbox.py "${args[@]}"

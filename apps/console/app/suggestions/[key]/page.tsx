@@ -20,6 +20,8 @@ import {
   INBOX_TAB_LABELS,
   archiveReasonLabel,
 } from "@/lib/labels";
+import { analysisMetaLines } from "@/lib/analysis-meta";
+import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +105,8 @@ export default async function SuggestionDetail({
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
   const timelineEvents = await getTimelineEvents(row.workOrderId);
+  const staleDays = computeStaleDaysFromStateAt(row.stateAt);
+  const analysisLines = analysisMetaLines(row);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-8">
@@ -139,6 +143,24 @@ export default async function SuggestionDetail({
           <p className="text-muted-foreground mt-2 text-xs">
             上方卡片为 Agent 快照；处置与归档以本栏及 Mongo 现状为准。
           </p>
+        </Card>
+      ) : null}
+
+      {analysisLines.length > 0 ? (
+        <Card className="mb-4 border-violet-500/25 bg-violet-500/5 p-4 text-sm">
+          <div className="font-medium text-violet-900 dark:text-violet-200">
+            Agent 分析时效
+            {staleDays != null ? (
+              <span className="text-muted-foreground ml-2 font-normal">
+                滞留 {staleDays} 天
+              </span>
+            ) : null}
+          </div>
+          <ul className="text-muted-foreground mt-2 space-y-1 text-xs leading-relaxed">
+            {analysisLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
         </Card>
       ) : null}
 

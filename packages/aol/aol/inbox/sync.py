@@ -106,7 +106,18 @@ def reconcile_inbox_row(
 
 
 def _fetch_sa_docs(cfg: Config, work_order_ids: List[str]) -> Dict[str, Dict[str, Any]]:
-    if not work_order_ids or cfg.fsm_source != "mongo" or not cfg.fsm_mongo_url:
+    if not work_order_ids:
+        return {}
+    if cfg.fsm_source == "mock":
+        from ..domain import MOCK_FOLLOW_UP_206_RECORDS
+
+        want = set(work_order_ids)
+        return {
+            str(d["_id"]): d
+            for d in MOCK_FOLLOW_UP_206_RECORDS
+            if str(d.get("_id")) in want
+        }
+    if cfg.fsm_source != "mongo" or not cfg.fsm_mongo_url:
         return {}
     from pymongo import MongoClient
 
@@ -192,4 +203,37 @@ def run_inbox_sync(
             "[dry-run]" if dry_run else "",
         )
 
+    return stats
+
+
+def run_timeline_refresh(
+    cfg: Config,
+    store: "TrackingStore",
+    *,
+    dry_run: bool = False,
+    limit: Optional[int] = None,
+    order_num: Optional[str] = None,
+    only_active: bool = False,
+) -> Dict[str, int]:
+    """刷新 Console 可见工单的时间轴（业务轨 + Agent 轨，不跑 LLM）。"""
+    logs = store.list_logs_for_inbox_sync(
+        only_active=only_active and not (order_num or ""),
+        limit=limit,
+        order_num=order_num,
+    )
+    stats = {"total": len(logs), "ok": 0, "fail": 0, "skipped": 0}
+    for log in logs:
+        ref = log.get("order_num") or log.get("work_order_id")
+        if dry_run:
+            stats["ok"] += 1
+            continue
+        try:
+            if store.refresh_timeline_for_log(cfg, log):
+                stats["ok"] += 1
+                logger.info("时间轴已刷新: %s", ref)
+            else:
+                stats["skipped"] += 1
+        except Exception:
+            stats["fail"] += 1
+            logger.exception("时间轴刷新失败: %s", ref)
     return stats

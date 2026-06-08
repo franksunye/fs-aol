@@ -249,6 +249,11 @@ function TimelineRow({
   onOpen: (m: DetailModal) => void;
 }) {
   const Icon = ev.lane === "business" ? Database : Sparkles;
+  const agentHighlight =
+    ev.lane === "agent" &&
+    ["reanalysis", "reanalyze_pending", "inbox", "stale_snapshot"].includes(
+      ev.kind
+    );
   const detailLink =
     ev.kind === "survey" && ev.survey
       ? { label: "查看勘察表单", modal: { type: "survey" as const, data: ev.survey } }
@@ -271,14 +276,20 @@ function TimelineRow({
         className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
           ev.lane === "business"
             ? "bg-blue-500/10 text-blue-600"
-            : "bg-violet-500/10 text-violet-600"
+            : agentHighlight
+              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+              : "bg-violet-500/10 text-violet-600"
         }`}
       >
         <Icon className="h-3.5 w-3.5" />
       </span>
       <div className="min-w-0 flex-1 pt-0.5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-sm font-medium">{ev.title}</span>
+          <span
+            className={`text-sm font-medium ${agentHighlight ? "text-amber-900 dark:text-amber-100" : ""}`}
+          >
+            {ev.title}
+          </span>
           <span className="text-muted-foreground font-mono text-[11px]">
             {formatAt(ev.at, ev.atMs)}
           </span>

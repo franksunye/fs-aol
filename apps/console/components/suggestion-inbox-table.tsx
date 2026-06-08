@@ -9,6 +9,7 @@ import {
   priorityClasses,
   decisionClasses,
   encodeKey,
+  archiveReasonLabel,
 } from "@/lib/labels";
 import { blockerDisplay } from "@/lib/blockers";
 import {
@@ -103,6 +104,14 @@ export function SuggestionInboxTable({
                     {stage ? (
                       <Badge variant="outline" className="text-[10px] font-normal">
                         {stage}
+                      </Badge>
+                    ) : null}
+                    {r.archiveReason ? (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] font-normal"
+                      >
+                        {archiveReasonLabel(r.archiveReason)}
                       </Badge>
                     ) : null}
                   </div>

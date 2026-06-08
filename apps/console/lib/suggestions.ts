@@ -69,6 +69,8 @@ export interface SuggestionRow {
   reconciledAt: string | null;
   mongoStatus: string;
   liveVerdict: string;
+  /** 上次 Agent 分析时的滞留天数快照 */
+  analyzedStaleDays: number | null;
 }
 
 export interface TraceStep {
@@ -208,6 +210,10 @@ function mapSuggestion(
     reconciledAt: str(row.reconciled_at).trim() || null,
     mongoStatus: str(row.mongo_status),
     liveVerdict: str(row.live_verdict),
+    analyzedStaleDays:
+      row.analyzed_stale_days != null && String(row.analyzed_stale_days).trim() !== ""
+        ? Number(row.analyzed_stale_days)
+        : null,
   };
 }
 
