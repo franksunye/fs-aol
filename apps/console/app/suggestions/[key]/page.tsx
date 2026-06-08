@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
-import { getSuggestion, type SuggestionDoc } from "@/lib/suggestions";
+import {
+  getSuggestion,
+  listTracesLite,
+} from "@/lib/suggestions";
 import { getTimelineEvents } from "@/lib/timeline";
-import { TracePanelLazy } from "@/components/trace-panel-lazy";
+import { AgentAnalysisPanel } from "@/components/agent-analysis-panel";
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
+import { DetailTabBar } from "@/components/detail-tab-bar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DecisionActions } from "@/components/decision-actions";
 import { BlockerFeedbackForm } from "@/components/blocker-feedback";
 import {
@@ -19,94 +23,50 @@ import {
   decisionClasses,
   INBOX_TAB_LABELS,
   archiveReasonLabel,
+  encodeKey,
 } from "@/lib/labels";
 import { analysisMetaLines } from "@/lib/analysis-meta";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
+import {
+  buildTimelineRoundLinks,
+  parseAgentRound,
+  parseDetailTab,
+} from "@/lib/agent-rounds";
 
 export const dynamic = "force-dynamic";
 
-function Field({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return (
-    <div>
-      <div className="text-muted-foreground text-xs">{label}</div>
-      <div className="text-sm">{value}</div>
-    </div>
-  );
-}
-
-function ListBlock({ title, items }: { title: string; items?: string[] }) {
-  if (!items || items.length === 0) return null;
-  return (
-    <div>
-      <h3 className="mb-2 text-sm font-medium">{title}</h3>
-      <ul className="space-y-1.5">
-        {items.map((it, i) => (
-          <li key={i} className="flex gap-2 text-sm">
-            <span className="text-muted-foreground font-mono text-xs">
-              {i + 1}
-            </span>
-            <span>{it}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function PlanView({ s, title }: { s: SuggestionDoc; title?: string }) {
-  const sit = s.情况判断 ?? {};
-  const plan = s.跟进方案 ?? {};
-  return (
-    <div className="space-y-6">
-      {title ? (
-        <Badge variant="secondary" className="text-xs">
-          {title}
-        </Badge>
-      ) : null}
-      {s.原因摘要 ? (
-        <p className="text-base leading-relaxed">{s.原因摘要}</p>
-      ) : null}
-
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Field label="商机阶段" value={sit.商机阶段} />
-        <Field label="报价状态" value={sit.报价状态} />
-        <Field label="金额与方案" value={sit.金额与方案} />
-        <Field label="渠道与部位" value={sit.渠道与部位} />
-      </div>
-
-      <Separator />
-
-      {plan.主行动 ? (
-        <div>
-          <h3 className="mb-1 text-sm font-medium">主行动</h3>
-          <p className="text-sm">{plan.主行动}</p>
-        </div>
-      ) : null}
-
-      <ListBlock title="优先级依据" items={s.优先级依据} />
-      <ListBlock title="沟通要点" items={plan.沟通要点} />
-      <ListBlock title="避免事项" items={plan.避免事项} />
-      <ListBlock title="引用查证" items={s.引用查证} />
-    </div>
-  );
-}
-
 export default async function SuggestionDetail({
   params,
+  searchParams,
 }: {
   params: Promise<{ key: string }>;
+  searchParams: Promise<{ tab?: string; round?: string }>;
 }) {
   const { key } = await params;
+  const sp = await searchParams;
   const dedupeKey = decodeURIComponent(key);
   const row = await getSuggestion(dedupeKey);
   if (!row) notFound();
 
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
-  const timelineEvents = await getTimelineEvents(row.workOrderId);
+  const [timelineEvents, traces] = await Promise.all([
+    getTimelineEvents(row.workOrderId),
+    listTracesLite(row.workOrderId),
+  ]);
+
+  const analysisCount = Math.max(traces.length, 1);
+  const tab = parseDetailTab(sp.tab);
+  const initialRound = parseAgentRound(sp.round, traces.length);
+  const roundLinksMap = buildTimelineRoundLinks(timelineEvents, traces);
+  const roundLinks: Record<number, number> = {};
+  roundLinksMap.forEach((v, k) => {
+    roundLinks[k] = v;
+  });
+
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
   const analysisLines = analysisMetaLines(row);
+  const detailBase = `/suggestions/${encodeKey(dedupeKey)}`;
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-8">
@@ -141,7 +101,8 @@ export default async function SuggestionDetail({
             </div>
           ) : null}
           <p className="text-muted-foreground mt-2 text-xs">
-            上方卡片为 Agent 快照；处置与归档以本栏及 Mongo 现状为准。
+            处置与归档以本栏及 Mongo 现状为准；Agent 分析 Tab
+            可查看各轮方案与查证。
           </p>
         </Card>
       ) : null}
@@ -174,6 +135,9 @@ export default async function SuggestionDetail({
               {eventTypeLabel(row.eventType)} · {row.city || "—"} ·{" "}
               {statusLabel(row.status)}
             </div>
+            <p className="text-muted-foreground text-xs">
+              当前建议（第 {analysisCount} 次 Agent 分析）
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={priorityClasses(s.优先级)}>
@@ -207,34 +171,41 @@ export default async function SuggestionDetail({
         </div>
       </Card>
 
-      <Tabs defaultValue="plan">
-        <TabsList>
-          <TabsTrigger value="plan">跟进方案</TabsTrigger>
-          <TabsTrigger value="trace">推理与查证</TabsTrigger>
-          <TabsTrigger value="timeline">业务时间轴</TabsTrigger>
-        </TabsList>
-        <TabsContent value="plan" className="pt-2">
-          <Card className="p-5">
-            <PlanView s={s} />
-            {modified ? (
-              <>
-                <Separator className="my-6" />
-                <PlanView s={modified} title="人工修改后的方案" />
-              </>
-            ) : null}
-          </Card>
-        </TabsContent>
-        <TabsContent value="trace" className="pt-2">
-          <Card className="p-5">
-            <TracePanelLazy workOrderId={row.workOrderId} />
-          </Card>
-        </TabsContent>
-        <TabsContent value="timeline" className="pt-2">
-          <Card className="p-5">
-            <PlanTimelineSection events={timelineEvents} />
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <div className="mb-3">
+        <DetailTabBar
+          baseHref={detailBase}
+          active={tab}
+          analysisCount={analysisCount}
+        />
+      </div>
+
+      {tab === "agent" ? (
+        <Card className="p-5">
+          <Suspense
+            fallback={
+              <p className="text-muted-foreground animate-pulse text-sm">
+                加载 Agent 分析…
+              </p>
+            }
+          >
+            <AgentAnalysisPanel
+              workOrderId={row.workOrderId}
+              dedupeKey={row.dedupeKey}
+              fallbackSuggestion={s}
+              modifiedSuggestion={modified}
+              initialRound={initialRound}
+            />
+          </Suspense>
+        </Card>
+      ) : (
+        <Card className="p-5">
+          <PlanTimelineSection
+            events={timelineEvents}
+            roundLinks={roundLinks}
+            suggestionBaseHref={detailBase}
+          />
+        </Card>
+      )}
     </main>
   );
 }

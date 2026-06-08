@@ -807,6 +807,7 @@ def _events_for_trace(
             at_ms=trace_ms,
             title="再分析 · 跟进建议" if is_reanalysis else "生成跟进建议",
             summary=" · ".join(summary_parts) or "—",
+            payload={"trace_round": index + 1},
         )
     )
     return events

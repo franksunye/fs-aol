@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Database, Sparkles } from "lucide-react";
 import type {
   AppointmentPayload,
@@ -244,9 +245,11 @@ type DetailModal =
 function TimelineRow({
   ev,
   onOpen,
+  agentRoundHref,
 }: {
   ev: TimelineEvent;
   onOpen: (m: DetailModal) => void;
+  agentRoundHref?: string;
 }) {
   const Icon = ev.lane === "business" ? Database : Sparkles;
   const agentHighlight =
@@ -309,12 +312,30 @@ function TimelineRow({
             {detailLink.label}
           </Button>
         ) : null}
+        {agentRoundHref ? (
+          <Link
+            href={agentRoundHref}
+            className="text-primary mt-1 inline-block text-xs hover:underline"
+          >
+            查看此次 Agent 分析 →
+          </Link>
+        ) : null}
       </div>
     </li>
   );
 }
 
-export function PlanTimelineSection({ events }: { events: TimelineEvent[] }) {
+export function PlanTimelineSection({
+  events,
+  roundLinks,
+  suggestionBaseHref,
+}: {
+  events: TimelineEvent[];
+  /** event id → 1-based trace round */
+  roundLinks?: Record<number, number>;
+  /** e.g. /suggestions/KEY — 用于跳转 Agent 分析 Tab */
+  suggestionBaseHref?: string;
+}) {
   const [modal, setModal] = useState<DetailModal>(null);
 
   const title =
@@ -329,18 +350,32 @@ export function PlanTimelineSection({ events }: { events: TimelineEvent[] }) {
   return (
     <>
       <p className="text-muted-foreground mb-4 text-xs">
-        业务事实与 Agent 工作记录；数据在引擎跑单后更新。
+        业务里程碑与 Agent 工作记录（含多次分析、归档、管家反馈）。引擎每轮
+        cron 或 Sync Inbox 会刷新。
       </p>
 
       {events.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          暂无记录。待 AOL 引擎处理该工单后会生成时间轴。
+          暂无时间轴。请确认引擎已处理该工单，或在运维侧执行 inbox /
+          timeline 同步。
         </p>
       ) : (
         <ol className="relative">
-          {events.map((ev) => (
-            <TimelineRow key={ev.id} ev={ev} onOpen={setModal} />
-          ))}
+          {events.map((ev) => {
+            const round = roundLinks?.[ev.id];
+            const agentRoundHref =
+              round != null && suggestionBaseHref
+                ? `${suggestionBaseHref}?tab=agent&round=${round}`
+                : undefined;
+            return (
+              <TimelineRow
+                key={ev.id}
+                ev={ev}
+                onOpen={setModal}
+                agentRoundHref={agentRoundHref}
+              />
+            );
+          })}
         </ol>
       )}
 

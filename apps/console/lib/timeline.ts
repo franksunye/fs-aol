@@ -71,6 +71,8 @@ export interface TimelineEvent {
   survey: SurveyPayload | null;
   appointment: AppointmentPayload | null;
   quote: QuotePayload | null;
+  /** Agent 分析轮次（1-based），来自 timeline payload */
+  traceRound: number | null;
 }
 
 function str(value: unknown): string {
@@ -210,6 +212,12 @@ export async function getTimelineEvents(
   return rows.map((row) => {
     const kind = str(row.kind);
     const payload = row.payload_json;
+    const payloadObj = parsePayloadJson(payload);
+    const traceRoundRaw = payloadObj?.trace_round;
+    const traceRound =
+      traceRoundRaw != null && String(traceRoundRaw).trim() !== ""
+        ? Number(traceRoundRaw)
+        : null;
     return {
       id: Number(row.id),
       workOrderId: str(row.work_order_id),
@@ -225,6 +233,10 @@ export async function getTimelineEvents(
       appointment:
         kind === "appointment" ? parseAppointmentPayload(payload) : null,
       quote: kind === "quote" ? parseQuotePayload(payload) : null,
+      traceRound:
+        traceRound != null && Number.isFinite(traceRound) && traceRound > 0
+          ? traceRound
+          : null,
     };
   });
 }
