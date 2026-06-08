@@ -194,6 +194,14 @@ export default async function SuggestionDetail({
               fallbackSuggestion={s}
               modifiedSuggestion={modified}
               initialRound={initialRound}
+              logMeta={{
+                status: row.status,
+                stateAt: row.stateAt,
+                outcomeFollowedUpAt:
+                  row.outcome?.decision === "followed_up"
+                    ? row.outcome.createdAt
+                    : null,
+              }}
             />
           </Suspense>
         </Card>

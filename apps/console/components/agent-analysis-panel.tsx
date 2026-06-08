@@ -7,13 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlanView } from "@/components/plan-view";
 import { TraceView } from "@/components/trace-view";
+import { AnalysisDiffCard } from "@/components/analysis-diff-card";
 import type { SuggestionDoc, TraceRow } from "@/lib/suggestions";
 import {
   formatTraceRoundLabel,
   isReanalysisTrace,
   parseAgentRound,
 } from "@/lib/agent-rounds";
+import {
+  reanalysisTriggerTags,
+  staleDaysAt,
+  wecomPushMeta,
+} from "@/lib/reanalysis-triggers";
 import { priorityClasses } from "@/lib/labels";
+import { cn } from "@/lib/utils";
+
+export type AgentLogMeta = {
+  status: string;
+  stateAt: string | null;
+  outcomeFollowedUpAt: string | null;
+};
 
 export function AgentAnalysisPanel({
   workOrderId,
@@ -21,12 +34,14 @@ export function AgentAnalysisPanel({
   fallbackSuggestion,
   modifiedSuggestion,
   initialRound,
+  logMeta,
 }: {
   workOrderId: string;
   dedupeKey: string;
   fallbackSuggestion: SuggestionDoc;
   modifiedSuggestion: SuggestionDoc | null;
   initialRound: number;
+  logMeta: AgentLogMeta;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,12 +86,20 @@ export function AgentAnalysisPanel({
   );
   const roundIndex = round - 1;
   const activeTrace = sortedTraces[roundIndex] ?? null;
+  const prevTrace = roundIndex > 0 ? sortedTraces[roundIndex - 1] : null;
 
   const suggestionForRound: SuggestionDoc = useMemo(() => {
     if (activeTrace?.parsed) return activeTrace.parsed;
     if (roundIndex === 0) return fallbackSuggestion;
     return fallbackSuggestion;
   }, [activeTrace, fallbackSuggestion, roundIndex]);
+
+  const prevSuggestion: SuggestionDoc | null = useMemo(() => {
+    if (!prevTrace) return null;
+    if (prevTrace.parsed) return prevTrace.parsed;
+    if (roundIndex === 1) return fallbackSuggestion;
+    return null;
+  }, [prevTrace, fallbackSuggestion, roundIndex]);
 
   const setRound = useCallback(
     (nextRound: number) => {
@@ -109,6 +132,27 @@ export function AgentAnalysisPanel({
   const isReanalysis = activeTrace
     ? isReanalysisTrace(activeTrace, roundIndex)
     : false;
+
+  const triggerTags =
+    activeTrace && isReanalysis
+      ? reanalysisTriggerTags({
+          roundIndex,
+          trace: activeTrace,
+          prevTrace,
+          stateAt: logMeta.stateAt,
+          outcomeFollowedUpAt: logMeta.outcomeFollowedUpAt,
+        })
+      : [];
+
+  const pushMeta = wecomPushMeta(logMeta.status, {
+    isLatestRound: isLatest,
+    isReanalysis,
+  });
+
+  const staleAtRound =
+    activeTrace && logMeta.stateAt
+      ? staleDaysAt(logMeta.stateAt, Date.parse(activeTrace.createdAt))
+      : null;
 
   return (
     <div className="space-y-5">
@@ -148,12 +192,56 @@ export function AgentAnalysisPanel({
             优先级 {suggestionForRound.优先级}
           </Badge>
         ) : null}
+        {staleAtRound != null ? (
+          <Badge variant="secondary" className="text-[10px] font-normal">
+            当时滞留 {staleAtRound} 天
+          </Badge>
+        ) : null}
+        {pushMeta ? (
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[10px] font-normal",
+              pushMeta.tone === "sent" &&
+                "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
+              pushMeta.tone === "warn" &&
+                "border-red-500/40 text-red-600 dark:text-red-400"
+            )}
+          >
+            {pushMeta.label}
+          </Badge>
+        ) : null}
         {activeTrace?.mode ? (
           <span className="text-muted-foreground font-mono text-[11px]">
             {activeTrace.mode}
           </span>
         ) : null}
       </div>
+
+      {triggerTags.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {triggerTags.map((tag) => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="text-[10px] font-normal whitespace-normal"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      {prevSuggestion && round > 1 ? (
+        <>
+          <AnalysisDiffCard
+            prev={prevSuggestion}
+            cur={suggestionForRound}
+            round={round}
+          />
+          <Separator />
+        </>
+      ) : null}
 
       <section>
         <h3 className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">

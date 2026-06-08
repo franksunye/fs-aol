@@ -742,11 +742,68 @@ def _business_events(
     return events
 
 
+def _days_between_trace_times(prev: "ReasoningTrace", cur: "ReasoningTrace") -> int:
+    prev_ms = _parse_at_ms(prev.created_at)
+    cur_ms = _parse_at_ms(cur.created_at)
+    if prev_ms is None or cur_ms is None:
+        return 0
+    return max(0, int(abs(cur_ms - prev_ms) / 86_400_000))
+
+
+def _stale_days_at_state(state_at: str, at_ms: int) -> Optional[int]:
+    from datetime import datetime
+
+    from ..reprocess.time_trigger import compute_stale_days_from_state_at
+
+    ref = datetime.utcfromtimestamp(at_ms / 1000.0)
+    return compute_stale_days_from_state_at(state_at, now=ref)
+
+
+def _reanalysis_trigger_tags(
+    prev_trace: "ReasoningTrace",
+    trace: "ReasoningTrace",
+    *,
+    state_at: str = "",
+    interval_days: int = 3,
+    step_days: int = 7,
+) -> List[str]:
+    tags: List[str] = []
+    gap = _days_between_trace_times(prev_trace, trace)
+    if gap >= interval_days:
+        tags.append(f"间隔触发（距上轮 {gap} 天）")
+    cur_ms = _parse_at_ms(trace.created_at)
+    prev_ms = _parse_at_ms(prev_trace.created_at)
+    if cur_ms and prev_ms and state_at:
+        stale_now = _stale_days_at_state(state_at, cur_ms)
+        stale_prev = _stale_days_at_state(state_at, prev_ms)
+        if (
+            stale_now is not None
+            and stale_prev is not None
+            and stale_now >= stale_prev + step_days
+        ):
+            tags.append(f"滞留加重（{stale_prev}→{stale_now} 天）")
+    return tags or ["再分析（规则入池）"]
+
+
+def _wecom_push_label(log_status: str, *, is_reanalysis: bool) -> str:
+    s = (log_status or "").strip()
+    if not is_reanalysis:
+        if s == "sent":
+            return "企微已推送"
+        return ""
+    return _LOG_STATUS_LABELS.get(s, s)
+
+
 def _events_for_trace(
     wid: str,
     dedupe_key: str,
     trace: "ReasoningTrace",
     index: int,
+    *,
+    prev_trace: Optional["ReasoningTrace"] = None,
+    state_at: str = "",
+    log_status: str = "",
+    is_latest: bool = False,
 ) -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
     trace_ms = _parse_at_ms(trace.created_at) or _parse_at_ms(bj_now().isoformat())
@@ -794,9 +851,21 @@ def _events_for_trace(
         summary_parts.append(primary)
     elif reason:
         summary_parts.append(reason[:100])
-    mode_hint = trace.mode or ""
-    if mode_hint and is_reanalysis:
-        summary_parts.append(f"({mode_hint})")
+    trigger_tags: List[str] = []
+    if is_reanalysis and prev_trace is not None:
+        trigger_tags = _reanalysis_trigger_tags(
+            prev_trace, trace, state_at=state_at or ""
+        )
+        summary_parts.extend(trigger_tags[:2])
+
+    payload: Dict[str, Any] = {"trace_round": index + 1}
+    if trigger_tags:
+        payload["trigger_tags"] = trigger_tags
+    if is_latest and log_status:
+        push = _wecom_push_label(log_status, is_reanalysis=is_reanalysis)
+        if push:
+            payload["wecom_push"] = push
+            summary_parts.append(push)
 
     events.append(
         _event(
@@ -807,7 +876,7 @@ def _events_for_trace(
             at_ms=trace_ms,
             title="再分析 · 跟进建议" if is_reanalysis else "生成跟进建议",
             summary=" · ".join(summary_parts) or "—",
-            payload={"trace_round": index + 1},
+            payload=payload,
         )
     )
     return events
@@ -916,8 +985,23 @@ def _agent_events(
     if not traces:
         traces = [trace]
 
+    state_at = str((log_row or {}).get("state_at") or "")
+    log_status = str((log_row or {}).get("status") or "")
+    last_idx = len(traces) - 1
     for idx, t in enumerate(traces):
-        events.extend(_events_for_trace(wid, dedupe_key, t, idx))
+        prev = traces[idx - 1] if idx > 0 else None
+        events.extend(
+            _events_for_trace(
+                wid,
+                dedupe_key,
+                t,
+                idx,
+                prev_trace=prev,
+                state_at=state_at,
+                log_status=log_status,
+                is_latest=idx == last_idx,
+            )
+        )
 
     outcome = store.get_latest_outcome(dedupe_key)
     if outcome and outcome.decision:
