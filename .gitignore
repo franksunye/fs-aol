@@ -22,6 +22,8 @@ logs/
 .DS_Store
 
 # Node / Next.js（apps/console 与工作区根）
+package-lock.json
+apps/console/package-lock.json
 node_modules/
 .next/
 .turbo/

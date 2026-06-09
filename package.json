@@ -2,6 +2,7 @@
   "name": "fs-aol",
   "version": "0.3.5",
   "private": true,
+  "packageManager": "pnpm@10.31.0",
   "description": "FS-AOL monorepo: apps/console (Next.js) + packages/aol (Python engine).",
   "scripts": {
     "dev": "pnpm --filter console dev",
