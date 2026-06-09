@@ -34,9 +34,24 @@ export function OpportunitySnapshotCard({
     isReanalysis: row.status.startsWith("reanalyzed"),
   });
 
+  const headerQuote =
+    quoteSummary !== "—"
+      ? quoteSummary
+      : sit?.报价状态?.trim() || null;
+
   return (
-    <CaseSection title="工单快照" bodyClassName="space-y-4">
-      <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+    <CaseSection
+      title="工单快照"
+      bodyClassName="p-3"
+      action={
+        headerQuote ? (
+          <span className="text-muted-foreground max-w-[min(100%,28rem)] truncate text-right text-xs font-normal">
+            {headerQuote}
+          </span>
+        ) : null
+      }
+    >
+      <dl className="grid gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <dt className="text-muted-foreground text-xs">事件 / 城市</dt>
           <dd className="mt-0.5 font-medium">
@@ -99,12 +114,6 @@ export function OpportunitySnapshotCard({
           </dd>
         </div>
       </dl>
-
-      {quoteSummary !== "—" ? (
-        <p className="text-muted-foreground border-t border-border pt-3 text-xs leading-relaxed">
-          {quoteSummary}
-        </p>
-      ) : null}
     </CaseSection>
   );
 }
