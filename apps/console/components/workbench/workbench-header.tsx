@@ -48,6 +48,7 @@ export function WorkbenchHeader({
           size="sm"
           onClick={() => router.refresh()}
           className="gap-1.5"
+          aria-label="刷新工作台数据"
         >
           <RefreshCw className="size-3.5" />
           刷新
@@ -55,7 +56,7 @@ export function WorkbenchHeader({
         <HousekeeperFilter pilots={pilots} currentId={hkFilter} />
         {isAuthEnabled() ? <LogoutButton /> : null}
         <Badge variant="outline" className="font-mono text-xs">
-          v0.3.1
+          v0.3.4
         </Badge>
       </div>
     </header>

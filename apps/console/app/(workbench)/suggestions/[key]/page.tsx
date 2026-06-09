@@ -86,7 +86,7 @@ export default async function SuggestionDetail({
             {decisionLabel(row.outcome?.decision)}
           </Badge>
           <Badge variant="outline" className="font-mono text-[10px]">
-            v0.3.3
+            v0.3.4
           </Badge>
         </div>
       </div>

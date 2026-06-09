@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { TraceRow } from "@/lib/suggestions";
-import type { TimelineEvent } from "@/lib/timeline";
 import { cn } from "@/lib/utils";
 
 type Tab = "facts" | "trace" | "timeline";

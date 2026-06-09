@@ -10,6 +10,7 @@ import { WorkbenchHeader } from "@/components/workbench/workbench-header";
 import { WorkbenchMetrics } from "@/components/workbench/workbench-metrics";
 import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
 import { OpportunityRow } from "@/components/workbench/opportunity-row";
+import { EmptyState } from "@/components/workbench/empty-state";
 import { SuggestionSort } from "@/components/suggestion-sort";
 import { INBOX_TAB_LABELS, inboxTabFromSearchParams } from "@/lib/labels";
 import {
@@ -82,24 +83,21 @@ export default async function WorkbenchPage({
       </div>
 
       {rows.length === 0 ? (
-        <div className="text-muted-foreground flex min-h-48 items-center justify-center rounded-xl border border-dashed p-8 text-center text-sm">
-          {hkFilter ? (
-            `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
-          ) : inboxTab === "active" &&
-            tabCounts.archived + tabCounts.closed > 0 ? (
-            <>
-              暂无待处置项。另有 {tabCounts.archived} 条归档、{tabCounts.closed}{" "}
-              条已处置，请用侧栏或上方标签查看。
-            </>
-          ) : (
-            <>
-              暂无建议。先运行引擎：
-              <code className="mx-1 font-mono text-xs">
-                FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py
-              </code>
-            </>
-          )}
-        </div>
+        <EmptyState
+          title={
+            hkFilter
+              ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
+              : `暂无${INBOX_TAB_LABELS[inboxTab]}`
+          }
+          description={
+            hkFilter
+              ? undefined
+              : inboxTab === "active" &&
+                  tabCounts.archived + tabCounts.closed > 0
+                ? `另有 ${tabCounts.archived} 条归档、${tabCounts.closed} 条已处置，请用侧栏或上方标签查看。`
+                : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
