@@ -20,7 +20,13 @@ export default function MobileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mobile-light mx-auto min-h-dvh w-full max-w-lg bg-[#f3f4f6] font-sans text-zinc-900 antialiased">
+    <div
+      className="mobile-light mx-auto min-h-dvh w-full max-w-lg bg-background font-sans text-foreground antialiased"
+      style={{
+        background: "var(--background)",
+        color: "var(--foreground)",
+      }}
+    >
       <MobileHeader />
       <div className="px-3 pt-3">{children}</div>
     </div>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Phone, FileText, ChevronRight } from "lucide-react";
+import { FileText, ChevronRight } from "lucide-react";
 import { getSuggestion } from "@/lib/suggestions";
+import { AgentSummaryCard } from "@/components/case/agent-summary-card";
+import { NextActionCard } from "@/components/case/next-action-card";
 import { MobileDispositionActions } from "@/components/mobile/mobile-disposition-actions";
 import { MobileBlockerFeedback } from "@/components/mobile/mobile-blocker-feedback";
 import {
@@ -9,7 +11,7 @@ import {
   statusLabel,
   decisionLabel,
 } from "@/lib/labels";
-import { primaryAction, resolveStaleDays } from "@/lib/suggestion-list-display";
+import { resolveStaleDays } from "@/lib/suggestion-list-display";
 
 function mobilePriorityClass(priority?: string): string {
   switch (priority) {
@@ -20,7 +22,7 @@ function mobilePriorityClass(priority?: string): string {
     case "低":
       return "bg-emerald-50 text-emerald-700";
     default:
-      return "bg-zinc-100 text-zinc-600";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -31,7 +33,7 @@ function mobileDecisionClass(decision?: string | null): string {
     case "rejected":
       return "bg-red-50 text-red-600";
     case "modified":
-      return "bg-blue-50 text-blue-700";
+      return "bg-violet-50 text-violet-700";
     case "followed_up":
       return "bg-violet-50 text-violet-700";
     default:
@@ -49,19 +51,17 @@ export async function MobileSuggestionContent({
 
   const s = row.suggestion;
   const stale = resolveStaleDays(row);
-  const action = primaryAction(s);
 
   return (
     <div className="space-y-3 pb-6">
-      {/* 工单信息卡 */}
-      <section className="overflow-hidden rounded-xl border border-zinc-100 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="p-4">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="text-lg font-bold tracking-tight text-zinc-900">
+            <span className="text-foreground text-lg font-bold tracking-tight">
               {row.orderNum || row.workOrderId}
             </span>
             {stale != null ? (
-              <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+              <span className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs font-medium">
                 滞留 {stale} 天
               </span>
             ) : null}
@@ -76,33 +76,15 @@ export async function MobileSuggestionContent({
               {decisionLabel(row.outcome?.decision)}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-muted-foreground text-sm">
             {eventTypeLabel(row.eventType)} · {row.city || "—"} ·{" "}
             {statusLabel(row.status)}
           </p>
         </div>
-
-        {/* 现在做什么 */}
-        <div className="border-t border-zinc-100 bg-blue-50/60 px-4 py-4">
-          <div className="flex gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
-              <Phone className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-blue-600">现在做什么</p>
-              <p className="mt-1 text-base leading-snug font-medium text-zinc-900">
-                {action || "—"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {s.原因摘要 ? (
-          <div className="border-t border-zinc-100 px-4 py-3">
-            <p className="text-sm leading-relaxed text-zinc-500">{s.原因摘要}</p>
-          </div>
-        ) : null}
       </section>
+
+      <AgentSummaryCard suggestion={s} />
+      <NextActionCard suggestion={s} />
 
       <MobileDispositionActions
         dedupeKey={row.dedupeKey}
@@ -120,13 +102,13 @@ export async function MobileSuggestionContent({
 
       <Link
         href={`/suggestions/${encodeURIComponent(dedupeKey)}`}
-        className="flex items-center justify-between rounded-xl border border-zinc-100 bg-white px-4 py-3.5 text-sm font-medium text-blue-600 shadow-sm active:bg-zinc-50"
+        className="text-primary flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5 text-sm font-medium shadow-sm active:bg-muted"
       >
         <span className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-blue-500" />
+          <FileText className="text-primary h-4 w-4" />
           查看完整方案与查证
         </span>
-        <ChevronRight className="h-5 w-5 text-zinc-300" />
+        <ChevronRight className="text-muted-foreground h-5 w-5" />
       </Link>
     </div>
   );

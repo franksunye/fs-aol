@@ -246,14 +246,17 @@ function TimelineRow({
   ev,
   onOpen,
   agentRoundHref,
+  unifiedFeed = false,
 }: {
   ev: TimelineEvent;
   onOpen: (m: DetailModal) => void;
   agentRoundHref?: string;
+  unifiedFeed?: boolean;
 }) {
+  const isAgent = ev.lane === "agent";
   const Icon = ev.lane === "business" ? Database : Sparkles;
   const agentHighlight =
-    ev.lane === "agent" &&
+    isAgent &&
     ["reanalysis", "reanalyze_pending", "inbox", "stale_snapshot"].includes(
       ev.kind
     );
@@ -270,7 +273,15 @@ function TimelineRow({
           : null;
 
   return (
-    <li className="relative flex gap-3 pb-5 last:pb-0">
+    <li
+      className={`relative flex gap-3 pb-5 last:pb-0 ${
+        unifiedFeed && isAgent
+          ? "border-l-4 border-l-primary pl-3"
+          : unifiedFeed
+            ? "border-l-4 border-l-border pl-3"
+            : ""
+      }`}
+    >
       <span
         className="bg-border absolute top-7 left-3.5 h-[calc(100%-8px)] w-px last:hidden"
         aria-hidden
@@ -278,10 +289,10 @@ function TimelineRow({
       <span
         className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
           ev.lane === "business"
-            ? "bg-blue-500/10 text-blue-600"
+            ? "bg-muted text-muted-foreground"
             : agentHighlight
-              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-              : "bg-violet-500/10 text-violet-600"
+              ? "bg-amber-500/15 text-amber-700"
+              : "bg-agent-surface text-primary"
         }`}
       >
         <Icon className="h-3.5 w-3.5" />
@@ -325,20 +336,25 @@ function TimelineRow({
   );
 }
 
+/** 业务 + Agent 事件按 at_ms 合并排序的 Activity Feed */
 export function PlanTimelineSection({
   events,
   roundLinks,
   suggestionBaseHref,
   compact = false,
+  unifiedFeed = true,
 }: {
   events: TimelineEvent[];
   /** event id → 1-based trace round */
   roundLinks?: Record<number, number>;
-  /** e.g. /suggestions/KEY — 用于跳转 Agent 分析 Tab */
+  /** e.g. /suggestions/KEY — 用于跳转对应 Run 轮次 */
   suggestionBaseHref?: string;
   compact?: boolean;
+  /** 统一 Feed 样式：Agent 紫左边框、业务中性 */
+  unifiedFeed?: boolean;
 }) {
   const [modal, setModal] = useState<DetailModal>(null);
+  const sortedEvents = [...events].sort((a, b) => b.atMs - a.atMs);
 
   const title =
     modal?.type === "survey"
@@ -353,23 +369,22 @@ export function PlanTimelineSection({
     <>
       {!compact ? (
         <p className="text-muted-foreground mb-4 text-xs">
-          业务里程碑与 Agent 工作记录（含多次分析、归档、管家反馈）。引擎每轮
-          cron 或 Sync Inbox 会刷新。
+          Activity Feed：业务里程碑与 Agent 工作记录合并展示（含多次分析、归档、管家反馈）。
         </p>
       ) : null}
 
-      {events.length === 0 ? (
+      {sortedEvents.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           暂无时间轴。请确认引擎已处理该工单，或在运维侧执行 inbox /
           timeline 同步。
         </p>
       ) : (
         <ol className="relative">
-          {events.map((ev) => {
-            const round = roundLinks?.[ev.id];
+          {sortedEvents.map((ev) => {
+            const round = roundLinks?.[ev.id] ?? ev.traceRound ?? undefined;
             const agentRoundHref =
               round != null && suggestionBaseHref
-                ? `${suggestionBaseHref}?tab=agent&round=${round}`
+                ? `${suggestionBaseHref}?round=${round}`
                 : undefined;
             return (
               <TimelineRow
@@ -377,6 +392,7 @@ export function PlanTimelineSection({
                 ev={ev}
                 onOpen={setModal}
                 agentRoundHref={agentRoundHref}
+                unifiedFeed={unifiedFeed}
               />
             );
           })}

@@ -1,15 +1,18 @@
-/* 管家移动反馈页：强制浅色主题（不受根 layout dark 影响） */
+/* 管家移动反馈页：与桌面 globals.css 同一套紫/绿 token */
 .mobile-light {
   color-scheme: light;
-  --background: #f3f4f6;
-  --foreground: #18181b;
-  --card: #ffffff;
-  --card-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --ring: #2563eb;
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.208 0.042 265.755);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.985 0.002 247.839);
+  --ring: oklch(0.541 0.281 293.009);
+  --agent-surface: oklch(0.943 0.029 294.588);
+  --success: oklch(0.596 0.145 163.225);
+  --success-foreground: oklch(0.985 0.002 247.839);
 }

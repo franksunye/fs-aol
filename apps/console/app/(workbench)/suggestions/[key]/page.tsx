@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { DispositionBar } from "@/components/case/disposition-bar";
 import { CaseWorkspace } from "@/components/case/case-workspace";
+import { PlanTimelineSection } from "@/components/plan-timeline-section";
 import {
   eventTypeLabel,
   statusLabel,
@@ -28,7 +29,7 @@ export default async function SuggestionDetail({
   searchParams,
 }: {
   params: Promise<{ key: string }>;
-  searchParams: Promise<{ tab?: string; round?: string }>;
+  searchParams: Promise<{ tab?: string; round?: string; view?: string }>;
 }) {
   const { key } = await params;
   const sp = await searchParams;
@@ -53,6 +54,7 @@ export default async function SuggestionDetail({
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
   const analysisLines = analysisMetaLines(row);
   const detailBase = `/suggestions/${encodeKey(dedupeKey)}`;
+  const feedView = sp.view === "feed";
 
   return (
     <main className="w-full px-6 py-6 lg:px-8">
@@ -84,7 +86,7 @@ export default async function SuggestionDetail({
             {decisionLabel(row.outcome?.decision)}
           </Badge>
           <Badge variant="outline" className="font-mono text-[10px]">
-            v0.3.2
+            v0.3.3
           </Badge>
         </div>
       </div>
@@ -122,25 +124,44 @@ export default async function SuggestionDetail({
         blockerNote={row.blocker?.note ?? null}
       />
 
-      <CaseWorkspace
-        workOrderId={row.workOrderId}
-        dedupeKey={row.dedupeKey}
-        suggestion={s}
-        modifiedSuggestion={modified}
-        initialRound={initialRound}
-        logMeta={{
-          status: row.status,
-          stateAt: row.stateAt,
-          outcomeFollowedUpAt:
-            row.outcome?.decision === "followed_up"
-              ? row.outcome.createdAt
-              : null,
-        }}
-        timelineEvents={timelineEvents}
-        roundLinks={roundLinks}
-        detailBase={detailBase}
-        traceLite={traces}
-      />
+      {feedView ? (
+        <Card className="mt-4 p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold">Activity Feed</h2>
+            <Link
+              href={detailBase}
+              className="text-primary text-xs hover:underline"
+            >
+              返回双栏视图
+            </Link>
+          </div>
+          <PlanTimelineSection
+            events={timelineEvents}
+            roundLinks={roundLinks}
+            suggestionBaseHref={detailBase}
+          />
+        </Card>
+      ) : (
+        <CaseWorkspace
+          workOrderId={row.workOrderId}
+          dedupeKey={row.dedupeKey}
+          suggestion={s}
+          modifiedSuggestion={modified}
+          initialRound={initialRound}
+          logMeta={{
+            status: row.status,
+            stateAt: row.stateAt,
+            outcomeFollowedUpAt:
+              row.outcome?.decision === "followed_up"
+                ? row.outcome.createdAt
+                : null,
+          }}
+          timelineEvents={timelineEvents}
+          roundLinks={roundLinks}
+          detailBase={detailBase}
+          traceLite={traces}
+        />
+      )}
     </main>
   );
 }
