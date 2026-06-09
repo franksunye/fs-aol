@@ -4,6 +4,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DesktopSidebar } from "./desktop-sidebar";
 import { MobileSidebar } from "./mobile-sidebar";
+import { ShellTopBar } from "./shell-top-bar";
 
 export function AppShell({
   children,
@@ -46,6 +47,7 @@ export function AppShell({
             />
             <span className="text-sm font-semibold">Follow-up Agent</span>
           </div>
+          <ShellTopBar />
           <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
         </div>
       </div>

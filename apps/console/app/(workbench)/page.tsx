@@ -9,7 +9,9 @@ import { WorkbenchHeader } from "@/components/workbench/workbench-header";
 import { WorkbenchMetrics } from "@/components/workbench/workbench-metrics";
 import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
-import { OpportunityRow } from "@/components/workbench/opportunity-row";
+import { OpportunityList } from "@/components/workbench/opportunity-list";
+import { WorkbenchSearchBar } from "@/components/workbench/workbench-search-bar";
+import { filterSuggestionsByQuery } from "@/lib/workbench-search";
 import { EmptyState } from "@/components/workbench/empty-state";
 import { INBOX_TAB_LABELS, inboxTabFromSearchParams } from "@/lib/labels";
 import {
@@ -43,6 +45,8 @@ export default async function WorkbenchPage({
     key?: string;
     round?: string;
     view?: string;
+    panel?: string;
+    q?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -62,7 +66,9 @@ export default async function WorkbenchPage({
   const sortKey = parseSuggestionSortKey(sp.sort);
   const sorted = sortSuggestions(rawRows, sortKey, pilots);
   const beforePriority = sorted;
-  const rows = filterByPriority(sorted, priorityFilter);
+  const priorityRows = filterByPriority(sorted, priorityFilter);
+  const rows = filterSuggestionsByQuery(priorityRows, sp.q);
+  const workItems = rows.map(mapFollowUpRow);
   const metrics = isActiveInbox
     ? computeWorkbenchMetricCards(beforePriority)
     : null;
@@ -87,6 +93,12 @@ export default async function WorkbenchPage({
         compact
       />
 
+      <div className="mb-3 md:hidden">
+        <Suspense fallback={null}>
+          <WorkbenchSearchBar className="max-w-none" />
+        </Suspense>
+      </div>
+
       {metrics ? <WorkbenchMetrics metrics={metrics} compact /> : null}
 
       {isActiveInbox ? (
@@ -102,37 +114,38 @@ export default async function WorkbenchPage({
       ) : (
         <p className="text-muted-foreground mb-4 text-sm">
           {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
+          {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
         </p>
       )}
 
       {!hasRows ? (
         <EmptyState
           title={
-            hkFilter
-              ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
-              : `暂无${INBOX_TAB_LABELS[inboxTab]}`
+            sp.q?.trim()
+              ? `未找到「${sp.q.trim()}」相关工单`
+              : hkFilter
+                ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
+                : `暂无${INBOX_TAB_LABELS[inboxTab]}`
           }
           description={
-            hkFilter
-              ? undefined
-              : inboxTab === "active" &&
-                  tabCounts.archived + tabCounts.closed > 0
-                ? `另有 ${tabCounts.archived} 条归档、${tabCounts.closed} 条已处置，请用侧栏查看。`
-                : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
+            sp.q?.trim()
+              ? "尝试工单号或摘要关键词，或清除搜索。"
+              : hkFilter
+                ? undefined
+                : inboxTab === "active" &&
+                    tabCounts.archived + tabCounts.closed > 0
+                  ? `另有 ${tabCounts.archived} 条归档、${tabCounts.closed} 条已处置，请用侧栏查看。`
+                  : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
           }
         />
       ) : (
-        <ul className="space-y-2" role="listbox" aria-label="机会列表">
-          {rows.map((row) => (
-            <li key={row.dedupeKey} role="option" aria-selected={selectedKey === row.dedupeKey}>
-              <OpportunityRow
-                item={mapFollowUpRow(row)}
-                listContext={listContext}
-                selected={selectedKey === row.dedupeKey}
-              />
-            </li>
-          ))}
-        </ul>
+        <div role="listbox" aria-label="机会列表">
+          <OpportunityList
+            items={workItems}
+            listContext={listContext}
+            selectedKey={selectedKey}
+          />
+        </div>
       )}
     </div>
   );

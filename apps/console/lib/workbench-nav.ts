@@ -7,10 +7,23 @@ import {
 } from "./labels";
 
 /** 切换列表筛选/排序/收件箱时清除分栏选中态 */
+export type DetailPanel = "activity" | "agent";
+
+export function parseDetailPanel(
+  panel?: string | null,
+  legacyView?: string | null
+): DetailPanel {
+  if (panel === "agent") return "agent";
+  if (panel === "activity") return "activity";
+  if (legacyView === "feed") return "activity";
+  return "activity";
+}
+
 export function stripPaneSelectionParams(q: URLSearchParams) {
   q.delete("key");
   q.delete("round");
   q.delete("view");
+  q.delete("panel");
 }
 
 export type WorkbenchListContext = {

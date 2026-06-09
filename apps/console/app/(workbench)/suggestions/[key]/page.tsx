@@ -9,6 +9,7 @@ import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
 import {
   detailHrefWithListContext,
   listContextFromDetailSearchParams,
+  parseDetailPanel,
   resolveWorkbenchBack,
 } from "@/lib/workbench-nav";
 
@@ -24,6 +25,7 @@ export default async function SuggestionDetail({
     tab?: string;
     round?: string;
     view?: string;
+    panel?: string;
     from?: string;
     hk?: string;
     sort?: string;
@@ -64,12 +66,10 @@ export default async function SuggestionDetail({
       <CaseDetailView
         row={row}
         timelineEvents={timelineEvents}
-        traceCount={traces.length}
         initialRound={initialRound}
         roundLinks={roundLinks}
         detailBase={detailBase}
-        listContext={listContext}
-        feedView={sp.view === "feed"}
+        panel={parseDetailPanel(sp.panel, sp.view)}
         variant="page"
       />
     </main>

@@ -4,6 +4,7 @@ import { getTimelineEvents } from "@/lib/timeline";
 import { encodeKey } from "@/lib/labels";
 import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
 import {
+  parseDetailPanel,
   workbenchListContextFromWorkbench,
   workbenchPaneDetailHref,
 } from "@/lib/workbench-nav";
@@ -21,6 +22,7 @@ export async function CaseDetailPane({
     priority?: string;
     round?: string;
     view?: string;
+    panel?: string;
   };
 }) {
   const row = await getSuggestion(dedupeKey);
@@ -45,12 +47,10 @@ export async function CaseDetailPane({
     <CaseDetailView
       row={row}
       timelineEvents={timelineEvents}
-      traceCount={traces.length}
       initialRound={initialRound}
       roundLinks={roundLinks}
       detailBase={detailBase}
-      listContext={listContext}
-      feedView={searchParams.view === "feed"}
+      panel={parseDetailPanel(searchParams.panel, searchParams.view)}
       variant="pane"
     />
   );

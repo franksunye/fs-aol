@@ -20,6 +20,7 @@ export function CaseWorkspace({
   roundLinks,
   detailBase,
   embedded = false,
+  hideTimeline = false,
 }: {
   workOrderId: string;
   dedupeKey: string;
@@ -32,7 +33,20 @@ export function CaseWorkspace({
   detailBase: string;
   /** 详情侧栏内：单列流式布局，由侧栏统一滚动 */
   embedded?: boolean;
+  /** Activity Tab 已展示时间轴时隐藏内嵌副本 */
+  hideTimeline?: boolean;
 }) {
+  const activityHref = (() => {
+    const [base, qs] = detailBase.includes("?")
+      ? detailBase.split("?", 2)
+      : [detailBase, ""];
+    const q = new URLSearchParams(qs);
+    q.delete("panel");
+    q.delete("view");
+    const s = q.toString();
+    return s ? `${base}?${s}` : base;
+  })();
+
   if (embedded) {
     return (
       <div className="flex w-full min-w-0 flex-col gap-5">
@@ -59,29 +73,27 @@ export function CaseWorkspace({
           />
         </Suspense>
 
-        <CaseSection
-          title="Agent 时间轴"
-          action={
-            <Link
-              href={
-                detailBase.includes("?")
-                  ? `${detailBase}&view=feed`
-                  : `${detailBase}?view=feed`
-              }
-              className="text-primary text-xs font-medium hover:underline"
-            >
-              查看全部
-            </Link>
-          }
-          bodyClassName="p-3"
-        >
-          <PlanTimelineSection
-            events={timelineEvents}
-            roundLinks={roundLinks}
-            suggestionBaseHref={detailBase}
-            compact
-          />
-        </CaseSection>
+        {!hideTimeline ? (
+          <CaseSection
+            title="Agent 时间轴"
+            action={
+              <Link
+                href={activityHref}
+                className="text-primary text-xs font-medium hover:underline"
+              >
+                查看活动时间线
+              </Link>
+            }
+            bodyClassName="p-3"
+          >
+            <PlanTimelineSection
+              events={timelineEvents}
+              roundLinks={roundLinks}
+              suggestionBaseHref={detailBase}
+              compact
+            />
+          </CaseSection>
+        ) : null}
       </div>
     );
   }
@@ -118,14 +130,10 @@ export function CaseWorkspace({
           title="Agent 时间轴"
           action={
             <Link
-              href={
-                detailBase.includes("?")
-                  ? `${detailBase}&view=feed`
-                  : `${detailBase}?view=feed`
-              }
+              href={activityHref}
               className="text-primary text-xs font-medium hover:underline"
             >
-              查看全部
+              查看活动时间线
             </Link>
           }
           bodyClassName="max-h-[calc(100vh-8rem)] overflow-y-auto p-3"
