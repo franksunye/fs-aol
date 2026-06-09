@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlanView } from "@/components/plan-view";
 import { TraceView } from "@/components/trace-view";
+import { ToolStepCard } from "@/components/case/tool-step-card";
 import { AnalysisDiffCard } from "@/components/analysis-diff-card";
 import type { SuggestionDoc, TraceRow } from "@/lib/suggestions";
 import {
@@ -35,6 +36,7 @@ export function AgentAnalysisPanel({
   modifiedSuggestion,
   initialRound,
   logMeta,
+  compact = false,
 }: {
   workOrderId: string;
   dedupeKey: string;
@@ -42,6 +44,8 @@ export function AgentAnalysisPanel({
   modifiedSuggestion: SuggestionDoc | null;
   initialRound: number;
   logMeta: AgentLogMeta;
+  /** Case Workspace：隐藏重复 PlanView，突出 Run / Tool Step */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -243,35 +247,50 @@ export function AgentAnalysisPanel({
         </>
       ) : null}
 
-      <section>
-        <h3 className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
-          跟进方案
-        </h3>
-        <PlanView
-          s={suggestionForRound}
-          title={
-            sortedTraces.length > 1
-              ? `第 ${round} 次分析输出的方案`
-              : undefined
-          }
-        />
-      </section>
-
-      {modifiedSuggestion && isLatest ? (
+      {!compact ? (
         <>
+          <section>
+            <h3 className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
+              跟进方案
+            </h3>
+            <PlanView
+              s={suggestionForRound}
+              title={
+                sortedTraces.length > 1
+                  ? `第 ${round} 次分析输出的方案`
+                  : undefined
+              }
+            />
+          </section>
+          {modifiedSuggestion && isLatest ? (
+            <>
+              <Separator />
+              <PlanView s={modifiedSuggestion} title="人工修改后的方案" />
+            </>
+          ) : null}
           <Separator />
-          <PlanView s={modifiedSuggestion} title="人工修改后的方案" />
         </>
       ) : null}
 
-      <Separator />
-
       <section>
         <h3 className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
-          推理与查证
+          {compact ? "Agent Run · 工具步骤" : "推理与查证"}
         </h3>
         {activeTrace ? (
-          <TraceView trace={activeTrace} />
+          compact && activeTrace.steps.length > 0 ? (
+            <div className="space-y-2">
+              {activeTrace.steps.map((st, i) => (
+                <ToolStepCard
+                  key={i}
+                  step={st}
+                  index={i}
+                  defaultOpen={i === activeTrace.steps.length - 1}
+                />
+              ))}
+            </div>
+          ) : (
+            <TraceView trace={activeTrace} />
+          )
         ) : (
           <p className="text-muted-foreground text-sm">
             该轮暂无分步 trace，方案来自日志快照。

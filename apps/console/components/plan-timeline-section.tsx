@@ -329,12 +329,14 @@ export function PlanTimelineSection({
   events,
   roundLinks,
   suggestionBaseHref,
+  compact = false,
 }: {
   events: TimelineEvent[];
   /** event id → 1-based trace round */
   roundLinks?: Record<number, number>;
   /** e.g. /suggestions/KEY — 用于跳转 Agent 分析 Tab */
   suggestionBaseHref?: string;
+  compact?: boolean;
 }) {
   const [modal, setModal] = useState<DetailModal>(null);
 
@@ -349,10 +351,12 @@ export function PlanTimelineSection({
 
   return (
     <>
-      <p className="text-muted-foreground mb-4 text-xs">
-        业务里程碑与 Agent 工作记录（含多次分析、归档、管家反馈）。引擎每轮
-        cron 或 Sync Inbox 会刷新。
-      </p>
+      {!compact ? (
+        <p className="text-muted-foreground mb-4 text-xs">
+          业务里程碑与 Agent 工作记录（含多次分析、归档、管家反馈）。引擎每轮
+          cron 或 Sync Inbox 会刷新。
+        </p>
+      ) : null}
 
       {events.length === 0 ? (
         <p className="text-muted-foreground text-sm">
