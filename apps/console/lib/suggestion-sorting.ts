@@ -46,7 +46,7 @@ function cmpText(a: string, b: string): number {
 export function parseSuggestionSortKey(raw?: string | null): SuggestionSortKey {
   return (ALL_SORT_KEYS as string[]).includes(raw ?? "")
     ? (raw as SuggestionSortKey)
-    : "latest";
+    : "stale";
 }
 
 export function sortSuggestions(

@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground min-h-full">
         <TooltipProvider>{children}</TooltipProvider>

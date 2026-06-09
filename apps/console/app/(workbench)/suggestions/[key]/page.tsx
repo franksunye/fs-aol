@@ -69,7 +69,7 @@ export default async function SuggestionDetail({
   const detailBase = `/suggestions/${encodeKey(dedupeKey)}`;
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-6 py-8">
+    <main className="w-full px-6 py-8 lg:px-8">
       <Link
         href="/"
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
