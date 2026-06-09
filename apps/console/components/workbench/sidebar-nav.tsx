@@ -6,6 +6,7 @@ import {
   Archive,
   BarChart3,
   Calendar,
+  CheckCircle2,
   CircleHelp,
   Inbox,
   Settings,
@@ -31,9 +32,11 @@ function navHref(path: string, sp: URLSearchParams, hk?: string): string {
 
 export function SidebarNav({
   activeCount,
+  closedCount,
   hk,
 }: {
   activeCount: number;
+  closedCount?: number;
   hk?: string;
 }) {
   const pathname = usePathname();
@@ -66,6 +69,13 @@ export function SidebarNav({
       icon: BarChart3,
       href: navHref("/", sp, hk),
       active: onHome && tab === "active",
+    },
+    {
+      label: "已处置",
+      icon: CheckCircle2,
+      href: navHref("/?tab=closed", sp, hk),
+      active: onHome && tab === "closed",
+      badge: closedCount && closedCount > 0 ? closedCount : undefined,
     },
     {
       label: "归档",

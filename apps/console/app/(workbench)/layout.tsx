@@ -15,7 +15,11 @@ export default async function WorkbenchLayout({
   );
 
   return (
-    <AppShell activeCount={counts.active} hk={hk || undefined}>
+    <AppShell
+      activeCount={counts.active}
+      closedCount={counts.closed}
+      hk={hk || undefined}
+    >
       {children}
     </AppShell>
   );

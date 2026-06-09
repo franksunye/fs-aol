@@ -13,9 +13,11 @@ import { SidebarNav } from "./sidebar-nav";
 
 export function MobileSidebar({
   activeCount,
+  closedCount,
   hk,
 }: {
   activeCount: number;
+  closedCount?: number;
   hk?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -38,7 +40,11 @@ export function MobileSidebar({
       <SheetContent side="left" className="w-60 p-0" showCloseButton>
         <SheetTitle className="sr-only">导航菜单</SheetTitle>
         <div onClick={() => setOpen(false)} onKeyDown={() => setOpen(false)}>
-          <SidebarNav activeCount={activeCount} hk={hk} />
+          <SidebarNav
+            activeCount={activeCount}
+            closedCount={closedCount}
+            hk={hk}
+          />
         </div>
       </SheetContent>
     </Sheet>
