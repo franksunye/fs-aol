@@ -93,7 +93,11 @@ def run(cfg: Optional[Config] = None) -> int:
         if time_reprocess_keys:
             logger.info("时间触发再分析入池: %d 条", len(time_reprocess_keys))
         processed_keys = store.effective_processed_keys()
-        work_orders = fetch_completed_work_orders(cfg, processed_keys)
+        work_orders = fetch_completed_work_orders(
+            cfg,
+            processed_keys,
+            reprocess_keys=time_reprocess_keys,
+        )
 
         success = 0
         reanalyzed = 0
