@@ -45,6 +45,7 @@ Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 *
 | [PUB-13-action-spec-v02.md](public/PUB-13-action-spec-v02.md) | **跟进建议 JSON v0.2**（输出结构） |
 | [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（Agentic UI + 试点目标、验收） |
 | [PUB-15-agentic-ui-design.md](public/PUB-15-agentic-ui-design.md) | **v0.3 Agentic UI 视觉规范**（色彩、侧栏框架、设计稿映射） |
+| [PUB-16-architecture-evolution.md](public/PUB-16-architecture-evolution.md) | **架构演进纪律**：每版架构自检、Operator 读模型、渐进式边界微调 |
 | [sops/](../sops/README.md) | **L2 SOP**（v0.4 启用，当前为大纲） |
 | [PUB-private-docs-template.md](public/PUB-private-docs-template.md) | 私有文档管理模板与边界 |
 
@@ -77,4 +78,4 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 - 版本：**v0.2.5** 已封版；**v0.3 线**进行中（`v0.3.1`…`v0.3.5` 迭代打 tag），见 [PUB-14](public/PUB-14-v030-scope.md) §2.1 · [PUB-15](public/PUB-15-agentic-ui-design.md)
 - 阶段：Phase 1 → **工业级 Agentic UI**（3～5 步）+ 真发运营收官（`v0.3.5`）
-- 最近更新：2026-06-09（`v0.2.5`：双时间轴、收件箱归档、时间再分析、多轮 Agent UI）
+- 最近更新：2026-06-09（`PUB-16` 架构演进纪律；`v0.2.5` / `v0.3.x` Agentic UI）

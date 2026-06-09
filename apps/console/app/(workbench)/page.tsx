@@ -8,6 +8,7 @@ import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers
 import { WorkbenchHeader } from "@/components/workbench/workbench-header";
 import { WorkbenchMetrics } from "@/components/workbench/workbench-metrics";
 import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
+import { mapFollowUpRow } from "@/lib/adapters/follow-up";
 import { OpportunityRow } from "@/components/workbench/opportunity-row";
 import { EmptyState } from "@/components/workbench/empty-state";
 import { INBOX_TAB_LABELS, inboxTabFromSearchParams } from "@/lib/labels";
@@ -125,7 +126,7 @@ export default async function WorkbenchPage({
           {rows.map((row) => (
             <li key={row.dedupeKey} role="option" aria-selected={selectedKey === row.dedupeKey}>
               <OpportunityRow
-                row={row}
+                item={mapFollowUpRow(row)}
                 listContext={listContext}
                 selected={selectedKey === row.dedupeKey}
               />

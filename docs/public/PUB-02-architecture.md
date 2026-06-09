@@ -296,6 +296,8 @@ RBAC、tenant isolation、audit、脱敏。POC：单租户、只读最小权限�
 
 详见 [PUB-03-roadmap.md](PUB-03-roadmap.md)。
 
+**版本级落地纪律**（Console / 追踪层如何渐进抽象、每版架构自检）见 [PUB-16-architecture-evolution.md](PUB-16-architecture-evolution.md)。
+
 ---
 
 ## 14. 终局定义

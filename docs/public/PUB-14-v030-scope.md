@@ -2,7 +2,7 @@
 
 > **状态**：立项中 · **交付方式**：**3～5 次迭代**，每轮打 **`v0.3.N` tag**（N=1…5）  
 > **依赖**：`v0.2.5` 已封版（v0.2.x 功能线收官）  
-> **配套**：[PUB-05-releases.md](PUB-05-releases.md) § v0.3 · [PUB-15-agentic-ui-design.md](PUB-15-agentic-ui-design.md) · [PUB-changelog.md](PUB-changelog.md)  
+> **配套**：[PUB-05-releases.md](PUB-05-releases.md) § v0.3 · [PUB-15-agentic-ui-design.md](PUB-15-agentic-ui-design.md) · [PUB-16-architecture-evolution.md](PUB-16-architecture-evolution.md) · [PUB-changelog.md](PUB-changelog.md)  
 > **最后修订**：2026-06-09（v0.3 迭代打 tag 纪律 + UX 设计稿对齐）
 
 ---

@@ -11,6 +11,7 @@
 | [05-releases.md](./PUB-05-releases.md) | 每版交付范围、验收清单、工程项 |
 | [14-v030-scope.md](./PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（Agentic UI + 试点验收） |
 | [15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md) | **v0.3 UX 设计稿 SSOT**（色彩、框架、组件） |
+| [16-architecture-evolution.md](./PUB-16-architecture-evolution.md) | **架构演进纪律**（每版自检、Operator 读模型、渐进微调） |
 | 私有文档 `docs/private/PRIV-09-business-decisions.md` | 业务口径 ADR（为何 206 only、14 天等） |
 | Git tag | 已封版快照（`v0.1.0` …） |
 
@@ -97,7 +98,8 @@
 
 | 目标版本 | 主题 | 摘要（一句话） | 依赖 |
 | --- | --- | --- | --- |
-| **v0.4.0** | context-sop | SOP v1 + 阻塞类型驱动话术分支 | `v0.3.5` |
+| **v0.3.6**（可选） | `[arch]` operator-adapter | WorkItem adapter 骨架 + `lib/tracking/` 拆分（见 PUB-16 §6） | `v0.3.5` |
+| **v0.4.0** | context-sop | SOP v1 + 阻塞类型驱动话术分支；契约生成 TS、`skill_id`（见 PUB-16） | `v0.3.5` |
 | **v0.5.0** | proof-metrics | 采纳率、推进率、周报（引擎轨证明包） | v0.3 运行数据 |
 | **v1.0.0** | console-mvp（产品轨） | 正式产品轨：试点 KPI 达标后（如 App 内处置率 ≥70%）；S1+S2 加厚 + SLO/Runbook | v0.3.5 + 试点 KPI |
 
@@ -110,6 +112,7 @@
 | 2026-05-29 | 战略文档 | 01～04 vision / architecture / roadmap / domain-semantics |
 | 2026-05-29 | 工程共识 | 06 LLM、07 dev E2E、xlink-data 口径 |
 | 2026-05-29 | ADR-006/007 | 知识分层；Agent 展示轨与主轨并行 |
+| 2026-06-09 | **PUB-16** | Operator Platform 架构演进纪律：L0/L1/L2 分层、WorkItem 读模型、每版 A1–A7 自检、v0.3～v1.0 渐进微调路线图 |
 
 ---
 
@@ -121,4 +124,4 @@
 
 ## 参见
 
-- [PUB-05-releases.md](./PUB-05-releases.md) · 私有文档 `docs/private/PRIV-08-follow-up-wedge-spec.md` · [docs/README.md](../README.md)
+- [PUB-05-releases.md](./PUB-05-releases.md) · [PUB-16-architecture-evolution.md](./PUB-16-architecture-evolution.md) · 私有文档 `docs/private/PRIV-08-follow-up-wedge-spec.md` · [docs/README.md](../README.md)
