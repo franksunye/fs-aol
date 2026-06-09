@@ -1,0 +1,73 @@
+import { notFound } from "next/navigation";
+import { getSuggestion, listTracesLite } from "@/lib/suggestions";
+import { getTimelineEvents } from "@/lib/timeline";
+import { encodeKey } from "@/lib/labels";
+import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
+import {
+  workbenchHref,
+  workbenchListContextFromWorkbench,
+  workbenchPaneDetailHref,
+} from "@/lib/workbench-nav";
+import { CaseDetailView } from "@/components/case/case-detail-view";
+
+export async function CaseDetailPane({
+  dedupeKey,
+  searchParams,
+}: {
+  dedupeKey: string;
+  searchParams: {
+    tab?: string;
+    hk?: string;
+    sort?: string;
+    priority?: string;
+    round?: string;
+    view?: string;
+  };
+}) {
+  const row = await getSuggestion(dedupeKey);
+  if (!row) notFound();
+
+  const listContext = workbenchListContextFromWorkbench(searchParams);
+  const [timelineEvents, traces] = await Promise.all([
+    getTimelineEvents(row.workOrderId),
+    listTracesLite(row.workOrderId),
+  ]);
+
+  const initialRound = parseAgentRound(searchParams.round, traces.length);
+  const roundLinksMap = buildTimelineRoundLinks(timelineEvents, traces);
+  const roundLinks: Record<number, number> = {};
+  roundLinksMap.forEach((v, k) => {
+    roundLinks[k] = v;
+  });
+
+  const detailBase = workbenchPaneDetailHref(row.dedupeKey, listContext);
+  const closeHref = workbenchHref(listContext);
+
+  return (
+    <CaseDetailView
+      row={row}
+      timelineEvents={timelineEvents}
+      traceCount={traces.length}
+      initialRound={initialRound}
+      roundLinks={roundLinks}
+      detailBase={detailBase}
+      listContext={listContext}
+      feedView={searchParams.view === "feed"}
+      variant="pane"
+      closeHref={closeHref}
+    />
+  );
+}
+
+export function parseWorkbenchPaneKey(raw?: string | null): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    return decodeURIComponent(raw.trim());
+  } catch {
+    return raw.trim();
+  }
+}
+
+export function encodeWorkbenchPaneKey(dedupeKey: string): string {
+  return encodeKey(dedupeKey);
+}

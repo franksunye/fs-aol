@@ -40,9 +40,11 @@ function PriorityMark({ priority }: { priority?: string }) {
 export function OpportunityRow({
   row,
   listContext,
+  selected = false,
 }: {
   row: SuggestionRow;
   listContext?: WorkbenchListContext;
+  selected?: boolean;
 }) {
   const s = row.suggestion;
   const staleDays = resolveStaleDays(row);
@@ -56,7 +58,14 @@ export function OpportunityRow({
   return (
     <Link
       href={href}
-      className="group block rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+      scroll={false}
+      aria-current={selected ? "true" : undefined}
+      className={cn(
+        "group block rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md",
+        selected
+          ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+          : "border-border bg-card"
+      )}
     >
       <div className="flex items-start gap-3">
         <PriorityMark priority={s.优先级} />

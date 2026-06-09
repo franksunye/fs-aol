@@ -13,9 +13,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 
 function navHref(path: string, sp: URLSearchParams, hk?: string): string {
   const q = new URLSearchParams(sp.toString());
+  stripPaneSelectionParams(q);
   if (path.includes("tab=")) {
     const tab = path.split("tab=")[1]?.split("&")[0];
     if (tab) q.set("tab", tab);

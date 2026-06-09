@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
+import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 
 const OPTIONS: Array<{ value: SuggestionSortKey; label: string }> = [
   { value: "latest", label: "最新建议" },
@@ -22,6 +23,7 @@ export function SuggestionSort({ current }: { current: SuggestionSortKey }) {
 
   function onChange(value: SuggestionSortKey) {
     const params = new URLSearchParams(searchParams.toString());
+    stripPaneSelectionParams(params);
     if (value === "latest") params.delete("sort");
     else params.set("sort", value);
     const qs = params.toString();

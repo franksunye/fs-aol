@@ -8,6 +8,7 @@ import type { PriorityFilter } from "@/lib/priority-filter";
 import { Button } from "@/components/ui/button";
 import { SuggestionSort } from "@/components/suggestion-sort";
 import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
+import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 
 const PRIORITY_TABS: { key: PriorityFilter; label: string }[] = [
   { key: "all", label: "全部" },
@@ -23,6 +24,7 @@ function buildPriorityHref(
   hk?: string
 ): string {
   const q = new URLSearchParams(sp.toString());
+  stripPaneSelectionParams(q);
   if (priority === "all") q.delete("priority");
   else q.set("priority", priority);
   if (hk) q.set("hk", hk);

@@ -101,8 +101,15 @@ export function CaseAgentPanel({
     (nextRound: number) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("round", String(nextRound));
-      params.delete("tab");
-      router.replace(`/suggestions/${encodeURIComponent(dedupeKey)}?${params}`);
+      const paneKey = params.get("key");
+      if (!paneKey) {
+        params.delete("tab");
+        router.replace(
+          `/suggestions/${encodeURIComponent(dedupeKey)}?${params}`
+        );
+        return;
+      }
+      router.replace(`/?${params.toString()}`);
     },
     [dedupeKey, router, searchParams]
   );

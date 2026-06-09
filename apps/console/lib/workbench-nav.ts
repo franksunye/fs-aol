@@ -6,6 +6,13 @@ import {
   type InboxBucket,
 } from "./labels";
 
+/** 切换列表筛选/排序/收件箱时清除分栏选中态 */
+export function stripPaneSelectionParams(q: URLSearchParams) {
+  q.delete("key");
+  q.delete("round");
+  q.delete("view");
+}
+
 export type WorkbenchListContext = {
   from?: InboxBucket;
   hk?: string;
@@ -51,15 +58,46 @@ export function workbenchHref(ctx: WorkbenchListContext = {}): string {
   return s ? `/?${s}` : "/";
 }
 
+function appendWorkbenchListQuery(q: URLSearchParams, ctx: WorkbenchListContext) {
+  const from = ctx.from ?? "active";
+  if (from !== "active") q.set("tab", from);
+  if (ctx.hk) q.set("hk", ctx.hk);
+  if (from === "active") {
+    if (ctx.sort) q.set("sort", ctx.sort);
+    if (ctx.priority) q.set("priority", ctx.priority);
+  }
+}
+
+/** 工作台分栏：列表与详情同页，URL 用 ?key= 驱动（邮件客户端式） */
+export function workbenchPaneHref(
+  dedupeKey: string,
+  ctx: WorkbenchListContext = {},
+  extra?: Record<string, string | undefined>
+): string {
+  const q = new URLSearchParams();
+  appendWorkbenchListQuery(q, ctx);
+  q.set("key", encodeKey(dedupeKey));
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) {
+      if (v) q.set(k, v);
+    }
+  }
+  return `/?${q.toString()}`;
+}
+
+export function workbenchPaneDetailHref(
+  dedupeKey: string,
+  ctx: WorkbenchListContext = {},
+  extra?: Record<string, string | undefined>
+): string {
+  return workbenchPaneHref(dedupeKey, ctx, extra);
+}
+
 export function suggestionDetailHref(
   dedupeKey: string,
   ctx: WorkbenchListContext = {}
 ): string {
-  const base = `/suggestions/${encodeKey(dedupeKey)}`;
-  const q = new URLSearchParams();
-  appendListContextQuery(q, ctx);
-  const s = q.toString();
-  return s ? `${base}?${s}` : base;
+  return workbenchPaneHref(dedupeKey, ctx);
 }
 
 export function listContextFromDetailSearchParams(sp: {
