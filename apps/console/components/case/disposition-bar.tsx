@@ -1,7 +1,7 @@
 import type { Decision, SuggestionDoc } from "@/lib/suggestions";
 import { DecisionActions } from "@/components/decision-actions";
 import { BlockerFeedbackForm } from "@/components/blocker-feedback";
-import type { BlockerType } from "@/lib/blockers";
+import { blockerDisplay, type BlockerType } from "@/lib/blockers";
 import { CaseSection } from "./case-section";
 
 export function DispositionBar({
@@ -30,7 +30,16 @@ export function DispositionBar({
         />
       </CaseSection>
 
-      <CaseSection title="卡点（可选）" className="h-full">
+      <CaseSection
+        title="卡点（可选）"
+        className="h-full"
+        bodyClassName="p-3"
+        action={
+          <span className="text-muted-foreground text-xs font-normal">
+            当前：{blockerDisplay(blockerType, blockerNote)}
+          </span>
+        }
+      >
         <BlockerFeedbackForm
           dedupeKey={dedupeKey}
           workOrderId={workOrderId}

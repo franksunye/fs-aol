@@ -72,66 +72,47 @@ export function BlockerFeedbackForm({
 
   if (compact) {
     return (
-      <div className="space-y-2">
-        <p className="text-muted-foreground text-xs">
-          当前：{blockerDisplay(currentType, currentNote)}
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="w-full sm:w-[148px] shrink-0">
-            <label
-              htmlFor="blocker-choice"
-              className="text-muted-foreground mb-1 block text-xs font-medium"
-            >
-              卡点
-            </label>
-            <select
-              id="blocker-choice"
-              className={selectClass}
-              value={choice}
-              disabled={pending}
-              onChange={(e) => setChoice(e.target.value)}
-            >
-              <option value="">请选择</option>
-              {BLOCKER_CHOICES.map((c) => (
-                <option key={c.choice} value={c.choice}>
-                  {c.label.replace(/^A |^B |^C |^D /, "")}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="min-w-0 flex-1">
-            <label
-              htmlFor="blocker-note-compact"
-              className="text-muted-foreground mb-1 block text-xs font-medium"
-            >
-              一句话反馈
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="blocker-note-compact"
-                type="text"
-                className={inputClass}
-                placeholder="请填写（可选）"
-                value={note}
-                disabled={pending}
-                onChange={(e) => setNote(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void submit();
-                }}
-              />
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-9 shrink-0"
-                disabled={pending || !choice}
-                aria-label="保存卡点"
-                onClick={() => void submit()}
-              >
-                <Send className="size-4" />
-              </Button>
-            </div>
-          </div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <select
+          id="blocker-choice"
+          className={cn(selectClass, "w-full sm:w-[148px] shrink-0")}
+          value={choice}
+          disabled={pending}
+          aria-label="卡点类型"
+          onChange={(e) => setChoice(e.target.value)}
+        >
+          <option value="">请选择</option>
+          {BLOCKER_CHOICES.map((c) => (
+            <option key={c.choice} value={c.choice}>
+              {c.label.replace(/^A |^B |^C |^D /, "")}
+            </option>
+          ))}
+        </select>
+        <div className="flex min-w-0 flex-1 gap-2">
+          <input
+            id="blocker-note-compact"
+            type="text"
+            className={inputClass}
+            placeholder="一句话反馈（可选）"
+            value={note}
+            disabled={pending}
+            aria-label="一句话反馈"
+            onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void submit();
+            }}
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="size-9 shrink-0"
+            disabled={pending || !choice}
+            aria-label="保存卡点"
+            onClick={() => void submit()}
+          >
+            <Send className="size-4" />
+          </Button>
         </div>
       </div>
     );
