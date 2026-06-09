@@ -12,8 +12,8 @@ import { AgentStatusBadge } from "./agent-status-badge";
 import {
   formatListTimestamp,
   formatQuoteBadge,
-  opportunityActionPreview,
-  opportunityMetaChips,
+  opportunityContextChips,
+  opportunitySummaryPreview,
   opportunityStageLabel,
 } from "@/lib/opportunity-display";
 import { cn } from "@/lib/utils";
@@ -48,8 +48,8 @@ export function OpportunityRow({
   const staleDays = resolveStaleDays(row);
   const href = suggestionDetailHref(row.dedupeKey, listContext);
   const quoteBadge = formatQuoteBadge(s);
-  const actionPreview = opportunityActionPreview(s);
-  const metaChips = opportunityMetaChips(s);
+  const summaryPreview = opportunitySummaryPreview(s);
+  const contextChips = opportunityContextChips(row);
   const timestamp = formatListTimestamp(row.processedAt);
   const agentStatus = resolveAgentRowStatus(row);
 
@@ -94,15 +94,15 @@ export function OpportunityRow({
             ) : null}
           </div>
 
-          {actionPreview ? (
+          {summaryPreview ? (
             <p className="text-foreground mt-2 line-clamp-2 text-sm leading-snug">
-              {actionPreview}
+              {summaryPreview}
             </p>
           ) : null}
 
-          {metaChips.length > 0 ? (
+          {contextChips.length > 0 ? (
             <p className="text-muted-foreground mt-2 text-xs">
-              {metaChips.join(" · ")}
+              {contextChips.join(" · ")}
             </p>
           ) : null}
         </div>

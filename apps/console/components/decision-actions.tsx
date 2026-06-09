@@ -23,12 +23,10 @@ export function DecisionActions({
   dedupeKey,
   workOrderId,
   suggestion,
-  currentDecision,
 }: {
   dedupeKey: string;
   workOrderId: string;
   suggestion: SuggestionDoc;
-  currentDecision?: Decision | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -70,11 +68,6 @@ export function DecisionActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {currentDecision ? (
-        <span className="text-muted-foreground mr-1 text-xs">
-          已反馈（可覆盖）：
-        </span>
-      ) : null}
       <Button
         size="sm"
         onClick={() => submit("approved")}

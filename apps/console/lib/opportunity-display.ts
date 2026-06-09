@@ -1,6 +1,7 @@
 import type { SuggestionDoc, SuggestionRow } from "./suggestions";
 import { parseQuoteAmountYuan, formatYuanCompact } from "./workbench-metrics";
-import { primaryAction } from "./suggestion-list-display";
+import { channelPartLine } from "./suggestion-list-display";
+import { BLOCKER_LABELS, type BlockerType } from "./blockers";
 
 export function formatQuoteBadge(s: SuggestionDoc): string | null {
   const amt = parseQuoteAmountYuan(s);
@@ -11,22 +12,68 @@ export function formatQuoteBadge(s: SuggestionDoc): string | null {
   return null;
 }
 
-/** 列表副文案：Agent 建议的主行动（Action Spec 真字段） */
-export function opportunityActionPreview(s: SuggestionDoc): string {
-  const action = primaryAction(s);
-  return action === "—" ? "" : action;
+/** 列表主文案：情境判断（优先原因摘要，避免与主行动模板重复） */
+export function opportunitySummaryPreview(s: SuggestionDoc): string {
+  const summary = s.原因摘要?.trim();
+  if (summary) return summary;
+  const basis = s.优先级依据?.map((x) => x?.trim()).find(Boolean);
+  if (basis) return basis;
+  const plan = s.情况判断?.金额与方案?.trim();
+  if (!plan) return "";
+  const head = plan.split("；")[0]?.trim() ?? plan;
+  return head.length > 96 ? `${head.slice(0, 95)}…` : head;
 }
 
-/** 列表辅助信息：引用查证条数 + 客户情绪 */
-export function opportunityMetaChips(s: SuggestionDoc): string[] {
+function summaryHaystack(s: SuggestionDoc): string {
+  return [
+    s.原因摘要,
+    ...(s.优先级依据 ?? []),
+    s.情况判断?.金额与方案,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function chipNotInSummary(text: string, haystack: string): boolean {
+  const key = text.trim().toLowerCase();
+  if (!key) return false;
+  return !haystack.includes(key);
+}
+
+/**
+ * 列表情境锚点：仅补充首行 badge 未覆盖、且未在摘要出现的字段。
+ */
+export function opportunityContextChips(row: SuggestionRow): string[] {
+  const s = row.suggestion;
   const chips: string[] = [];
-  const cites = s.引用查证?.filter((c) => c?.trim()) ?? [];
-  if (cites.length > 0) chips.push(`${cites.length} 条查证`);
-  if (s.客户情绪?.trim()) chips.push(`情绪 ${s.客户情绪}`);
+  const quoteBadge = formatQuoteBadge(s);
+  const haystack = summaryHaystack(s);
+
+  const city = row.city?.trim();
+  if (city && chipNotInSummary(city, haystack)) chips.push(city);
+
+  const channel = channelPartLine(s);
+  if (channel !== "—" && chipNotInSummary(channel, haystack)) {
+    chips.push(channel);
+  }
+
   const quoteStatus = s.情况判断?.报价状态?.trim();
-  if (quoteStatus && !formatQuoteBadge(s)?.includes("报价")) {
+  if (quoteStatus && !quoteBadge && chipNotInSummary(quoteStatus, haystack)) {
     chips.push(quoteStatus);
   }
+
+  const mood = s.客户情绪?.trim();
+  if (mood && mood !== "中性" && chipNotInSummary(mood, haystack)) {
+    chips.push(`情绪 ${mood}`);
+  }
+
+  const blockerType = row.blocker?.blockerType;
+  if (blockerType && blockerType !== "UNKNOWN") {
+    const label = BLOCKER_LABELS[blockerType as BlockerType] ?? blockerType;
+    chips.push(`卡点 ${label}`);
+  }
+
   return chips;
 }
 
