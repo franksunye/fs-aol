@@ -61,18 +61,30 @@ export function OpportunityRow({
       scroll={false}
       aria-current={selected ? "true" : undefined}
       className={cn(
-        "group block rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md",
+        "group relative block overflow-hidden rounded-lg border p-3.5 transition-all duration-200",
         selected
-          ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-          : "border-border bg-card"
+          ? "border-primary/25 bg-sidebar-accent shadow-sm"
+          : "border-border/80 bg-card hover:border-border hover:bg-muted/35"
       )}
     >
-      <div className="flex items-start gap-3">
+      <span
+        aria-hidden
+        className={cn(
+          "bg-primary absolute top-2 bottom-2 left-0 w-1 rounded-full transition-all duration-200",
+          selected ? "opacity-100" : "w-0 opacity-0"
+        )}
+      />
+      <div className="flex items-start gap-3 pl-0.5">
         <PriorityMark priority={s.优先级} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="font-mono text-sm font-semibold group-hover:text-primary">
+              <span
+                className={cn(
+                  "font-mono text-sm font-semibold transition-colors",
+                  selected ? "text-primary" : "group-hover:text-primary"
+                )}
+              >
                 {row.orderNum || row.workOrderId}
               </span>
               <AgentStatusBadge status={agentStatus} />
@@ -115,7 +127,14 @@ export function OpportunityRow({
             </p>
           ) : null}
         </div>
-        <ChevronRight className="text-muted-foreground mt-1 size-4 shrink-0 opacity-40 transition-opacity group-hover:opacity-100" />
+        <ChevronRight
+          className={cn(
+            "mt-1 size-4 shrink-0 transition-all duration-200",
+            selected
+              ? "text-primary translate-x-0 opacity-100"
+              : "text-muted-foreground translate-x-0 opacity-30 group-hover:translate-x-0.5 group-hover:opacity-70"
+          )}
+        />
       </div>
     </Link>
   );

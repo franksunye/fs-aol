@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { X } from "lucide-react";
 import type { SuggestionRow } from "@/lib/suggestions";
 import type { TimelineEvent } from "@/lib/timeline";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +29,6 @@ export function CaseDetailView({
   listContext,
   feedView,
   variant,
-  closeHref,
 }: {
   row: SuggestionRow;
   timelineEvents: TimelineEvent[];
@@ -41,7 +39,6 @@ export function CaseDetailView({
   listContext: WorkbenchListContext;
   feedView: boolean;
   variant: "pane" | "page";
-  closeHref?: string;
 }) {
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
@@ -57,8 +54,8 @@ export function CaseDetailView({
           : "mx-auto w-full max-w-[1400px] px-6 py-6 lg:px-8"
       }
     >
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+      <header className="mb-4">
+        <div className="min-w-0">
           <h1
             className={
               isPane
@@ -87,15 +84,6 @@ export function CaseDetailView({
             ) : null}
           </div>
         </div>
-        {isPane && closeHref ? (
-          <Link
-            href={closeHref}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors"
-            aria-label="关闭详情"
-          >
-            <X className="size-4" />
-          </Link>
-        ) : null}
       </header>
 
       {row.inboxBucket !== "active" ? (
@@ -160,13 +148,6 @@ export function CaseDetailView({
           detailBase={detailBase}
         />
       )}
-      {isPane ? (
-        <p className="text-muted-foreground mt-6 text-center text-[11px]">
-          {traceCount > 0
-            ? `${traceCount} 轮 Agent 分析 · 切换列表项无需离开本页`
-            : "切换列表项无需离开本页"}
-        </p>
-      ) : null}
     </div>
   );
 }

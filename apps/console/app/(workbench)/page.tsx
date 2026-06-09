@@ -149,7 +149,6 @@ export default async function WorkbenchPage({
         list={listPane}
         detail={detailPane}
         selectedKey={selectedKey}
-        showPlaceholder={hasRows}
       />
     </main>
   );

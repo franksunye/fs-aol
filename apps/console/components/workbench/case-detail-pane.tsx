@@ -4,7 +4,6 @@ import { getTimelineEvents } from "@/lib/timeline";
 import { encodeKey } from "@/lib/labels";
 import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
 import {
-  workbenchHref,
   workbenchListContextFromWorkbench,
   workbenchPaneDetailHref,
 } from "@/lib/workbench-nav";
@@ -41,7 +40,6 @@ export async function CaseDetailPane({
   });
 
   const detailBase = workbenchPaneDetailHref(row.dedupeKey, listContext);
-  const closeHref = workbenchHref(listContext);
 
   return (
     <CaseDetailView
@@ -54,7 +52,6 @@ export async function CaseDetailPane({
       listContext={listContext}
       feedView={searchParams.view === "feed"}
       variant="pane"
-      closeHref={closeHref}
     />
   );
 }

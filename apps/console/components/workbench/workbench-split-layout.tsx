@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Inbox } from "lucide-react";
+import { ArrowLeft, PanelRightClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -15,17 +15,14 @@ export function WorkbenchSplitLayout({
   list,
   detail,
   selectedKey,
-  showPlaceholder = true,
 }: {
   list: ReactNode;
   detail: ReactNode | null;
   selectedKey: string | null;
-  /** 宽屏无选中时是否展示右侧空态（邮件客户端式） */
-  showPlaceholder?: boolean;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
-  const paneOpen = Boolean(selectedKey && detail);
+  const sidebarOpen = Boolean(selectedKey && detail);
 
   const listContext = workbenchListContextFromWorkbench({
     tab: sp.get("tab") ?? undefined,
@@ -35,82 +32,116 @@ export function WorkbenchSplitLayout({
   });
   const closeHref = workbenchHref(listContext);
 
+  const closeSidebar = useCallback(() => {
+    router.push(closeHref);
+  }, [router, closeHref]);
+
   useEffect(() => {
-    if (!paneOpen) return;
+    if (!sidebarOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") router.push(closeHref);
+      if (e.key === "Escape") closeSidebar();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paneOpen, router, closeHref]);
+  }, [sidebarOpen, closeSidebar]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const lock = () => {
+      if (mq.matches) document.body.style.overflow = "hidden";
+    };
+    const unlock = () => {
+      document.body.style.overflow = "";
+    };
+    lock();
+    mq.addEventListener("change", lock);
+    return () => {
+      mq.removeEventListener("change", lock);
+      unlock();
+    };
+  }, [sidebarOpen]);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col lg:min-h-[calc(100dvh-0px)] lg:flex-row">
-      {/* 列表区 */}
+    <div
+      className="relative flex min-h-0 w-full flex-1 overflow-hidden"
+      data-sidebar-open={sidebarOpen ? "true" : "false"}
+    >
+      {/* 列表主区 */}
       <section
         className={cn(
-          "min-h-0 shrink-0 overflow-y-auto",
-          paneOpen
-            ? "hidden w-full lg:block lg:w-[min(42%,520px)] lg:max-w-[520px] lg:border-r lg:border-border"
-            : "w-full flex-1",
-          showPlaceholder && !paneOpen && "lg:w-[min(42%,520px)] lg:max-w-[520px] lg:border-r lg:border-border"
+          "min-h-0 min-w-0 flex-1 overflow-y-auto transition-[max-width] duration-300 ease-out",
+          sidebarOpen && "lg:max-w-[min(42%,420px)] lg:shrink-0"
         )}
         aria-label="机会列表"
       >
         {list}
       </section>
 
-      {/* 详情区：移动端全屏覆盖；桌面常驻右栏 */}
-      <section
+      {/* 移动端遮罩 */}
+      <button
+        type="button"
+        aria-label="关闭详情侧栏"
         className={cn(
-          "bg-background min-h-0 flex-col",
-          paneOpen
-            ? "fixed inset-0 z-40 flex lg:static lg:z-auto lg:flex-1"
-            : showPlaceholder
-              ? "hidden lg:flex lg:flex-1"
-              : "hidden"
+          "fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+          sidebarOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         )}
-        aria-label="案件详情"
-      >
-        {paneOpen ? (
-          <>
-            <div className="flex items-center gap-2 border-b border-border px-3 py-2 lg:hidden">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="gap-1"
-                render={<Link href={closeHref} />}
-              >
-                <ArrowLeft className="size-4" />
-                列表
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              {detail}
-            </div>
-          </>
-        ) : showPlaceholder ? (
-          <WorkbenchDetailPlaceholder />
-        ) : null}
-      </section>
-    </div>
-  );
-}
+        onClick={closeSidebar}
+      />
 
-function WorkbenchDetailPlaceholder() {
-  return (
-    <div className="text-muted-foreground flex h-full min-h-[320px] flex-col items-center justify-center gap-3 px-8 text-center">
-      <div className="bg-muted flex size-14 items-center justify-center rounded-2xl">
-        <Inbox className="size-7 opacity-60" aria-hidden />
-      </div>
-      <div>
-        <p className="text-foreground text-sm font-medium">选择一条机会</p>
-        <p className="mt-1 max-w-xs text-xs leading-relaxed">
-          点击左侧列表即可在本页右侧查看详情；切换条目时详情同步更新，无需返回导航。
-        </p>
-      </div>
-      <p className="text-[11px] opacity-70">Esc 关闭详情 · 宽屏始终分栏浏览</p>
+      {/* 详情侧栏 */}
+      <aside
+        role="complementary"
+        aria-label="案件详情侧栏"
+        aria-hidden={!sidebarOpen}
+        className={cn(
+          "bg-background flex flex-col border-border",
+          "transition-[transform,width,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed inset-y-0 right-0 z-50 w-full max-w-full border-l",
+          "shadow-[-16px_0_40px_-12px_rgba(15,23,42,0.2)]",
+          sidebarOpen
+            ? "translate-x-0 opacity-100"
+            : "pointer-events-none translate-x-full opacity-0",
+          "lg:relative lg:z-auto lg:max-w-none lg:translate-x-0 lg:shadow-[-12px_0_32px_-16px_rgba(15,23,42,0.12)]",
+          sidebarOpen
+            ? "lg:pointer-events-auto lg:w-[min(58%,720px)] lg:min-w-[480px] lg:shrink-0 lg:opacity-100"
+            : "lg:w-0 lg:min-w-0 lg:overflow-hidden lg:border-0 lg:opacity-0 lg:shadow-none"
+        )}
+      >
+        <header className="bg-muted/50 flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-3 lg:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="lg:hidden"
+              render={<Link href={closeHref} />}
+              aria-label="返回列表"
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+            <span className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+              案件详情
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={closeSidebar}
+            aria-label="关闭详情侧栏"
+            title="关闭 (Esc)"
+          >
+            <PanelRightClose className="size-4" />
+          </Button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {sidebarOpen ? detail : null}
+        </div>
+      </aside>
     </div>
   );
 }
