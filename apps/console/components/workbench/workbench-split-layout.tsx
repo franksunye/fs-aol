@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useId, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, PanelRightClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { shellScrollClass } from "@/lib/shell-preferences";
 import {
   workbenchHref,
   workbenchListContextFromWorkbench,
@@ -22,6 +23,7 @@ export function WorkbenchSplitLayout({
 }) {
   const router = useRouter();
   const sp = useSearchParams();
+  const titleId = useId();
   const sidebarOpen = Boolean(selectedKey && detail);
 
   const listContext = workbenchListContextFromWorkbench({
@@ -39,7 +41,9 @@ export function WorkbenchSplitLayout({
   useEffect(() => {
     if (!sidebarOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeSidebar();
+      if (e.key !== "Escape") return;
+      if (e.defaultPrevented) return;
+      closeSidebar();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -48,17 +52,14 @@ export function WorkbenchSplitLayout({
   useEffect(() => {
     if (!sidebarOpen) return;
     const mq = window.matchMedia("(max-width: 1023px)");
-    const lock = () => {
-      if (mq.matches) document.body.style.overflow = "hidden";
+    const syncBodyScroll = () => {
+      document.body.style.overflow = mq.matches ? "hidden" : "";
     };
-    const unlock = () => {
-      document.body.style.overflow = "";
-    };
-    lock();
-    mq.addEventListener("change", lock);
+    syncBodyScroll();
+    mq.addEventListener("change", syncBodyScroll);
     return () => {
-      mq.removeEventListener("change", lock);
-      unlock();
+      mq.removeEventListener("change", syncBodyScroll);
+      document.body.style.overflow = "";
     };
   }, [sidebarOpen]);
 
@@ -67,10 +68,10 @@ export function WorkbenchSplitLayout({
       className="relative flex h-full min-h-0 w-full overflow-hidden"
       data-sidebar-open={sidebarOpen ? "true" : "false"}
     >
-      {/* 列表：侧栏打开时固定宽度，其余空间留给详情 */}
       <section
         className={cn(
-          "min-h-0 shrink-0 overflow-y-auto overscroll-contain transition-[width,max-width] duration-300 ease-out",
+          shellScrollClass,
+          "shrink-0 transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
           sidebarOpen
             ? "w-full max-w-full basis-full lg:w-[min(38%,400px)] lg:max-w-[400px] lg:basis-[min(38%,400px)] lg:border-r lg:border-border"
             : "min-w-0 flex-1"
@@ -80,12 +81,13 @@ export function WorkbenchSplitLayout({
         {list}
       </section>
 
-      {/* 移动端遮罩 */}
       <button
         type="button"
         aria-label="关闭详情侧栏"
+        aria-hidden={!sidebarOpen}
+        tabIndex={sidebarOpen ? 0 : -1}
         className={cn(
-          "fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none lg:hidden",
           sidebarOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -93,20 +95,22 @@ export function WorkbenchSplitLayout({
         onClick={closeSidebar}
       />
 
-      {/* 详情侧栏：占满剩余宽度，内部独立滚动 */}
       <aside
         role="complementary"
-        aria-label="案件详情侧栏"
+        aria-label="案件详情"
+        aria-labelledby={sidebarOpen ? titleId : undefined}
         aria-hidden={!sidebarOpen}
+        {...(!sidebarOpen ? { inert: true } : {})}
         className={cn(
           "bg-background flex h-full min-h-0 flex-col border-border",
-          "transition-[transform,flex,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "transition-[transform,flex,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
           "fixed inset-y-0 right-0 z-50 w-full border-l",
+          "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
           "shadow-[-16px_0_40px_-12px_rgba(15,23,42,0.2)]",
           sidebarOpen
             ? "translate-x-0 opacity-100"
             : "pointer-events-none translate-x-full opacity-0",
-          "lg:relative lg:z-auto lg:translate-x-0 lg:shadow-[-12px_0_32px_-16px_rgba(15,23,42,0.12)]",
+          "lg:relative lg:z-auto lg:translate-x-0 lg:pt-0 lg:pb-0 lg:shadow-[-12px_0_32px_-16px_rgba(15,23,42,0.12)]",
           sidebarOpen
             ? "lg:pointer-events-auto lg:min-w-0 lg:flex-1 lg:opacity-100"
             : "lg:w-0 lg:min-w-0 lg:flex-none lg:overflow-hidden lg:border-0 lg:opacity-0 lg:shadow-none"
@@ -119,12 +123,15 @@ export function WorkbenchSplitLayout({
               variant="ghost"
               size="icon-sm"
               className="lg:hidden"
-              render={<Link href={closeHref} />}
+              render={<Link href={closeHref} scroll={false} />}
               aria-label="返回列表"
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeft className="size-4" aria-hidden />
             </Button>
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+            <span
+              id={titleId}
+              className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
+            >
               案件详情
             </span>
           </div>
@@ -136,11 +143,11 @@ export function WorkbenchSplitLayout({
             aria-label="关闭详情侧栏"
             title="关闭 (Esc)"
           >
-            <PanelRightClose className="size-4" />
+            <PanelRightClose className="size-4" aria-hidden />
           </Button>
         </header>
 
-        <div className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div className={cn(shellScrollClass, "w-full flex-1")}>
           {sidebarOpen ? detail : null}
         </div>
       </aside>

@@ -18,6 +18,11 @@ import {
 import { cn } from "@/lib/utils";
 import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function navHref(path: string, sp: URLSearchParams, hk?: string): string {
   const q = new URLSearchParams(sp.toString());
@@ -53,18 +58,37 @@ type NavItem = {
   disabled?: boolean;
 };
 
+const navItemClass = (opts: {
+  collapsed: boolean;
+  active?: boolean;
+  disabled?: boolean;
+}) =>
+  cn(
+    "relative flex items-center rounded-lg text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+    opts.collapsed ? "min-h-11 justify-center px-2 py-2" : "gap-3 px-3 py-2",
+    opts.disabled
+      ? "text-muted-foreground cursor-not-allowed opacity-50"
+      : opts.active
+        ? "bg-sidebar-accent text-primary"
+        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+  );
+
 export function SidebarNav({
   activeCount,
   closedCount,
   hk,
   collapsed = false,
   onToggleCollapsed,
+  collapseShortcutLabel,
+  onNavigate,
 }: {
   activeCount: number;
   closedCount?: number;
   hk?: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  collapseShortcutLabel?: string;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const sp = useSearchParams();
@@ -121,19 +145,15 @@ export function SidebarNav({
   ];
 
   return (
-    <aside
-      className={cn(
-        "bg-sidebar text-sidebar-foreground flex h-full w-full flex-col border-r border-sidebar-border"
-      )}
-    >
+    <div className="text-sidebar-foreground flex h-full w-full flex-col">
       <div
         className={cn(
-          "flex items-center border-b border-sidebar-border transition-all duration-200",
+          "flex shrink-0 items-center border-b border-sidebar-border transition-[padding] duration-200 motion-reduce:transition-none",
           collapsed ? "justify-center px-2 py-4" : "gap-2 px-4 py-5"
         )}
       >
         <div className="bg-primary flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
-          <Sparkles className="size-5" />
+          <Sparkles className="size-5" aria-hidden />
         </div>
         {!collapsed ? (
           <div className="min-w-0">
@@ -144,110 +164,97 @@ export function SidebarNav({
       </div>
 
       <nav
-        className={cn("flex-1 space-y-0.5", collapsed ? "p-2" : "p-3")}
+        className={cn("min-h-0 flex-1 space-y-0.5 overflow-y-auto", collapsed ? "p-2" : "p-3")}
         aria-label="主导航"
       >
         {items.map((item) => (
-          <SidebarNavItem key={item.label} item={item} collapsed={collapsed} />
+          <SidebarNavItem
+            key={item.label}
+            item={item}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
         ))}
       </nav>
 
       <div
         className={cn(
-          "space-y-0.5 border-t border-sidebar-border",
+          "shrink-0 space-y-0.5 border-t border-sidebar-border",
           collapsed ? "p-2" : "p-3"
         )}
       >
-        {footerLinks.map((link) => {
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={collapsed ? link.label : undefined}
-              className={cn(
-                "text-muted-foreground hover:text-foreground flex items-center rounded-lg text-sm transition-colors hover:bg-sidebar-accent/60",
-                collapsed
-                  ? "justify-center px-2 py-2.5"
-                  : "gap-3 px-3 py-2"
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              {!collapsed ? link.label : null}
-            </Link>
-          );
-        })}
+        {footerLinks.map((link) => (
+          <SidebarFooterLink
+            key={link.label}
+            link={link}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        ))}
         {onToggleCollapsed ? (
           <Button
             type="button"
             variant="ghost"
             size={collapsed ? "icon-sm" : "sm"}
             className={cn(
-              "text-muted-foreground hover:text-foreground mt-1 w-full",
-              collapsed ? "mx-auto" : "justify-start gap-3 px-3"
+              "text-muted-foreground hover:text-foreground mt-1 w-full focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+              collapsed ? "mx-auto min-h-11" : "justify-start gap-3 px-3"
             )}
             onClick={onToggleCollapsed}
             aria-label={collapsed ? "展开侧栏" : "收起侧栏"}
-            title={collapsed ? "展开侧栏" : "收起侧栏"}
+            title={
+              collapseShortcutLabel
+                ? `${collapsed ? "展开" : "收起"}侧栏 (${collapseShortcutLabel})`
+                : collapsed
+                  ? "展开侧栏"
+                  : "收起侧栏"
+            }
           >
             {collapsed ? (
-              <PanelLeft className="size-4" />
+              <PanelLeft className="size-4" aria-hidden />
             ) : (
               <>
-                <PanelLeftClose className="size-4" />
-                收起侧栏
+                <PanelLeftClose className="size-4" aria-hidden />
+                <span>收起侧栏</span>
+                {collapseShortcutLabel ? (
+                  <kbd className="text-muted-foreground bg-muted/80 ml-auto hidden rounded px-1.5 py-0.5 font-mono text-[10px] lg:inline">
+                    {collapseShortcutLabel}
+                  </kbd>
+                ) : null}
               </>
             )}
           </Button>
         ) : null}
       </div>
-    </aside>
+    </div>
   );
 }
 
 function SidebarNavItem({
   item,
   collapsed,
+  onNavigate,
 }: {
   item: NavItem;
   collapsed: boolean;
+  onNavigate?: () => void;
 }) {
   const Icon = item.icon;
+  const tooltip = item.disabled
+    ? `${item.label}（即将开放）`
+    : item.badge != null && collapsed
+      ? `${item.label} · ${item.badge}`
+      : item.label;
 
-  if (item.disabled) {
-    return (
-      <span
-        className={cn(
-          "text-muted-foreground flex cursor-not-allowed items-center rounded-lg text-sm opacity-50",
-          collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2"
-        )}
-        title={collapsed ? `${item.label}（v0.4 开放）` : "v0.4 开放"}
-      >
-        <Icon className="size-4 shrink-0" />
-        {!collapsed ? item.label : null}
-      </span>
-    );
-  }
-
-  return (
-    <Link
-      href={item.href}
-      aria-current={item.active ? "page" : undefined}
-      title={collapsed ? item.label : undefined}
-      className={cn(
-        "relative flex items-center rounded-lg text-sm font-medium transition-colors",
-        collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2",
-        item.active
-          ? "bg-sidebar-accent text-primary"
-          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-      )}
-    >
+  const content = (
+    <>
       <span className="relative shrink-0">
-        <Icon className="size-4" />
+        <Icon className="size-4" aria-hidden />
         {collapsed && item.badge != null ? (
-          <span className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full text-[9px] font-bold tabular-nums">
+          <span
+            className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full text-[9px] font-bold tabular-nums"
+            aria-hidden
+          >
             {item.badge > 9 ? "9+" : item.badge}
           </span>
         ) : null}
@@ -262,6 +269,87 @@ function SidebarNavItem({
           ) : null}
         </>
       ) : null}
+    </>
+  );
+
+  if (item.disabled) {
+    const node = (
+      <span
+        className={navItemClass({ collapsed, disabled: true })}
+        aria-disabled="true"
+      >
+        {content}
+      </span>
+    );
+    if (!collapsed) return node;
+    return (
+      <Tooltip>
+        <TooltipTrigger render={node} />
+        <TooltipContent side="right" sideOffset={8}>
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  const link = (
+    <Link
+      href={item.href}
+      scroll={false}
+      onClick={onNavigate}
+      aria-current={item.active ? "page" : undefined}
+      className={navItemClass({ collapsed, active: item.active })}
+    >
+      {content}
     </Link>
+  );
+
+  if (!collapsed) return link;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={link} />
+      <TooltipContent side="right" sideOffset={8}>
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function SidebarFooterLink({
+  link,
+  collapsed,
+  onNavigate,
+}: {
+  link: { label: string; icon: LucideIcon; href: string };
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const Icon = link.icon;
+  const anchor = (
+    <Link
+      href={link.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onNavigate}
+      className={cn(
+        "text-muted-foreground hover:text-foreground flex items-center rounded-lg text-sm transition-colors outline-none hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+        collapsed ? "min-h-11 justify-center px-2 py-2" : "gap-3 px-3 py-2"
+      )}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden />
+      {!collapsed ? link.label : null}
+    </Link>
+  );
+
+  if (!collapsed) return anchor;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={anchor} />
+      <TooltipContent side="right" sideOffset={8}>
+        {link.label}
+      </TooltipContent>
+    </Tooltip>
   );
 }

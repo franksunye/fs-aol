@@ -6,7 +6,11 @@ import {
 
 export default function WorkbenchLoading() {
   return (
-    <main className="w-full px-6 py-8 lg:px-8" aria-busy="true" aria-label="加载工作台">
+    <main
+      className="h-full w-full overflow-y-auto px-6 py-8 lg:px-8"
+      aria-busy="true"
+      aria-label="加载工作台"
+    >
       <div className="mb-6 space-y-2">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-48" />

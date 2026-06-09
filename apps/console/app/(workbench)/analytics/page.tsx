@@ -7,6 +7,8 @@ import {
 } from "@/lib/analytics";
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
+import { shellScrollClass } from "@/lib/shell-preferences";
+import { cn } from "@/lib/utils";
 import { AnalyticsRangeSelect } from "@/components/analytics/analytics-range-select";
 import { AnalyticsMetricCards } from "@/components/analytics/analytics-metric-cards";
 import { AnalyticsTrendChart } from "@/components/analytics/analytics-trend-chart";
@@ -35,7 +37,7 @@ export default async function AnalyticsPage({
   });
 
   return (
-    <main className="h-full w-full overflow-y-auto px-6 py-8 lg:px-8">
+    <main className={cn(shellScrollClass, "h-full w-full px-6 py-8 lg:px-8")}>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">

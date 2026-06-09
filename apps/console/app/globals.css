@@ -134,3 +134,11 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .shell-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 35%, transparent)
+      transparent;
+  }
+}
