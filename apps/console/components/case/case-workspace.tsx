@@ -62,7 +62,11 @@ export function CaseWorkspace({
           title="Agent 时间轴"
           action={
             <Link
-              href={`${detailBase}?view=feed`}
+              href={
+                detailBase.includes("?")
+                  ? `${detailBase}&view=feed`
+                  : `${detailBase}?view=feed`
+              }
               className="text-primary text-xs font-medium hover:underline"
             >
               查看全部

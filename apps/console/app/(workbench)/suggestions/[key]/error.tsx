@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { resolveWorkbenchBack } from "@/lib/workbench-nav";
 
 export default function SuggestionDetailError({
   error,
@@ -12,6 +14,17 @@ export default function SuggestionDetailError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const sp = useSearchParams();
+  const back = resolveWorkbenchBack(
+    {
+      from: sp.get("from") ?? undefined,
+      hk: sp.get("hk") ?? undefined,
+      sort: sp.get("sort") ?? undefined,
+      priority: sp.get("priority") ?? undefined,
+    },
+    "active"
+  );
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -27,8 +40,12 @@ export default function SuggestionDetailError({
         <Button type="button" onClick={() => reset()}>
           重试
         </Button>
-        <Button type="button" variant="outline" render={<Link href="/" />}>
-          返回工作台
+        <Button
+          type="button"
+          variant="outline"
+          render={<Link href={back.href} />}
+        >
+          {back.label}
         </Button>
       </div>
     </main>

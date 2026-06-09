@@ -384,7 +384,7 @@ export function PlanTimelineSection({
             const round = roundLinks?.[ev.id] ?? ev.traceRound ?? undefined;
             const agentRoundHref =
               round != null && suggestionBaseHref
-                ? `${suggestionBaseHref}?round=${round}`
+                ? `${suggestionBaseHref}${suggestionBaseHref.includes("?") ? "&" : "?"}round=${round}`
                 : undefined;
             return (
               <TimelineRow

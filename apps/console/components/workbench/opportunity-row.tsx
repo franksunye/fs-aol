@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { SuggestionRow } from "@/lib/suggestions";
-import { encodeKey, decisionLabel, decisionClasses } from "@/lib/labels";
+import { decisionLabel, decisionClasses } from "@/lib/labels";
+import {
+  suggestionDetailHref,
+  type WorkbenchListContext,
+} from "@/lib/workbench-nav";
 import { resolveStaleDays } from "@/lib/suggestion-list-display";
 import { resolveAgentRowStatus } from "@/lib/agent-status";
 import { AgentStatusBadge } from "./agent-status-badge";
@@ -33,10 +37,16 @@ function PriorityMark({ priority }: { priority?: string }) {
   );
 }
 
-export function OpportunityRow({ row }: { row: SuggestionRow }) {
+export function OpportunityRow({
+  row,
+  listContext,
+}: {
+  row: SuggestionRow;
+  listContext?: WorkbenchListContext;
+}) {
   const s = row.suggestion;
   const staleDays = resolveStaleDays(row);
-  const href = `/suggestions/${encodeKey(row.dedupeKey)}`;
+  const href = suggestionDetailHref(row.dedupeKey, listContext);
   const quoteBadge = formatQuoteBadge(s);
   const actionPreview = opportunityActionPreview(s);
   const metaChips = opportunityMetaChips(s);

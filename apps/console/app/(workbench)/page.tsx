@@ -21,6 +21,7 @@ import {
 } from "@/lib/priority-filter";
 import { computeWorkbenchMetricCards } from "@/lib/workbench-metrics";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
+import { workbenchListContextFromWorkbench } from "@/lib/workbench-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,12 @@ export default async function WorkbenchPage({
   const displayName = hkFilter
     ? housekeeperName(pilots, hkFilter)
     : "管家";
+  const listContext = workbenchListContextFromWorkbench({
+    tab: sp.tab,
+    hk: hkFilter,
+    sort: sp.sort,
+    priority: sp.priority,
+  });
 
   return (
     <main className="w-full px-6 py-8 lg:px-8">
@@ -99,7 +106,7 @@ export default async function WorkbenchPage({
         <ul className="space-y-3">
           {rows.map((row) => (
             <li key={row.dedupeKey}>
-              <OpportunityRow row={row} />
+              <OpportunityRow row={row} listContext={listContext} />
             </li>
           ))}
         </ul>

@@ -20,6 +20,11 @@ import {
 } from "@/lib/labels";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
+import {
+  detailHrefWithListContext,
+  listContextFromDetailSearchParams,
+  resolveWorkbenchBack,
+} from "@/lib/workbench-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +33,15 @@ export default async function SuggestionDetail({
   searchParams,
 }: {
   params: Promise<{ key: string }>;
-  searchParams: Promise<{ tab?: string; round?: string; view?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    round?: string;
+    view?: string;
+    from?: string;
+    hk?: string;
+    sort?: string;
+    priority?: string;
+  }>;
 }) {
   const { key } = await params;
   const sp = await searchParams;
@@ -51,17 +64,20 @@ export default async function SuggestionDetail({
   });
 
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
-  const detailBase = `/suggestions/${encodeKey(dedupeKey)}`;
+  const listContext = listContextFromDetailSearchParams(sp);
+  const back = resolveWorkbenchBack(sp, row.inboxBucket);
+  const detailPath = `/suggestions/${encodeKey(dedupeKey)}`;
+  const detailBase = detailHrefWithListContext(detailPath, listContext);
   const feedView = sp.view === "feed";
   const mobileHref = `/m/s/${encodeURIComponent(dedupeKey)}`;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-6 lg:px-8">
       <Link
-        href="/"
+        href={back.href}
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
-        <ArrowLeft className="h-4 w-4" /> 返回工作台
+        <ArrowLeft className="h-4 w-4" /> {back.label}
       </Link>
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -117,7 +133,7 @@ export default async function SuggestionDetail({
         <CaseSection title="Activity Feed · 全宽时间轴">
           <div className="mb-3 flex justify-end">
             <Link
-              href={detailBase}
+              href={detailHrefWithListContext(detailPath, listContext)}
               className="text-primary text-xs hover:underline"
             >
               返回案件视图
