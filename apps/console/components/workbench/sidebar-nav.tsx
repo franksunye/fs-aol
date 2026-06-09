@@ -11,7 +11,6 @@ import {
   Inbox,
   Settings,
   Sparkles,
-  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +29,15 @@ function navHref(path: string, sp: URLSearchParams, hk?: string): string {
   return s ? `/?${s}` : "/";
 }
 
+function analyticsHref(sp: URLSearchParams, hk?: string): string {
+  const q = new URLSearchParams();
+  const range = sp.get("range");
+  if (range) q.set("range", range);
+  if (hk) q.set("hk", hk);
+  const s = q.toString();
+  return s ? `/analytics?${s}` : "/analytics";
+}
+
 export function SidebarNav({
   activeCount,
   closedCount,
@@ -43,6 +51,7 @@ export function SidebarNav({
   const sp = useSearchParams();
   const tab = sp.get("tab") || "active";
   const onHome = pathname === "/";
+  const onAnalytics = pathname === "/analytics";
 
   const items = [
     {
@@ -53,12 +62,6 @@ export function SidebarNav({
       badge: activeCount > 0 ? activeCount : undefined,
     },
     {
-      label: "机会",
-      icon: Target,
-      href: navHref("/", sp, hk),
-      active: onHome && tab === "active",
-    },
-    {
       label: "日历",
       icon: Calendar,
       href: "#",
@@ -67,8 +70,8 @@ export function SidebarNav({
     {
       label: "分析",
       icon: BarChart3,
-      href: navHref("/", sp, hk),
-      active: onHome && tab === "active",
+      href: analyticsHref(sp, hk),
+      active: onAnalytics,
     },
     {
       label: "已处置",
