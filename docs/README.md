@@ -43,6 +43,7 @@ Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 *
 | [PUB-06-llm-providers.md](public/PUB-06-llm-providers.md) | **用什么模型**：混元 Lite 日常 + DeepSeek 抽样验证 |
 | [PUB-07-product-surface.md](public/PUB-07-product-surface.md) | **怎么变成产品**：两轨纪律 + 产品脊柱 S1–S6（UI/UX）+ 产品化 DoD |
 | [PUB-13-action-spec-v02.md](public/PUB-13-action-spec-v02.md) | **跟进建议 JSON v0.2**（输出结构） |
+| [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（试点目标、已落地、待交付、验收） |
 | [sops/](../sops/README.md) | **L2 SOP**（v0.4 启用，当前为大纲） |
 | [PUB-private-docs-template.md](public/PUB-private-docs-template.md) | 私有文档管理模板与边界 |
 
@@ -73,6 +74,6 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 ## 状态
 
-- 版本：**v0.2.4** 已封版；**v0.3.0** 规模化试点 + UX wow（不加本质）已立项，见 [PUB-05-releases.md](public/PUB-05-releases.md) § v0.3.0
-- 阶段：Phase 1（Follow-up 楔子）→ v0.3 运营试点
-- 最近更新：2026-06-01（对齐《认知机器》五层：Harness / Trusted Execution / Skill）
+- 版本：**v0.2.5** 已封版（v0.2.x 功能线收官）；**v0.3.0** 运营试点立项中，见 [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md)
+- 阶段：Phase 1（Follow-up 楔子）→ v0.3 真发试点与 KPI 证明
+- 最近更新：2026-06-09（`v0.2.5`：双时间轴、收件箱归档、时间再分析、多轮 Agent UI）

@@ -149,6 +149,7 @@ flowchart LR
 | **v0.2.2** | 业务语义（管家收件箱、已跟进、outcomes 可读） | ✅ `v0.2.2` |
 | **v0.2.3** | 闭环指标（Console 轻量 KPI + 7 日离 206 率脚本） | ✅ `v0.2.3` |
 | **v0.2.4** | Console 收口（生产 E2E + 收件箱 UX + state_at + 排序） | ✅ `v0.2.4` |
+| **v0.2.5** | 认知外显 + 时间再分析闭环（双时间轴、收件箱归档、多轮 Agent UI） | ✅ `v0.2.5` |
 
 > **产品轨 `v1.0` tag 纪律**：在 v0.2.x 闭环被证明且试点 KPI 达标（如 App 内处置率 ≥70%）后再打；见 [PUB-07-product-surface.md](PUB-07-product-surface.md) §1。
 
@@ -271,7 +272,7 @@ python scripts/advancement_rate.py --limit 50 --window-days 7
 
 ### v0.2.4 · Console 收口（已发布 `v0.2.4`，2026-05-31）
 
-**目标**：在 v0.2.3 阶段门基础上，完成 **生产 E2E** 与 **Console 收件箱可用性** 收口，正式结束 v0.2.x 线。
+**目标**：在 v0.2.3 阶段门基础上，完成 **生产 E2E** 与 **Console 收件箱可用性** 收口。
 
 **交付范围**：
 
@@ -290,7 +291,33 @@ python scripts/advancement_rate.py --limit 50 --window-days 7
 - [x] GHA cron 手动/定时跑通：引擎写 Turso、企微 webhook 可达、Console 深链可开
 - [x] 收件箱可扫读：无横向滚动；工单事实与建议时间分离；滞留随日历递增
 - [x] 排序与管家筛选可组合（URL 持久化）
-- [x] v0.2.x 收口共识：产品方认可当前 Console + 通知链路，可进入 v0.3 规模化试点
+- [x] v0.2.4 收口共识：产品方认可 Console + 通知链路可日常预览
+
+---
+
+### v0.2.5 · 认知外显 + 再分析闭环（已发布 `v0.2.5`，2026-06-09）
+
+**目标**：在 v0.2.4 运营链路之上，让管家与 PO **看见 Agent 多次工作**与业务进展，并完成 **时间触发再分析**端到端闭环。**v0.2.x 功能线收官**；后续增量转入 v0.3 运营试点（不加楔子业务本质）。
+
+**交付范围**：
+
+| 项 | 说明 |
+|----|------|
+| 业务时间轴 | Mongo 里程碑（建单/预约/勘察/报价/签约等）→ Turso `timeline_events` → Console「业务时间轴」Tab |
+| Agent 时间轴 | inbox / stale_snapshot / reanalyze_pending / reanalysis 等节点；每轮 cron + sync 持续刷新 |
+| 收件箱三桶 | `inbox_bucket`：待处置 / 已处置 / 归档；**已签约、离 wedge → 归档**（待处置 = 仍在 206 楔子且需跟进） |
+| 时间触发再分析 | `REANALYZE_*`：间隔 ≥3 天或滞留台阶 +7 天；优先级升高再推企微 |
+| 再分析补捞 | 对入池 `dedupe_key` 按 `work_order_id` **定向 Mongo 补捞**，不受 `FSM_BATCH_LIMIT` 漏捞 |
+| Console Agent 分析 | 多轮 trace 选择器（`?tab=agent&round=N`）；轮次 diff、触发标签、推送外显、分析时效卡片 |
+| 运维 | Cloudflare Worker → GHA `agent_cron`；`sync_inbox` / `backfill_timeline` workflows |
+| 移动端 | 管家处置白底移动页、Turso 读路径优化 |
+
+**验收清单（打勾即 tag `v0.2.5`）**：
+
+- [x] 时间触发再分析：Turso 判定入池 + Mongo 补捞 + 写入第二轮 trace（含 `reanalyzed_no_push`）
+- [x] Console 可选多轮 Agent 分析，业务时间轴可跳转对应轮次
+- [x] 收件箱归档规则与 Mongo wedge 一致（signed / left_wedge / agent_no_follow）
+- [x] PO 确认：v0.2 楔子功能无继续发散项，可冻结功能面进入 v0.3 运营证明
 
 ---
 
@@ -310,7 +337,9 @@ python run_cron.py --reset-tracking
 
 ## v0.3.0 · scale pilot（规模化试点，建议 2–4 周）
 
-**目标**：在 **v0.2.4 闭环已收口** 之后，做第一次 **可日常运营的真发试点**——证明链路 **跑得稳、管家愿意用、数字值得扩大**。
+> **范围 SSOT（含 2026-06 修订）**：[PUB-14-v030-scope.md](PUB-14-v030-scope.md) — 已落地 vs 待交付、验收清单、与 main 加厚能力对齐。
+
+**目标**：在 **`v0.2.5` 功能线已封版** 之后，做第一次 **可日常运营的真发试点**——证明链路 **跑得稳、管家愿意用、数字值得扩大**。
 
 > **纪律（PO 共识 2026-05-31）**  
 > - **功能本质不增加**：仍为 206 + 四位管家 + Action Spec v0.2 + 四种阻塞 + 四种 disposition。  

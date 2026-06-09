@@ -1,6 +1,6 @@
 {
   "name": "fs-aol",
-  "version": "0.2.0",
+  "version": "0.2.5",
   "private": true,
   "description": "FS-AOL monorepo: apps/console (Next.js) + packages/aol (Python engine).",
   "scripts": {
