@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { AgentSummaryCard } from "./agent-summary-card";
 import { NextActionCard } from "./next-action-card";
-import { EvidenceTabs } from "./evidence-tabs";
-import { AgentAnalysisPanel } from "@/components/agent-analysis-panel";
+import { CaseAgentPanel } from "./case-agent-panel";
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
-import type { SuggestionDoc, TraceRow } from "@/lib/suggestions";
+import { CaseSection } from "./case-section";
+import type { SuggestionDoc } from "@/lib/suggestions";
 import type { TimelineEvent } from "@/lib/timeline";
 import type { AgentLogMeta } from "@/components/agent-analysis-panel";
 
@@ -18,7 +19,6 @@ export function CaseWorkspace({
   timelineEvents,
   roundLinks,
   detailBase,
-  traceLite,
 }: {
   workOrderId: string;
   dedupeKey: string;
@@ -29,50 +29,54 @@ export function CaseWorkspace({
   timelineEvents: TimelineEvent[];
   roundLinks: Record<number, number>;
   detailBase: string;
-  traceLite: TraceRow[];
 }) {
-  const latestTrace = traceLite.length > 0 ? traceLite[traceLite.length - 1] : null;
-
   return (
-    <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_280px]">
-      <div className="space-y-4">
-        <AgentSummaryCard suggestion={suggestion} />
-        <NextActionCard suggestion={suggestion} />
-        <EvidenceTabs trace={latestTrace} timelineCount={timelineEvents.length} />
-      </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="flex min-w-0 flex-col gap-5">
+        <div className="grid gap-4 md:grid-cols-2 md:items-stretch">
+          <AgentSummaryCard suggestion={suggestion} />
+          <NextActionCard suggestion={suggestion} />
+        </div>
 
-      <div className="space-y-4">
         <Suspense
           fallback={
             <p className="text-muted-foreground animate-pulse text-sm">
-              加载 Agent Run…
+              加载 Agent 分析…
             </p>
           }
         >
-          <AgentAnalysisPanel
+          <CaseAgentPanel
             workOrderId={workOrderId}
             dedupeKey={dedupeKey}
             fallbackSuggestion={suggestion}
             modifiedSuggestion={modifiedSuggestion}
             initialRound={initialRound}
             logMeta={logMeta}
-            compact
+            timelineCount={timelineEvents.length}
           />
         </Suspense>
       </div>
 
-      <aside className="space-y-2">
-        <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Agent 时间轴
-        </h2>
-        <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
+      <aside className="lg:sticky lg:top-6 lg:self-start">
+        <CaseSection
+          title="Agent 时间轴"
+          action={
+            <Link
+              href={`${detailBase}?view=feed`}
+              className="text-primary text-xs font-medium hover:underline"
+            >
+              查看全部
+            </Link>
+          }
+          bodyClassName="max-h-[calc(100vh-8rem)] overflow-y-auto p-3"
+        >
           <PlanTimelineSection
             events={timelineEvents}
             roundLinks={roundLinks}
             suggestionBaseHref={detailBase}
             compact
           />
-        </div>
+        </CaseSection>
       </aside>
     </div>
   );

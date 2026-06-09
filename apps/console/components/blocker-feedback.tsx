@@ -49,9 +49,9 @@ export function BlockerFeedbackForm({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
+    <div className="space-y-3 border-t border-border pt-4">
       <div>
-        <div className="text-sm font-medium">卡点</div>
+        <div className="text-sm font-medium">卡点（可选）</div>
         <p className="text-muted-foreground text-xs">
           当前：{blockerDisplay(currentType, currentNote)}
         </p>

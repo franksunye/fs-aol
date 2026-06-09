@@ -32,10 +32,12 @@ export function AnalysisDiffCard({
   prev,
   cur,
   round,
+  compact = false,
 }: {
   prev: SuggestionDoc;
   cur: SuggestionDoc;
   round: number;
+  compact?: boolean;
 }) {
   const diffs = diffSuggestions(prev, cur);
   const anyChange = hasSuggestionChanges(diffs);
@@ -43,9 +45,15 @@ export function AnalysisDiffCard({
   return (
     <section className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          与第 {round - 1} 次对比
-        </h3>
+        {!compact ? (
+          <h3 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+            与第 {round - 1} 次对比
+          </h3>
+        ) : (
+          <span className="text-muted-foreground text-xs">
+            首次分析 → 第 {round} 次
+          </span>
+        )}
         <Badge
           variant={anyChange ? "default" : "secondary"}
           className="text-[10px] font-normal"

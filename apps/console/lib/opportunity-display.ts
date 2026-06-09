@@ -1,48 +1,36 @@
 import type { SuggestionDoc, SuggestionRow } from "./suggestions";
 import { parseQuoteAmountYuan, formatYuanCompact } from "./workbench-metrics";
-
-const CONFIDENCE: Record<string, number> = {
-  高: 85,
-  中: 72,
-  低: 60,
-};
-
-const DURATION_MIN: Record<string, number> = {
-  高: 15,
-  中: 20,
-  低: 12,
-};
-
-const IMPACT_PCT: Record<string, number> = {
-  高: 31,
-  中: 26,
-  低: 18,
-};
-
-export function opportunityConfidence(s: SuggestionDoc): number {
-  const p = s.优先级 || "中";
-  let base = CONFIDENCE[p] ?? 68;
-  if (s.客户情绪 === "积极") base = Math.min(95, base + 5);
-  if (s.客户情绪 === "消极") base = Math.max(45, base - 8);
-  return base;
-}
-
-export function opportunityDurationMin(s: SuggestionDoc): number {
-  return DURATION_MIN[s.优先级 || "中"] ?? 15;
-}
-
-export function opportunityImpactPct(s: SuggestionDoc): number {
-  return IMPACT_PCT[s.优先级 || "中"] ?? 20;
-}
+import { primaryAction } from "./suggestion-list-display";
 
 export function formatQuoteBadge(s: SuggestionDoc): string | null {
   const amt = parseQuoteAmountYuan(s);
   if (amt != null) return `报价 ${formatYuanCompact(amt)}`;
   const status = s.情况判断?.报价状态?.trim();
   if (status === "已正式报价未签约") return "已报价";
+  if (status === "无正式报价") return "未报价";
   return null;
 }
 
+/** 列表副文案：Agent 建议的主行动（Action Spec 真字段） */
+export function opportunityActionPreview(s: SuggestionDoc): string {
+  const action = primaryAction(s);
+  return action === "—" ? "" : action;
+}
+
+/** 列表辅助信息：引用查证条数 + 客户情绪 */
+export function opportunityMetaChips(s: SuggestionDoc): string[] {
+  const chips: string[] = [];
+  const cites = s.引用查证?.filter((c) => c?.trim()) ?? [];
+  if (cites.length > 0) chips.push(`${cites.length} 条查证`);
+  if (s.客户情绪?.trim()) chips.push(`情绪 ${s.客户情绪}`);
+  const quoteStatus = s.情况判断?.报价状态?.trim();
+  if (quoteStatus && !formatQuoteBadge(s)?.includes("报价")) {
+    chips.push(quoteStatus);
+  }
+  return chips;
+}
+
+/** processedAt = 本条跟进建议生成时刻，非工单业务时间 */
 export function formatListTimestamp(iso: string): string {
   if (!iso?.trim()) return "";
   const d = new Date(iso);
@@ -57,15 +45,16 @@ export function formatListTimestamp(iso: string): string {
     minute: "2-digit",
     hour12: false,
   });
-  if (d >= startToday) return time;
-  if (d >= startYesterday) return `昨天 ${time}`;
-  return d.toLocaleString("zh-CN", {
+  if (d >= startToday) return `建议 ${time}`;
+  if (d >= startYesterday) return `建议 昨天 ${time}`;
+  const date = d.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
+  return `建议 ${date}`;
 }
 
 export function opportunityStageLabel(row: SuggestionRow): string {

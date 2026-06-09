@@ -1,18 +1,19 @@
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { SuggestionRow } from "@/lib/suggestions";
-import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
-import { encodeKey } from "@/lib/labels";
+import { encodeKey, decisionLabel, decisionClasses } from "@/lib/labels";
 import { resolveStaleDays } from "@/lib/suggestion-list-display";
+import { resolveAgentRowStatus } from "@/lib/agent-status";
+import { AgentStatusBadge } from "./agent-status-badge";
 import {
   formatListTimestamp,
   formatQuoteBadge,
-  opportunityConfidence,
-  opportunityDurationMin,
-  opportunityImpactPct,
+  opportunityActionPreview,
+  opportunityMetaChips,
   opportunityStageLabel,
 } from "@/lib/opportunity-display";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 function PriorityMark({ priority }: { priority?: string }) {
   const label = priority || "—";
@@ -32,20 +33,15 @@ function PriorityMark({ priority }: { priority?: string }) {
   );
 }
 
-export function OpportunityRow({
-  row,
-}: {
-  row: SuggestionRow;
-  pilots?: PilotHousekeeper[];
-}) {
+export function OpportunityRow({ row }: { row: SuggestionRow }) {
   const s = row.suggestion;
   const staleDays = resolveStaleDays(row);
   const href = `/suggestions/${encodeKey(row.dedupeKey)}`;
   const quoteBadge = formatQuoteBadge(s);
-  const confidence = opportunityConfidence(s);
-  const duration = opportunityDurationMin(s);
-  const impact = opportunityImpactPct(s);
+  const actionPreview = opportunityActionPreview(s);
+  const metaChips = opportunityMetaChips(s);
   const timestamp = formatListTimestamp(row.processedAt);
+  const agentStatus = resolveAgentRowStatus(row);
 
   return (
     <Link
@@ -60,6 +56,7 @@ export function OpportunityRow({
               <span className="font-mono text-sm font-semibold group-hover:text-primary">
                 {row.orderNum || row.workOrderId}
               </span>
+              <AgentStatusBadge status={agentStatus} />
               <span className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-[11px] font-medium">
                 {opportunityStageLabel(row)}
               </span>
@@ -73,6 +70,12 @@ export function OpportunityRow({
                   {quoteBadge}
                 </span>
               ) : null}
+              <Badge
+                variant="outline"
+                className={cn("text-[10px]", decisionClasses(row.outcome?.decision))}
+              >
+                {decisionLabel(row.outcome?.decision)}
+              </Badge>
             </div>
             {timestamp ? (
               <span className="text-muted-foreground shrink-0 font-mono text-[11px] tabular-nums">
@@ -81,27 +84,19 @@ export function OpportunityRow({
             ) : null}
           </div>
 
-          <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs tabular-nums">
-            <span>
-              信心 <span className="text-foreground font-medium">{confidence}%</span>
-            </span>
-            <span>
-              预计耗时{" "}
-              <span className="text-foreground font-medium">{duration} 分钟</span>
-            </span>
-            <span>
-              预计影响{" "}
-              <span className="font-medium text-emerald-600">+{impact}% 签约率</span>
-            </span>
-          </div>
-        </div>
-      </div>
+          {actionPreview ? (
+            <p className="text-foreground mt-2 line-clamp-2 text-sm leading-snug">
+              {actionPreview}
+            </p>
+          ) : null}
 
-      <div className="mt-3 flex justify-end">
-        <span className="text-primary inline-flex items-center gap-0.5 text-xs font-medium">
-          查看
-          <ChevronDown className="size-3.5 opacity-60" aria-hidden />
-        </span>
+          {metaChips.length > 0 ? (
+            <p className="text-muted-foreground mt-2 text-xs">
+              {metaChips.join(" · ")}
+            </p>
+          ) : null}
+        </div>
+        <ChevronRight className="text-muted-foreground mt-1 size-4 shrink-0 opacity-40 transition-opacity group-hover:opacity-100" />
       </div>
     </Link>
   );

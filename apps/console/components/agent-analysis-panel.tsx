@@ -108,8 +108,8 @@ export function AgentAnalysisPanel({
   const setRound = useCallback(
     (nextRound: number) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", "agent");
       params.set("round", String(nextRound));
+      params.delete("tab");
       router.replace(`/suggestions/${encodeURIComponent(dedupeKey)}?${params}`);
     },
     [dedupeKey, router, searchParams]

@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { DispositionBar } from "@/components/case/disposition-bar";
 import { CaseWorkspace } from "@/components/case/case-workspace";
+import { OpportunitySnapshotCard } from "@/components/case/opportunity-snapshot-card";
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
+import { CaseSection } from "@/components/case/case-section";
 import {
-  eventTypeLabel,
-  statusLabel,
   decisionLabel,
   priorityClasses,
   decisionClasses,
@@ -18,7 +18,6 @@ import {
   archiveReasonLabel,
   encodeKey,
 } from "@/lib/labels";
-import { analysisMetaLines } from "@/lib/analysis-meta";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
 
@@ -52,12 +51,12 @@ export default async function SuggestionDetail({
   });
 
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
-  const analysisLines = analysisMetaLines(row);
   const detailBase = `/suggestions/${encodeKey(dedupeKey)}`;
   const feedView = sp.view === "feed";
+  const mobileHref = `/m/s/${encodeURIComponent(dedupeKey)}`;
 
   return (
-    <main className="w-full px-6 py-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-6 lg:px-8">
       <Link
         href="/"
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
@@ -65,22 +64,18 @@ export default async function SuggestionDetail({
         <ArrowLeft className="h-4 w-4" /> 返回工作台
       </Link>
 
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="font-mono text-xl font-semibold">
-            {row.orderNum || row.workOrderId}
-          </div>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {eventTypeLabel(row.eventType)} · {row.city || "—"} ·{" "}
-            {statusLabel(row.status)}
-          </p>
-        </div>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <h1 className="font-mono text-2xl font-semibold tracking-tight">
+          {row.orderNum || row.workOrderId}
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
           <Badge className={priorityClasses(s.优先级)}>
             优先级 {s.优先级 || "—"}
           </Badge>
           {staleDays != null ? (
-            <Badge variant="outline">滞留 {staleDays} 天</Badge>
+            <Badge variant="outline" className="tabular-nums">
+              滞留 {staleDays} 天
+            </Badge>
           ) : null}
           <Badge className={decisionClasses(row.outcome?.decision)}>
             {decisionLabel(row.outcome?.decision)}
@@ -89,7 +84,7 @@ export default async function SuggestionDetail({
             v0.3.5
           </Badge>
         </div>
-      </div>
+      </header>
 
       {row.inboxBucket !== "active" ? (
         <Card className="mb-4 border-amber-200 bg-amber-50/80 p-4 text-sm">
@@ -105,34 +100,27 @@ export default async function SuggestionDetail({
         </Card>
       ) : null}
 
-      {analysisLines.length > 0 ? (
-        <Card className="border-violet-200 bg-agent-surface/50 mb-4 p-3 text-xs">
-          <ul className="text-muted-foreground space-y-1">
-            {analysisLines.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
+      <div className="mb-5 space-y-5">
+        <OpportunitySnapshotCard row={row} mobileHref={mobileHref} />
 
-      <DispositionBar
-        dedupeKey={row.dedupeKey}
-        workOrderId={row.workOrderId}
-        suggestion={s}
-        currentDecision={row.outcome?.decision ?? null}
-        blockerType={row.blocker?.blockerType ?? null}
-        blockerNote={row.blocker?.note ?? null}
-      />
+        <DispositionBar
+          dedupeKey={row.dedupeKey}
+          workOrderId={row.workOrderId}
+          suggestion={s}
+          currentDecision={row.outcome?.decision ?? null}
+          blockerType={row.blocker?.blockerType ?? null}
+          blockerNote={row.blocker?.note ?? null}
+        />
+      </div>
 
       {feedView ? (
-        <Card className="mt-4 p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Activity Feed</h2>
+        <CaseSection title="Activity Feed · 全宽时间轴">
+          <div className="mb-3 flex justify-end">
             <Link
               href={detailBase}
               className="text-primary text-xs hover:underline"
             >
-              返回双栏视图
+              返回案件视图
             </Link>
           </div>
           <PlanTimelineSection
@@ -140,7 +128,7 @@ export default async function SuggestionDetail({
             roundLinks={roundLinks}
             suggestionBaseHref={detailBase}
           />
-        </Card>
+        </CaseSection>
       ) : (
         <CaseWorkspace
           workOrderId={row.workOrderId}
@@ -159,7 +147,6 @@ export default async function SuggestionDetail({
           timelineEvents={timelineEvents}
           roundLinks={roundLinks}
           detailBase={detailBase}
-          traceLite={traces}
         />
       )}
     </main>
