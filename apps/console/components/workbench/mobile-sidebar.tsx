@@ -44,6 +44,7 @@ export function MobileSidebar({
             activeCount={activeCount}
             closedCount={closedCount}
             hk={hk}
+            collapsed={false}
           />
         </div>
       </SheetContent>

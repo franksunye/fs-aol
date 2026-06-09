@@ -50,7 +50,7 @@ export function CaseDetailView({
     <div
       className={
         isPane
-          ? "px-4 py-4 lg:px-5 lg:py-5"
+          ? "w-full min-w-0 px-4 py-4 lg:px-6 lg:py-5"
           : "mx-auto w-full max-w-[1400px] px-6 py-6 lg:px-8"
       }
     >
@@ -146,6 +146,7 @@ export function CaseDetailView({
           timelineEvents={timelineEvents}
           roundLinks={roundLinks}
           detailBase={detailBase}
+          embedded={isPane}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SidebarNav } from "./sidebar-nav";
+import { DesktopSidebar } from "./desktop-sidebar";
 import { MobileSidebar } from "./mobile-sidebar";
 
 export function AppShell({
@@ -14,18 +14,16 @@ export function AppShell({
   hk?: string;
 }) {
   return (
-    <div className="flex min-h-screen w-full">
-      <Suspense fallback={<div className="hidden w-60 shrink-0 border-r md:block" />}>
-        <aside className="hidden h-screen shrink-0 md:block">
-          <SidebarNav
-            activeCount={activeCount}
-            closedCount={closedCount}
-            hk={hk}
-          />
-        </aside>
+    <div className="flex h-dvh w-full overflow-hidden">
+      <Suspense fallback={<div className="hidden h-full w-60 shrink-0 border-r md:block" />}>
+        <DesktopSidebar
+          activeCount={activeCount}
+          closedCount={closedCount}
+          hk={hk}
+        />
       </Suspense>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="bg-background sticky top-0 z-30 flex items-center gap-2 border-b border-border px-4 py-2 md:hidden">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="bg-background z-30 flex shrink-0 items-center gap-2 border-b border-border px-4 py-2 md:hidden">
           <MobileSidebar
             activeCount={activeCount}
             closedCount={closedCount}
@@ -33,7 +31,7 @@ export function AppShell({
           />
           <span className="text-sm font-semibold">Follow-up Agent</span>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
   );

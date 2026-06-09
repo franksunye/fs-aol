@@ -144,7 +144,7 @@ export default async function WorkbenchPage({
     ) : null;
 
   return (
-    <main className="flex min-h-0 w-full flex-1 flex-col">
+    <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <WorkbenchSplitLayout
         list={listPane}
         detail={detailPane}

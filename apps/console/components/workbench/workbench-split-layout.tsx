@@ -64,14 +64,16 @@ export function WorkbenchSplitLayout({
 
   return (
     <div
-      className="relative flex min-h-0 w-full flex-1 overflow-hidden"
+      className="relative flex h-full min-h-0 w-full overflow-hidden"
       data-sidebar-open={sidebarOpen ? "true" : "false"}
     >
-      {/* 列表主区 */}
+      {/* 列表：侧栏打开时固定宽度，其余空间留给详情 */}
       <section
         className={cn(
-          "min-h-0 min-w-0 flex-1 overflow-y-auto transition-[max-width] duration-300 ease-out",
-          sidebarOpen && "lg:max-w-[min(42%,420px)] lg:shrink-0"
+          "min-h-0 shrink-0 overflow-y-auto overscroll-contain transition-[width,max-width] duration-300 ease-out",
+          sidebarOpen
+            ? "w-full max-w-full basis-full lg:w-[min(38%,400px)] lg:max-w-[400px] lg:basis-[min(38%,400px)] lg:border-r lg:border-border"
+            : "min-w-0 flex-1"
         )}
         aria-label="机会列表"
       >
@@ -91,23 +93,23 @@ export function WorkbenchSplitLayout({
         onClick={closeSidebar}
       />
 
-      {/* 详情侧栏 */}
+      {/* 详情侧栏：占满剩余宽度，内部独立滚动 */}
       <aside
         role="complementary"
         aria-label="案件详情侧栏"
         aria-hidden={!sidebarOpen}
         className={cn(
-          "bg-background flex flex-col border-border",
-          "transition-[transform,width,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          "fixed inset-y-0 right-0 z-50 w-full max-w-full border-l",
+          "bg-background flex h-full min-h-0 flex-col border-border",
+          "transition-[transform,flex,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed inset-y-0 right-0 z-50 w-full border-l",
           "shadow-[-16px_0_40px_-12px_rgba(15,23,42,0.2)]",
           sidebarOpen
             ? "translate-x-0 opacity-100"
             : "pointer-events-none translate-x-full opacity-0",
-          "lg:relative lg:z-auto lg:max-w-none lg:translate-x-0 lg:shadow-[-12px_0_32px_-16px_rgba(15,23,42,0.12)]",
+          "lg:relative lg:z-auto lg:translate-x-0 lg:shadow-[-12px_0_32px_-16px_rgba(15,23,42,0.12)]",
           sidebarOpen
-            ? "lg:pointer-events-auto lg:w-[min(58%,720px)] lg:min-w-[480px] lg:shrink-0 lg:opacity-100"
-            : "lg:w-0 lg:min-w-0 lg:overflow-hidden lg:border-0 lg:opacity-0 lg:shadow-none"
+            ? "lg:pointer-events-auto lg:min-w-0 lg:flex-1 lg:opacity-100"
+            : "lg:w-0 lg:min-w-0 lg:flex-none lg:overflow-hidden lg:border-0 lg:opacity-0 lg:shadow-none"
         )}
       >
         <header className="bg-muted/50 flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-3 lg:px-4">
@@ -138,7 +140,7 @@ export function WorkbenchSplitLayout({
           </Button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
           {sidebarOpen ? detail : null}
         </div>
       </aside>

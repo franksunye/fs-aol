@@ -19,6 +19,7 @@ export function CaseWorkspace({
   timelineEvents,
   roundLinks,
   detailBase,
+  embedded = false,
 }: {
   workOrderId: string;
   dedupeKey: string;
@@ -29,7 +30,62 @@ export function CaseWorkspace({
   timelineEvents: TimelineEvent[];
   roundLinks: Record<number, number>;
   detailBase: string;
+  /** 详情侧栏内：单列流式布局，由侧栏统一滚动 */
+  embedded?: boolean;
 }) {
+  if (embedded) {
+    return (
+      <div className="flex w-full min-w-0 flex-col gap-5">
+        <div className="grid gap-4 md:grid-cols-2 md:items-stretch xl:grid-cols-2">
+          <AgentSummaryCard suggestion={suggestion} />
+          <NextActionCard suggestion={suggestion} />
+        </div>
+
+        <Suspense
+          fallback={
+            <p className="text-muted-foreground animate-pulse text-sm">
+              加载 Agent 分析…
+            </p>
+          }
+        >
+          <CaseAgentPanel
+            workOrderId={workOrderId}
+            dedupeKey={dedupeKey}
+            fallbackSuggestion={suggestion}
+            modifiedSuggestion={modifiedSuggestion}
+            initialRound={initialRound}
+            logMeta={logMeta}
+            timelineCount={timelineEvents.length}
+          />
+        </Suspense>
+
+        <CaseSection
+          title="Agent 时间轴"
+          action={
+            <Link
+              href={
+                detailBase.includes("?")
+                  ? `${detailBase}&view=feed`
+                  : `${detailBase}?view=feed`
+              }
+              className="text-primary text-xs font-medium hover:underline"
+            >
+              查看全部
+            </Link>
+          }
+          bodyClassName="p-3"
+        >
+          <PlanTimelineSection
+            events={timelineEvents}
+            roundLinks={roundLinks}
+            suggestionBaseHref={detailBase}
+            compact
+          />
+        </CaseSection>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex min-w-0 flex-col gap-5">
