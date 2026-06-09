@@ -15,7 +15,13 @@ const OPTIONS: Array<{ value: SuggestionSortKey; label: string }> = [
   { value: "disposition", label: "反馈情况" },
 ];
 
-export function SuggestionSort({ current }: { current: SuggestionSortKey }) {
+export function SuggestionSort({
+  current,
+  compact = false,
+}: {
+  current: SuggestionSortKey;
+  compact?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,11 +39,30 @@ export function SuggestionSort({ current }: { current: SuggestionSortKey }) {
     });
   }
 
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Label className="text-muted-foreground shrink-0 text-[11px]">排序</Label>
+        <select
+          className="border-input bg-background h-7 min-w-[6.5rem] rounded-md border px-1.5 text-xs outline-none focus-visible:border-ring"
+          value={current}
+          disabled={pending}
+          aria-label="排序方式"
+          onChange={(e) => onChange(e.target.value as SuggestionSortKey)}
+        >
+          {OPTIONS.map((op) => (
+            <option key={op.value} value={op.value}>
+              {op.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
-      <Label className="text-muted-foreground text-xs shrink-0">
-        排序
-      </Label>
+      <Label className="text-muted-foreground shrink-0 text-xs">排序</Label>
       <div className="flex flex-wrap items-center gap-1">
         {OPTIONS.map((op) => {
           const active = current === op.value;

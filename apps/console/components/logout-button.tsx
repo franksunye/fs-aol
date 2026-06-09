@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
+export function LogoutButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
 
   async function logout() {
@@ -13,8 +13,15 @@ export function LogoutButton() {
   }
 
   return (
-    <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={logout}>
-      退出
+    <Button
+      type="button"
+      variant="ghost"
+      size={compact ? "icon-sm" : "sm"}
+      className={compact ? undefined : "text-xs"}
+      onClick={logout}
+      aria-label="退出登录"
+    >
+      {compact ? "退" : "退出"}
     </Button>
   );
 }

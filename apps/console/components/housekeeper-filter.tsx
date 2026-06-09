@@ -4,15 +4,18 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
+import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 
 const COOKIE = "aol_hk_filter";
 
 export function HousekeeperFilter({
   pilots,
   currentId,
+  compact = false,
 }: {
   pilots: PilotHousekeeper[];
   currentId?: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -35,6 +38,7 @@ export function HousekeeperFilter({
   function onChange(value: string) {
     persistCookie(value);
     const params = new URLSearchParams(searchParams.toString());
+    stripPaneSelectionParams(params);
     if (value) params.set("hk", value);
     else params.delete("hk");
     const qs = params.toString();
@@ -45,13 +49,20 @@ export function HousekeeperFilter({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor="hk-filter" className="text-muted-foreground text-xs shrink-0">
-        管家收件箱
-      </Label>
+    <div className="flex items-center gap-1.5">
+      {!compact ? (
+        <Label htmlFor="hk-filter" className="text-muted-foreground shrink-0 text-xs">
+          管家收件箱
+        </Label>
+      ) : null}
       <select
         id="hk-filter"
-        className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+        aria-label="管家收件箱"
+        className={
+          compact
+            ? "border-input bg-background h-7 max-w-[5.5rem] truncate rounded-md border px-1.5 text-xs"
+            : "border-input bg-background h-8 rounded-md border px-2 text-sm"
+        }
         value={selected}
         disabled={pending}
         onChange={(e) => onChange(e.target.value)}

@@ -77,15 +77,16 @@ export default async function WorkbenchPage({
   const hasRows = rows.length > 0;
 
   const listPane = (
-    <div className="px-4 py-6 lg:px-5 lg:py-6">
+    <div className="px-3 py-4 lg:px-4 lg:py-5">
       <WorkbenchHeader
         displayName={displayName}
         pendingCount={metrics?.pending ?? tabCounts.active}
         pilots={pilots}
         hkFilter={hkFilter}
+        compact
       />
 
-      {metrics ? <WorkbenchMetrics metrics={metrics} /> : null}
+      {metrics ? <WorkbenchMetrics metrics={metrics} compact /> : null}
 
       {isActiveInbox ? (
         <Suspense fallback={null}>
@@ -94,6 +95,7 @@ export default async function WorkbenchPage({
             rows={beforePriority}
             currentPriority={priorityFilter}
             sortKey={sortKey}
+            compact
           />
         </Suspense>
       ) : (

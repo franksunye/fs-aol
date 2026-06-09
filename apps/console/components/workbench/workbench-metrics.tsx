@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   formatYuanCompact,
   type WorkbenchMetricCards,
@@ -11,36 +12,58 @@ function MetricCard({
   value,
   footer,
   icon,
+  compact,
 }: {
   label: string;
   value: ReactNode;
   footer?: React.ReactNode;
   icon?: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <Card className="gap-2 rounded-xl border-border bg-card p-5 shadow-sm">
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+    <Card
+      className={cn(
+        "gap-1 rounded-lg border-border bg-card shadow-sm",
+        compact ? "p-2.5" : "gap-2 rounded-xl p-5"
+      )}
+    >
+      <div className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium">
         {icon}
-        <span>{label}</span>
+        <span className={compact ? "truncate" : undefined}>{label}</span>
       </div>
-      <div className="text-foreground text-3xl font-semibold tracking-tight tabular-nums">
+      <div
+        className={cn(
+          "text-foreground font-semibold tracking-tight tabular-nums",
+          compact ? "text-lg leading-none" : "text-3xl"
+        )}
+      >
         {value}
       </div>
-      {footer ? <div className="pt-0.5">{footer}</div> : null}
+      {footer && !compact ? <div className="pt-0.5">{footer}</div> : null}
     </Card>
   );
 }
 
-export function WorkbenchMetrics({ metrics }: { metrics: WorkbenchMetricCards }) {
+export function WorkbenchMetrics({
+  metrics,
+  compact = false,
+}: {
+  metrics: WorkbenchMetricCards;
+  compact?: boolean;
+}) {
   const { base } = metrics;
 
   return (
     <section
-      className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      className={cn(
+        "grid grid-cols-2 gap-2",
+        compact ? "mb-3" : "mb-6 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      )}
       aria-label="工作台指标"
     >
       <MetricCard
-        label="待处理机会"
+        compact={compact}
+        label="待处理"
         value={metrics.pending}
         footer={
           <span className="text-muted-foreground text-xs">
@@ -52,7 +75,8 @@ export function WorkbenchMetrics({ metrics }: { metrics: WorkbenchMetricCards })
         }
       />
       <MetricCard
-        label="报价池金额"
+        compact={compact}
+        label="报价池"
         value={
           metrics.pushableAmount > 0
             ? formatYuanCompact(metrics.pushableAmount)
@@ -61,15 +85,16 @@ export function WorkbenchMetrics({ metrics }: { metrics: WorkbenchMetricCards })
         footer={
           <span className="text-muted-foreground text-xs">
             {metrics.quotedCount > 0
-              ? `${metrics.quotedCount}/${metrics.pending} 条含可解析报价`
-              : "待处理工单暂无金额字段"}
+              ? `${metrics.quotedCount}/${metrics.pending} 条含报价`
+              : "暂无金额字段"}
           </span>
         }
       />
       <MetricCard
+        compact={compact}
         label="高优先级"
         value={metrics.highPriority}
-        icon={<Flame className="size-3.5 text-red-500" aria-hidden />}
+        icon={<Flame className="size-3 text-red-500" aria-hidden />}
         footer={
           <span className="text-muted-foreground text-xs tabular-nums">
             占待处理 {metrics.highPriorityShare}%
@@ -77,11 +102,12 @@ export function WorkbenchMetrics({ metrics }: { metrics: WorkbenchMetricCards })
         }
       />
       <MetricCard
-        label="App 内反馈率"
+        compact={compact}
+        label="反馈率"
         value={`${base.handledRate}%`}
         footer={
           <span className="text-muted-foreground text-xs">
-            采纳率 {base.adoptionRate}% · 已跟进 {base.followedUp}
+            采纳 {base.adoptionRate}% · 已跟进 {base.followedUp}
           </span>
         }
       />
