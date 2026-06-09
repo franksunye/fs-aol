@@ -42,3 +42,9 @@ export function blockerDisplay(type?: string | null, note?: string | null): stri
 export function choiceToBlockerType(choice: string): BlockerType | null {
   return CHOICE_TO_BLOCKER[choice.toUpperCase()] ?? null;
 }
+
+export function blockerTypeToChoice(type?: string | null): string {
+  if (!type || type === "UNKNOWN") return "";
+  const found = BLOCKER_CHOICES.find((c) => c.type === type);
+  return found?.choice ?? "";
+}
