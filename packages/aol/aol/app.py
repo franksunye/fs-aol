@@ -14,7 +14,8 @@ import json
 import logging
 import os
 import sys
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 # ---- 可选依赖：缺失时不影响 dry-run + mock + local 链路 ----
 try:
@@ -101,6 +102,10 @@ def run(cfg: Optional[Config] = None) -> int:
 
         success = 0
         reanalyzed = 0
+        failed = 0
+        skipped = 0
+        total_tokens = 0
+        processed = len(work_orders)
         if not work_orders:
             logger.info("本轮无待跟进事件。")
         for wo in work_orders:
@@ -120,9 +125,11 @@ def run(cfg: Optional[Config] = None) -> int:
                         ).strip()
                 suggestion, trace = reason_follow_up(cfg, wo, prior_context=prior_context)
                 store.log_reasoning_trace(trace)  # 每次推理都落 trace（含失败）
+                total_tokens += int(trace.total_tokens or 0)
 
                 if suggestion is None:
                     logger.warning("工单 %s 推理失败(%s)，下轮重试。", ref, trace.error)
+                    failed += 1
                     continue
 
                 logger.info(
@@ -196,8 +203,12 @@ def run(cfg: Optional[Config] = None) -> int:
                         reanalyzed += 1
                 else:
                     logger.warning("工单 %s 推送失败，下轮重试。", ref)
+                    failed += 1
+                if status in ("skipped_no_follow_up", "reanalyzed_skipped_no_follow_up"):
+                    skipped += 1
             except Exception:
                 logger.exception("工单 %s 处理异常，下轮重试。", ref)
+                failed += 1
 
         if work_orders:
             logger.info(
@@ -206,6 +217,8 @@ def run(cfg: Optional[Config] = None) -> int:
                 len(work_orders),
                 reanalyzed,
             )
+        inbox_stats: Dict[str, Any] = {}
+        timeline_stats: Dict[str, Any] = {}
         try:
             from .inbox.sync import run_inbox_sync, run_timeline_refresh
 
@@ -215,6 +228,19 @@ def run(cfg: Optional[Config] = None) -> int:
             logger.info("时间轴同步: %s", timeline_stats)
         except Exception:
             logger.exception("收件箱/时间轴同步失败（不影响主流程）。")
+
+        run_summary = {
+            "run_at": datetime.now(timezone.utc).isoformat(),
+            "processed": processed,
+            "success": success,
+            "reanalyzed": reanalyzed,
+            "failed": failed,
+            "skipped": skipped,
+            "tokens": total_tokens,
+            "inbox_sync": inbox_stats,
+            "timeline_sync": timeline_stats,
+        }
+        logger.info("run_summary %s", json.dumps(run_summary, ensure_ascii=False))
         return 0
     finally:
         store.close()

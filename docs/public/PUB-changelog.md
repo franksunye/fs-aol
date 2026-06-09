@@ -29,6 +29,11 @@
 | 2026-05-31 | **v0.2.3** 闭环指标 | Console **轻量 KPI**（待处置/已跟进/阻塞采集率）；只读 Mongo **`scripts/advancement_rate.py`** 7 日离 206 率；**v0.2.x 阶段门**达成。 | `v0.2.3` |
 | 2026-05-31 | **v0.2.4** Console 收口 | **生产 E2E**：GHA cron + 企微紧凑卡 + Console 深链；收件箱 **四层信息**（工单/情况/动作/处置）、**`state_at` 现算滞留**、平铺排序；trace 时间线；本地 v0.2 闭环（`make seed-local` / webpack dev）。 | `v0.2.4` |
 | 2026-06-09 | **v0.2.5** 认知外显 + 再分析闭环 | **业务/Agent 双时间轴**、收件箱三桶与归档纪律、**时间触发再分析**（含 Mongo 定向补捞）、Console **多轮 Agent 分析**（diff/触发/推送外显）；Cloudflare→GHA cron。**v0.2.x 功能线收官**。 | `v0.2.5` |
+| 2026-06-04 | **v0.3.1** ui-shell | 浅色紫主题、240px 侧栏 App Shell、Agent Workbench 首页、默认 **stale** 排序。 | `v0.3.1` |
+| 2026-06-04 | **v0.3.2** ui-case | Case Workspace 双栏：Agent 摘要、Next Action、Tool Step、sticky 人在回路处置条。 | `v0.3.2` |
+| 2026-06-04 | **v0.3.3** ui-feed | 统一 Activity Feed（业务+Agent 紫/中性轨）；移动页 token 与 case 组件对齐。 | `v0.3.3` |
+| 2026-06-04 | **v0.3.4** ui-industrial | 空态/错态/骨架、a11y、md 以下侧栏 Sheet；生产可演示抛光。 | `v0.3.4` |
+| 2026-06-04 | **v0.3.5** pilot-cap | **`run_summary`** JSON 日志、`pilot-cron` runbook、真发切换清单；**v0.3 线封版**。 | `v0.3.5` |
 
 ---
 
@@ -74,18 +79,24 @@
 
 ---
 
-## 开发中 / 计划中（v0.3 线）
+## v0.3 线（Agentic UI + 试点收官 · 已封版 `v0.3.5`，2026-06-04）
 
-> **v0.3 范围 SSOT**：[14-v030-scope.md](./PUB-14-v030-scope.md) · **UX**：[15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md)  
-> **纪律**：每完成关键迭代打 **`v0.3.N` tag**（3～5 次）；收官 **`v0.3.5`**。
+> 范围 SSOT：[14-v030-scope.md](./PUB-14-v030-scope.md) · UX：[15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md) · Runbook：[pilot-cron.md](../runbooks/pilot-cron.md)
+
+| 目标版本 | 主题 | 摘要 | Tag |
+| --- | --- | --- | --- |
+| **v0.3.1** | ui-shell | 侧栏 + 浅色紫 Workbench | ✅ `v0.3.1` |
+| **v0.3.2** | ui-case | Case Workspace + DispositionBar | ✅ `v0.3.2` |
+| **v0.3.3** | ui-feed | Activity Feed + 移动对齐 | ✅ `v0.3.3` |
+| **v0.3.4** | ui-industrial | 空态/错态/a11y/响应式 | ✅ `v0.3.4` |
+| **v0.3.5** | pilot-cap | run_summary + runbook + 真发清单 | ✅ `v0.3.5` |
+
+---
+
+## 开发中 / 计划中（v0.4+）
 
 | 目标版本 | 主题 | 摘要（一句话） | 依赖 |
 | --- | --- | --- | --- |
-| **v0.3.1** | ui-shell | 侧栏 App Shell + 浅色紫主题 + Agent Workbench 首页 | `v0.2.5` |
-| **v0.3.2** | ui-case | Case Workspace：双栏、Agent 摘要/Next Action、Tool Step | `v0.3.1` |
-| **v0.3.3** | ui-feed | Activity Feed + 移动视觉统一 + 处置反馈 | `v0.3.2` |
-| **v0.3.4** | ui-industrial | 空态/错态/a11y/性能 — 工业级可演示 | `v0.3.3` |
-| **v0.3.5** | pilot-cap | 真发 + run_summary + 7 天 cron + 处置率 ≥50% — **v0.3 线封版** | `v0.3.4` |
 | **v0.4.0** | context-sop | SOP v1 + 阻塞类型驱动话术分支 | `v0.3.5` |
 | **v0.5.0** | proof-metrics | 采纳率、推进率、周报（引擎轨证明包） | v0.3 运行数据 |
 | **v1.0.0** | console-mvp（产品轨） | 正式产品轨：试点 KPI 达标后（如 App 内处置率 ≥70%）；S1+S2 加厚 + SLO/Runbook | v0.3.5 + 试点 KPI |

@@ -56,7 +56,7 @@ export function WorkbenchHeader({
         <HousekeeperFilter pilots={pilots} currentId={hkFilter} />
         {isAuthEnabled() ? <LogoutButton /> : null}
         <Badge variant="outline" className="font-mono text-xs">
-          v0.3.4
+          v0.3.5
         </Badge>
       </div>
     </header>
