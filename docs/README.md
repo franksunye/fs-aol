@@ -43,7 +43,8 @@ Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 *
 | [PUB-06-llm-providers.md](public/PUB-06-llm-providers.md) | **用什么模型**：混元 Lite 日常 + DeepSeek 抽样验证 |
 | [PUB-07-product-surface.md](public/PUB-07-product-surface.md) | **怎么变成产品**：两轨纪律 + 产品脊柱 S1–S6（UI/UX）+ 产品化 DoD |
 | [PUB-13-action-spec-v02.md](public/PUB-13-action-spec-v02.md) | **跟进建议 JSON v0.2**（输出结构） |
-| [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（试点目标、已落地、待交付、验收） |
+| [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（Agentic UI + 试点目标、验收） |
+| [PUB-15-agentic-ui-design.md](public/PUB-15-agentic-ui-design.md) | **v0.3 Agentic UI 视觉规范**（色彩、侧栏框架、设计稿映射） |
 | [sops/](../sops/README.md) | **L2 SOP**（v0.4 启用，当前为大纲） |
 | [PUB-private-docs-template.md](public/PUB-private-docs-template.md) | 私有文档管理模板与边界 |
 
@@ -74,6 +75,6 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 ## 状态
 
-- 版本：**v0.2.5** 已封版（v0.2.x 功能线收官）；**v0.3.0** 运营试点立项中，见 [PUB-14-v030-scope.md](public/PUB-14-v030-scope.md)
-- 阶段：Phase 1（Follow-up 楔子）→ v0.3 真发试点与 KPI 证明
+- 版本：**v0.2.5** 已封版；**v0.3 线**进行中（`v0.3.1`…`v0.3.5` 迭代打 tag），见 [PUB-14](public/PUB-14-v030-scope.md) §2.1 · [PUB-15](public/PUB-15-agentic-ui-design.md)
+- 阶段：Phase 1 → **工业级 Agentic UI**（3～5 步）+ 真发运营收官（`v0.3.5`）
 - 最近更新：2026-06-09（`v0.2.5`：双时间轴、收件箱归档、时间再分析、多轮 Agent UI）

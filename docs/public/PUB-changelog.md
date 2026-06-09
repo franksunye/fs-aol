@@ -9,7 +9,8 @@
 |------|------|
 | **本表（changelog）** | 版本时间线、对外一句话、讨论排期 |
 | [05-releases.md](./PUB-05-releases.md) | 每版交付范围、验收清单、工程项 |
-| [14-v030-scope.md](./PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（已落地 vs 待交付、验收清单） |
+| [14-v030-scope.md](./PUB-14-v030-scope.md) | **v0.3.0 范围 SSOT**（Agentic UI + 试点验收） |
+| [15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md) | **v0.3 UX 设计稿 SSOT**（色彩、框架、组件） |
 | 私有文档 `docs/private/PRIV-09-business-decisions.md` | 业务口径 ADR（为何 206 only、14 天等） |
 | Git tag | 已封版快照（`v0.1.0` …） |
 
@@ -73,16 +74,21 @@
 
 ---
 
-## 开发中 / 计划中（v0.3+）
+## 开发中 / 计划中（v0.3 线）
 
-> **v0.3.0 范围 SSOT**：[14-v030-scope.md](./PUB-14-v030-scope.md)（认知外显已收入 **`v0.2.5`**；v0.3 主战场 = 运营真发 + KPI）。
+> **v0.3 范围 SSOT**：[14-v030-scope.md](./PUB-14-v030-scope.md) · **UX**：[15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md)  
+> **纪律**：每完成关键迭代打 **`v0.3.N` tag**（3～5 次）；收官 **`v0.3.5`**。
 
 | 目标版本 | 主题 | 摘要（一句话） | 依赖 |
 | --- | --- | --- | --- |
-| **v0.3.0** | scale pilot | **真发试点 + 运营证明**：`run_summary` + runbook + 7 天 cron；处置率 ≥50%、离 206 粗率、试点周报 | `v0.2.5` |
-| **v0.4.0** | context-sop | SOP v1 + 阻塞类型驱动话术分支 | v0.3 试点反馈 |
+| **v0.3.1** | ui-shell | 侧栏 App Shell + 浅色紫主题 + Agent Workbench 首页 | `v0.2.5` |
+| **v0.3.2** | ui-case | Case Workspace：双栏、Agent 摘要/Next Action、Tool Step | `v0.3.1` |
+| **v0.3.3** | ui-feed | Activity Feed + 移动视觉统一 + 处置反馈 | `v0.3.2` |
+| **v0.3.4** | ui-industrial | 空态/错态/a11y/性能 — 工业级可演示 | `v0.3.3` |
+| **v0.3.5** | pilot-cap | 真发 + run_summary + 7 天 cron + 处置率 ≥50% — **v0.3 线封版** | `v0.3.4` |
+| **v0.4.0** | context-sop | SOP v1 + 阻塞类型驱动话术分支 | `v0.3.5` |
 | **v0.5.0** | proof-metrics | 采纳率、推进率、周报（引擎轨证明包） | v0.3 运行数据 |
-| **v1.0.0** | console-mvp（产品轨） | 正式产品轨：试点 KPI 达标后（如 App 内处置率 ≥70%）；S1+S2 加厚 + SLO/Runbook | v0.2.x + v0.3 试点 KPI |
+| **v1.0.0** | console-mvp（产品轨） | 正式产品轨：试点 KPI 达标后（如 App 内处置率 ≥70%）；S1+S2 加厚 + SLO/Runbook | v0.3.5 + 试点 KPI |
 
 ---
 
