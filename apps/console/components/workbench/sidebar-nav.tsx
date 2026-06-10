@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
 import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,7 @@ export function SidebarNav({
   const onHome = pathname === "/";
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
+  const onSettings = pathname.startsWith("/settings");
 
   const items: NavItem[] = [
     {
@@ -143,12 +145,14 @@ export function SidebarNav({
     {
       label: "设置",
       icon: Settings,
-      href: "https://github.com/franksunye/fs-aol/blob/main/docs/public/PUB-15-agentic-ui-design.md",
+      href: AI_INFRASTRUCTURE_PATH,
+      active: onSettings,
     },
     {
       label: "帮助与反馈",
       icon: CircleHelp,
       href: "https://github.com/franksunye/fs-aol/blob/main/docs/README.md",
+      external: true,
     },
   ];
 
@@ -329,7 +333,13 @@ function SidebarFooterLink({
   collapsed,
   onNavigate,
 }: {
-  link: { label: string; icon: LucideIcon; href: string };
+  link: {
+    label: string;
+    icon: LucideIcon;
+    href: string;
+    external?: boolean;
+    active?: boolean;
+  };
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
@@ -337,12 +347,17 @@ function SidebarFooterLink({
   const anchor = (
     <Link
       href={link.href}
-      target="_blank"
-      rel="noopener noreferrer"
+      scroll={link.external ? undefined : false}
+      target={link.external ? "_blank" : undefined}
+      rel={link.external ? "noopener noreferrer" : undefined}
       onClick={onNavigate}
+      aria-current={link.active ? "page" : undefined}
       className={cn(
-        "text-muted-foreground hover:text-foreground flex items-center rounded-lg text-sm transition-colors outline-none hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-        collapsed ? "min-h-11 justify-center px-2 py-2" : "gap-3 px-3 py-2"
+        "flex items-center rounded-lg text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+        collapsed ? "min-h-11 justify-center px-2 py-2" : "gap-3 px-3 py-2",
+        link.active
+          ? "bg-sidebar-accent text-primary"
+          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden />
