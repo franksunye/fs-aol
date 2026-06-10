@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -35,23 +36,24 @@ export function DataListColumnSettings({
             className="size-7"
             aria-label="列设置"
             title="列设置"
-          >
-            <Columns3 className="size-3.5" aria-hidden />
-          </Button>
+          />
         }
-      />
+      >
+        <Columns3 className="size-3.5" aria-hidden />
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel className="text-xs">显示列</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {columns.map((col) => (
-          <DropdownMenuCheckboxItem
-            key={col.id}
-            checked={!isColumnHidden(col.id)}
-            onCheckedChange={(checked) => setColumnHidden(col.id, !checked)}
-          >
-            {col.label}
-          </DropdownMenuCheckboxItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs">显示列</DropdownMenuLabel>
+          {columns.map((col) => (
+            <DropdownMenuCheckboxItem
+              key={col.id}
+              checked={!isColumnHidden(col.id)}
+              onCheckedChange={(checked) => setColumnHidden(col.id, !checked)}
+            >
+              {col.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-muted-foreground text-xs"

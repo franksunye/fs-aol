@@ -112,17 +112,33 @@ export function ActionExecutionView({
     }
   }, [selectedId, filtered, selectedAction, sp, router]);
 
+  const filterBar = (
+    <ActionExecutionFilters
+      hk={hkFilter}
+      counts={quickCounts}
+      filters={filters}
+      embedded
+    />
+  );
+
   const listPane = (
     <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
-      <div className="shrink-0">
-        <ActionExecutionFilters hk={hkFilter} counts={quickCounts} filters={filters} />
-      </div>
+      {filtered.length === 0 ? (
+        <div className="mb-3 shrink-0">
+          <ActionExecutionFilters
+            hk={hkFilter}
+            counts={quickCounts}
+            filters={filters}
+          />
+        </div>
+      ) : null}
       <ActionExecutionList
         className="min-h-0 flex-1"
         items={filtered}
         selectedId={selectedId}
         hk={hkFilter}
         layout={selectedId ? "narrow" : "wide"}
+        toolbarStart={filtered.length > 0 ? filterBar : undefined}
         resetDeps={[
           filters.quick,
           filters.agentId,

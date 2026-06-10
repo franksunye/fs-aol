@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
@@ -59,6 +59,7 @@ export function ActionExecutionList({
   layout = "wide",
   resetDeps = [],
   className,
+  toolbarStart,
 }: {
   items: ExecutionAction[];
   selectedId: string | null;
@@ -66,6 +67,7 @@ export function ActionExecutionList({
   layout?: DataListLayout;
   resetDeps?: readonly unknown[];
   className?: string;
+  toolbarStart?: ReactNode;
 }) {
   const router = useRouter();
   const { density, setDensity } = useDataListDensity();
@@ -135,6 +137,7 @@ export function ActionExecutionList({
       className={cn("min-h-[12rem] flex-1", className)}
       toolbar={
         <DataListToolbar
+          start={toolbarStart}
           end={
             <>
               <DataListColumnSettings

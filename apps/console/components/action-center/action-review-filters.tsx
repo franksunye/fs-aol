@@ -37,11 +37,14 @@ export function ActionReviewFilters({
   rows,
   currentPriority,
   compact = false,
+  embedded = false,
 }: {
   hk?: string;
   rows: { suggestion: { 优先级?: string }; outcome: unknown }[];
   currentPriority: PriorityFilter;
   compact?: boolean;
+  /** Inline inside DataListToolbar — no outer margin or bordered tray */
+  embedded?: boolean;
 }) {
   const sp = useSearchParams();
 
@@ -56,10 +59,12 @@ export function ActionReviewFilters({
   return (
     <nav
       className={cn(
-        "mb-3 flex gap-1.5",
-        compact
-          ? "scrollbar-none bg-muted/40 -mx-0.5 overflow-x-auto rounded-lg border border-border p-2"
-          : "mb-4 flex-wrap gap-2"
+        "flex gap-1.5",
+        embedded
+          ? "scrollbar-none min-w-0 overflow-x-auto"
+          : compact
+            ? "mb-3 scrollbar-none bg-muted/40 -mx-0.5 overflow-x-auto rounded-lg border border-border p-2"
+            : "mb-4 flex-wrap gap-2"
       )}
       aria-label="优先级筛选"
     >

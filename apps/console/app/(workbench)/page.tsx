@@ -14,7 +14,6 @@ import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers
 import { ActionReviewFilters } from "@/components/action-center/action-review-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
 import { ActionReviewList } from "@/components/action-center/action-review-list";
-import { ActionReviewSearchBar } from "@/components/action-center/action-review-search-bar";
 import { filterActionReviewsByQuery } from "@/lib/action-review-search";
 import { EmptyState } from "@/components/action-center/empty-state";
 import { INBOX_TAB_LABELS } from "@/lib/labels";
@@ -172,6 +171,10 @@ export default async function ActionCenterPage({
     cfilter: sp.cfilter,
   });
   const hasRows = listTotal > 0;
+  const listToolbarSummary =
+    isInboxData && !isActiveInbox
+      ? `${INBOX_TAB_LABELS[inboxTab]} · ${listTotal} 条`
+      : undefined;
 
   const secondaryStrip = isExecution ? (
     <ActionCenterSecondaryStrip
@@ -233,6 +236,20 @@ export default async function ActionCenterPage({
           selectedKey={selectedKey}
           sortKey={sortKey}
           layout={selectedKey ? "narrow" : "wide"}
+          toolbarSummary={listToolbarSummary}
+          toolbarStart={
+            isActiveInbox ? (
+              <Suspense fallback={null}>
+                <ActionReviewFilters
+                  hk={hkFilter}
+                  rows={beforePriority}
+                  currentPriority={priorityFilter}
+                  compact
+                  embedded
+                />
+              </Suspense>
+            ) : undefined
+          }
         />
       </Suspense>
     </div>
@@ -240,14 +257,8 @@ export default async function ActionCenterPage({
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
-      <div className="mb-3 shrink-0 md:hidden">
-        <Suspense fallback={null}>
-          <ActionReviewSearchBar className="max-w-none" />
-        </Suspense>
-      </div>
-
       <div className="shrink-0">
-        {isActiveInbox ? (
+        {!hasRows && isActiveInbox ? (
           <Suspense fallback={null}>
             <ActionReviewFilters
               hk={hkFilter}
@@ -257,20 +268,9 @@ export default async function ActionCenterPage({
             />
           </Suspense>
         ) : isClosedLoop ? (
-          <>
-            <Suspense fallback={null}>
-              <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
-            </Suspense>
-            <p className="text-muted-foreground mb-4 text-sm">
-              {INBOX_TAB_LABELS[inboxTab]} · {listTotal} 条
-              {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
-            </p>
-          </>
-        ) : isInboxData ? (
-          <p className="text-muted-foreground mb-4 text-sm">
-            {INBOX_TAB_LABELS[inboxTab]} · {listTotal} 条
-            {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
-          </p>
+          <Suspense fallback={null}>
+            <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
+          </Suspense>
         ) : null}
       </div>
 

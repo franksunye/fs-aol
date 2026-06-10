@@ -36,6 +36,7 @@ export function stripPaneSelectionParams(q: URLSearchParams) {
   q.delete("view");
   q.delete("panel");
   q.delete("action");
+  q.delete("q");
   q.delete("aquick");
   q.delete("aagent");
   q.delete("aq");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import type { WorkItem } from "@/lib/operator-model";
 import {
@@ -34,6 +34,8 @@ export function ActionReviewList({
   selectedKey,
   sortKey: serverSortKey,
   layout = "wide",
+  toolbarSummary,
+  toolbarStart,
 }: {
   items: WorkItem[];
   /** When set, items are already the current page (server-side pagination). */
@@ -42,6 +44,10 @@ export function ActionReviewList({
   selectedKey: string | null;
   sortKey: ActionReviewSortKey;
   layout?: DataListLayout;
+  /** Merged into toolbar left side, e.g. 「已归档 · 24 条」 */
+  toolbarSummary?: string;
+  /** Merged into toolbar left side, e.g. priority filter chips */
+  toolbarStart?: ReactNode;
 }) {
   const sp = useSearchParams();
   const { density, setDensity } = useDataListDensity();
@@ -122,6 +128,18 @@ export function ActionReviewList({
           className="h-full"
           toolbar={
             <DataListToolbar
+              start={
+                toolbarStart || toolbarSummary ? (
+                  <>
+                    {toolbarStart}
+                    {toolbarSummary ? (
+                      <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+                        {toolbarSummary}
+                      </span>
+                    ) : null}
+                  </>
+                ) : undefined
+              }
               end={
                 <>
                   <DataListColumnSettings

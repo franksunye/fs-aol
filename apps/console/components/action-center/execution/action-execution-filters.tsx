@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   MY_ACTIONS_AGENT_OPTIONS,
@@ -24,7 +23,7 @@ const QUICK_TABS: {
 ];
 
 function buildHref(
-  patch: Partial<{ quick: string; agent: string; q: string }>,
+  patch: Partial<{ quick: string; agent: string }>,
   sp: URLSearchParams,
   hk?: string
 ): string {
@@ -42,10 +41,7 @@ function buildHref(
     if (patch.agent === "all") q.delete("aagent");
     else q.set("aagent", patch.agent);
   }
-  if (patch.q !== undefined) {
-    if (patch.q) q.set("aq", patch.q);
-    else q.delete("aq");
-  }
+  q.delete("aq");
   if (hk) q.set("hk", hk);
   else q.delete("hk");
 
@@ -57,20 +53,27 @@ export function ActionExecutionFilters({
   hk,
   counts,
   filters,
+  embedded = false,
 }: {
   hk?: string;
   counts: Record<ExecutionQuickFilter, number>;
   filters: ActionExecutionFilters;
+  /** Inline inside DataListToolbar — no outer margin or bordered tray */
+  embedded?: boolean;
 }) {
   const sp = useSearchParams();
   const router = useRouter();
 
   return (
-    <div className="mb-3 space-y-2">
-      <nav
-        className="scrollbar-none flex gap-1.5 overflow-x-auto rounded-lg border border-border bg-muted/30 p-1.5"
-        aria-label="行动筛选"
-      >
+    <nav
+      className={cn(
+        "scrollbar-none flex min-w-0 gap-1.5 overflow-x-auto",
+        embedded
+          ? ""
+          : "mb-3 rounded-lg border border-border bg-muted/30 p-1.5"
+      )}
+      aria-label="行动筛选"
+    >
         {QUICK_TABS.map((tab) => (
           <Link
             key={tab.key}
@@ -90,7 +93,7 @@ export function ActionExecutionFilters({
           </Link>
         ))}
 
-        <label className="relative ml-auto shrink-0">
+        <label className="relative shrink-0">
           <span className="sr-only">来源 Agent</span>
           <select
             value={filters.agentId}
@@ -108,28 +111,6 @@ export function ActionExecutionFilters({
             ))}
           </select>
         </label>
-      </nav>
-
-      <form
-        className="relative"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          const query = String(fd.get("aq") ?? "");
-          router.push(buildHref({ q: query }, sp, hk), { scroll: false });
-        }}
-      >
-        <Search
-          className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
-          aria-hidden
-        />
-        <input
-          name="aq"
-          defaultValue={filters.query}
-          placeholder="搜索 Action、商机、客户…"
-          className="border-input bg-background placeholder:text-muted-foreground h-8 w-full rounded-lg border pr-3 pl-8 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-        />
-      </form>
-    </div>
+    </nav>
   );
 }

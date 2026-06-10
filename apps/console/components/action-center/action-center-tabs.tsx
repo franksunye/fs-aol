@@ -32,6 +32,8 @@ function buildHref(
   if (view !== "closed") {
     q.delete("cfilter");
   }
+  q.delete("q");
+  q.delete("aq");
   if (hk) q.set("hk", hk);
   else q.delete("hk");
   const s = q.toString();
