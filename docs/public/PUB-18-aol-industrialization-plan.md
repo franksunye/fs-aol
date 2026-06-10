@@ -330,6 +330,8 @@ Suggestion -> 审核 / 修改 / 拒绝 -> Action -> 分发 -> 反馈 -> Outcome 
 | `v0.7.0` | bilingual-i18n | 支持中文和英文，完成 Console 文案、枚举、格式化和英文 Quickstart |
 | `v0.8.0` | configurable-oss-core | 解耦、配置化、产品化，发布开源 AOL Core / Console alpha |
 
+旧规划不废弃：`context-sop` 作为 v0.4 的 Context Builder / Decision Policy，`proof-metrics` 作为 v0.4 Evaluation / Outcome 与 v0.5 多 Agent proof 的基础。
+
 若沿 `v0.3.x` 后续补丁 / `v0.4` 前置执行：
 
 | 迭代 | 建议 tag | 主题 |

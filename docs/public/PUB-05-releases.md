@@ -441,6 +441,26 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 **产品判断**：若 Follow-up 不能闭环，其他 Agent 都只是样例；若 Follow-up 闭环成立，AOL 才有可复制的产品内核。
 
+### 旧规划吸收关系
+
+旧规划中的 `context-sop` 不丢弃，吸收到 v0.4 的 **Context Builder / Decision Policy**：
+
+| 旧能力 | 新归属 | 处理方式 |
+|--------|--------|----------|
+| 上下文补全 | Business Object / Context Builder | 作为真实工单、报价、合同、workflowNode 上下文快照的一部分 |
+| SOP v1 | Decision Policy | 作为 Agent 判断输入与版本化依据，不再作为孤立 prompt 提质版本 |
+| 阻塞类型话术分支 | Human Review / Decision | 阻塞类型进入人审、反馈与下一轮判断，不只影响输出文案 |
+| `sop_version` / `context_sources` | Run Trace | 进入 Run 信任轨和 Evaluation 样本字段 |
+
+旧规划中的 `proof-metrics` 也不丢弃，吸收到 v0.4 的 **Evaluation / Outcome**：
+
+| 旧能力 | 新归属 | 处理方式 |
+|--------|--------|----------|
+| 采纳率 / 推进率 | Evaluation | 作为真实 Follow-up 闭环验收指标 |
+| `suggestion_outcomes` | Action / Outcome | 升级为通用 outcome 口径，为 v0.5 多 Agent 复用做准备 |
+| 周报证明包 | Evaluation / Management View | 先基于真实 Follow-up 样本生成，后续扩展到多 Agent 对比 |
+| token 成本 | Run / Evaluation | 与延迟、完成率一起进入 Agent 质量与成本评估 |
+
 ### 交付范围
 
 | 链路 | 本版必须打穿 |
@@ -488,6 +508,15 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。
 
 **产品判断**：v0.5 的价值不在“多两个页面”，而在证明 v0.4 的 Action 生命周期、Run trace、Evaluation、Governance 可以跨 Agent 复用。
+
+### 旧规划延续
+
+v0.5 继续消费 `proof-metrics`，但口径从单一 Follow-up 证明包升级为 **多 Agent proof**：
+
+- Follow-up 的采纳率、修改率、完成率成为基线。
+- 两个新增真实 Agent 必须复用同一 Outcome / Evaluation 口径。
+- 周报从「AI 跟进试点周报」升级为「AOL 多 Agent 运营周报」。
+- 指标必须能解释差异：数据源、Agent 定义、Action 类型、审批策略、执行反馈不同。
 
 ### 交付范围
 
