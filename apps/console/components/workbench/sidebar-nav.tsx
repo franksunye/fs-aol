@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Archive,
   BarChart3,
+  Bot,
   Calendar,
   CheckCircle2,
   CircleHelp,
@@ -95,6 +96,7 @@ export function SidebarNav({
   const tab = sp.get("tab") || "active";
   const onHome = pathname === "/";
   const onAnalytics = pathname === "/analytics";
+  const onAgents = pathname === "/agents";
 
   const items: NavItem[] = [
     {
@@ -103,6 +105,12 @@ export function SidebarNav({
       href: navHref("/", sp, hk),
       active: onHome && tab === "active",
       badge: activeCount > 0 ? activeCount : undefined,
+    },
+    {
+      label: "Agents",
+      icon: Bot,
+      href: "/agents",
+      active: onAgents,
     },
     {
       label: "日历",
