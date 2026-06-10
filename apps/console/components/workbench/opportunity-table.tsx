@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { WorkItem } from "@/lib/operator-model";
 import { followUpListBadges } from "@/lib/adapters/follow-up-list-badges";
-import { decisionClasses } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { AgentStatusBadge } from "./agent-status-badge";
 import { BadgeStack } from "./badge-stack";
 import type { WorkbenchListContext } from "@/lib/workbench-nav";
 import { suggestionDetailHref } from "@/lib/workbench-nav";
@@ -61,11 +59,11 @@ export function OpportunityTable({
             <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
               停滞
             </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase lg:table-cell">
-              Agent
-            </th>
             <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
-              处置
+              部位
+            </th>
+            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase lg:table-cell">
+              管家
             </th>
             <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
               时间
@@ -135,18 +133,17 @@ export function OpportunityTable({
                 <td className="text-muted-foreground px-2 py-2.5 text-right align-middle text-xs tabular-nums">
                   {display.staleDays != null ? `${display.staleDays}d` : "—"}
                 </td>
-                <td className="hidden px-2 py-2.5 align-middle lg:table-cell">
-                  <AgentStatusBadge status={display.agentStatus} />
+                <td
+                  className="text-muted-foreground hidden max-w-[5.5rem] truncate px-2 py-2.5 align-middle text-xs md:table-cell"
+                  title={display.partLabel !== "—" ? display.partLabel : undefined}
+                >
+                  {display.partLabel}
                 </td>
-                <td className="hidden px-2 py-2.5 align-middle text-xs md:table-cell">
-                  <span
-                    className={cn(
-                      "inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium",
-                      decisionClasses(item.disposition?.decision)
-                    )}
-                  >
-                    {display.dispositionLabel}
-                  </span>
+                <td
+                  className="hidden max-w-[5rem] truncate px-2 py-2.5 align-middle text-xs lg:table-cell"
+                  title={display.assigneeLabel !== "—" ? display.assigneeLabel : undefined}
+                >
+                  {display.assigneeLabel}
                 </td>
                 <td className="text-muted-foreground px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums">
                   {display.timestamp.replace(/^建议\s*/, "")}

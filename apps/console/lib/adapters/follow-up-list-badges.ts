@@ -1,9 +1,7 @@
-import { decisionClasses } from "../labels";
 import type { ListBadge } from "../list-display";
 import type { WorkItem } from "../operator-model";
-import { AGENT_STATUS_LABELS } from "../agent-status";
 
-/** 列表行 badge（最多 3 个可见，其余由 BadgeStack 折叠） */
+/** 窄屏列表补充 badge（桌面列已展示部位/管家，此处避免 Agent/处置重复） */
 export function followUpListBadges(item: WorkItem): ListBadge[] {
   const d = item.listDisplay;
   if (!d) return [];
@@ -24,25 +22,19 @@ export function followUpListBadges(item: WorkItem): ListBadge[] {
     });
   }
 
-  if (d.quoteBadge) {
+  if (d.partLabel && d.partLabel !== "—") {
     badges.push({
-      key: "quote",
-      label: d.quoteBadge,
-      className: "bg-violet-50 text-violet-700 border-violet-100",
+      key: "part",
+      label: d.partLabel,
+      variant: "outline",
     });
   }
 
-  badges.push({
-    key: "agent",
-    label: AGENT_STATUS_LABELS[d.agentStatus],
-    variant: "secondary",
-  });
-
-  if (item.disposition?.decision) {
+  if (d.assigneeLabel && d.assigneeLabel !== "—") {
     badges.push({
-      key: "disposition",
-      label: d.dispositionLabel,
-      className: decisionClasses(item.disposition.decision),
+      key: "assignee",
+      label: d.assigneeLabel,
+      variant: "secondary",
     });
   }
 

@@ -47,9 +47,9 @@ export type WorkItemListDisplay = {
   quoteBadge: string | null;
   contextChips: string[];
   timestamp: string;
-  agentStatus: "pending_reanalyze" | "analyzed" | "handled";
+  partLabel: string;
+  assigneeLabel: string;
   staleDays: number | null;
-  dispositionLabel: string;
 };
 
 export type WorkItem = {

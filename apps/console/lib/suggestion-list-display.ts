@@ -31,11 +31,38 @@ export function quoteLine(s: SuggestionDoc): string {
   return parts.join(" · ") || "—";
 }
 
+function truncateListField(text: string, max = 16): string {
+  const t = text.trim();
+  if (!t) return "—";
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+
 export function channelPartLine(s: SuggestionDoc): string {
   const raw = s.情况判断?.渠道与部位?.trim();
   if (!raw) return "—";
   const head = raw.split("；")[0]?.trim() ?? raw;
   return head.length > 32 ? `${head.slice(0, 31)}…` : head;
+}
+
+/** 列表「部位」列：从 渠道与部位 提取渗漏部位 */
+export function repairPartLine(s: SuggestionDoc): string {
+  const raw = s.情况判断?.渠道与部位?.trim();
+  if (!raw) return "—";
+
+  const labeled = raw.match(/部位[：:]\s*([^；]+)/);
+  if (labeled?.[1]) return truncateListField(labeled[1]);
+
+  const parts = raw
+    .split("；")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    const tail = parts[parts.length - 1]!;
+    if (!/渠道/.test(tail)) return truncateListField(tail);
+    return truncateListField(parts[1] ?? tail);
+  }
+
+  return truncateListField(parts[0] ?? raw);
 }
 
 export function stageBadge(s: SuggestionDoc): string | null {

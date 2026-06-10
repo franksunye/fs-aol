@@ -1,5 +1,4 @@
-import { resolveAgentRowStatus } from "../agent-status";
-import { decisionLabel } from "../labels";
+import { housekeeperName, loadPilotHousekeepers } from "../pilot-housekeepers";
 import type {
   DispositionDecision,
   SkillId,
@@ -15,7 +14,10 @@ import {
   opportunityStageLabel,
   opportunitySummaryPreview,
 } from "../opportunity-display";
-import { resolveStaleDays } from "../suggestion-list-display";
+import {
+  repairPartLine,
+  resolveStaleDays,
+} from "../suggestion-list-display";
 import type { SuggestionDoc, SuggestionRow } from "../tracking";
 
 function mapPriority(raw?: string): WorkItemPriority | undefined {
@@ -53,6 +55,7 @@ function buildRecommendation(s: SuggestionDoc) {
 function buildListDisplay(row: SuggestionRow): WorkItemListDisplay {
   const s = row.suggestion;
   const priority = mapPriority(s.优先级);
+  const pilots = loadPilotHousekeepers();
   return {
     subjectLabel: row.orderNum || row.workOrderId,
     priorityLabel: priorityDisplayLabel(priority, s.优先级),
@@ -60,9 +63,9 @@ function buildListDisplay(row: SuggestionRow): WorkItemListDisplay {
     quoteBadge: formatQuoteBadge(s),
     contextChips: opportunityContextChips(row),
     timestamp: formatListTimestamp(row.processedAt),
-    agentStatus: resolveAgentRowStatus(row),
+    partLabel: repairPartLine(s),
+    assigneeLabel: housekeeperName(pilots, row.housekeeperId),
     staleDays: resolveStaleDays(row),
-    dispositionLabel: decisionLabel(row.outcome?.decision),
   };
 }
 
