@@ -130,8 +130,6 @@ export function ActionReviewList({
     </>
   );
 
-  const showToolbar = Boolean(toolbarStart);
-
   return (
     <ActionReviewListKeyboard
       itemHrefs={itemHrefs}
@@ -142,37 +140,18 @@ export function ActionReviewList({
         <DataListFrame
           className="h-full"
           toolbar={
-            showToolbar ? (
-              <DataListToolbar start={toolbarStart} end={viewControls} />
-            ) : null
+            <DataListToolbar start={toolbarStart} end={viewControls} />
           }
           footer={
             total > 0 ? (
-              showToolbar ? (
-                <DataListPagination
-                  page={page}
-                  pageSize={pageSize}
-                  total={total}
-                  pageCount={pageCount}
-                  onPageChange={setPage}
-                  onPageSizeChange={setPageSize}
-                />
-              ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <DataListPagination
-                    className="min-w-0 flex-1 py-1.5"
-                    page={page}
-                    pageSize={pageSize}
-                    total={total}
-                    pageCount={pageCount}
-                    onPageChange={setPage}
-                    onPageSizeChange={setPageSize}
-                  />
-                  <div className="flex shrink-0 items-center gap-2 pr-2">
-                    {viewControls}
-                  </div>
-                </div>
-              )
+              <DataListPagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
             ) : null
           }
         >
