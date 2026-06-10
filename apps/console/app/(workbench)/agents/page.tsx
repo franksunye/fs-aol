@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { AgentsPage } from "@/components/agents/agents-page";
 
 export default function AgentsRoutePage() {
-  return <AgentsPage />;
+  return (
+    <Suspense fallback={null}>
+      <AgentsPage />
+    </Suspense>
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Bot, ChevronRight, Plus } from "lucide-react";
 import {
   AGENT_BUSINESS_LINES,
@@ -15,6 +16,7 @@ import { AgentsListPanel } from "./agents-list-panel";
 import { AgentDetailPanel } from "./agent-detail-panel";
 
 export function AgentsPage() {
+  const sp = useSearchParams();
   const [selectedId, setSelectedId] = useState("follow-up");
   const [businessLine, setBusinessLine] =
     useState<AgentBusinessLine>("all");
@@ -30,6 +32,16 @@ export function AgentsPage() {
           }),
     [businessLine]
   );
+
+  useEffect(() => {
+    const fromQuery = sp.get("agent")?.trim();
+    if (
+      fromQuery &&
+      MOCK_AGENTS.some((agent) => agent.id === fromQuery)
+    ) {
+      setSelectedId(fromQuery);
+    }
+  }, [sp]);
 
   useEffect(() => {
     if (!listAgents.some((agent) => agent.id === selectedId)) {

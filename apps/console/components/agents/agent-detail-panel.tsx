@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { MockAgent } from "@/lib/agents-mock";
 import { AGENT_STATUS_LABEL, formatAgentYuan } from "@/lib/agents-mock";
+import { agentSettingsHref } from "@/lib/agents-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,10 +116,21 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
               ) : (
                 <DemoButton variant="default">进入工作台</DemoButton>
               )}
-              <DemoButton variant="outline">
-                <Settings className="size-4" aria-hidden />
-                设置
-              </DemoButton>
+              {agentSettingsHref(agent.id) ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  render={<Link href={agentSettingsHref(agent.id)!} />}
+                >
+                  <Settings className="size-4" aria-hidden />
+                  设置
+                </Button>
+              ) : (
+                <DemoButton variant="outline">
+                  <Settings className="size-4" aria-hidden />
+                  设置
+                </DemoButton>
+              )}
               <DemoButton variant="outline" size="icon" className="text-destructive">
                 <Pause className="size-4" aria-hidden />
               </DemoButton>
