@@ -5,6 +5,7 @@ import {
   type AnalyticsRangeKey,
 } from "./analytics";
 import {
+  EVALUATION_RANGE_OPTIONS,
   formatEvaluationYuan,
   getEvaluationSnapshot,
   type EvaluationFilters,
@@ -18,7 +19,16 @@ export type EvaluationDataSource = "live" | "mock" | "mixed";
 export type EvaluationPageSnapshot = EvaluationSnapshot & {
   dataSource: EvaluationDataSource;
   rangeLabel: string;
+  /** Turso/库内统计加载失败时为 true，页面仍展示 mock */
+  analyticsLoadFailed?: boolean;
 };
+
+function rangeLabelFor(filters: EvaluationFilters): string {
+  return (
+    EVALUATION_RANGE_OPTIONS.find((o) => o.id === filters.range)?.label ??
+    "近 7 天"
+  );
+}
 
 function mapRangeKey(range: EvaluationFilters["range"]): AnalyticsRangeKey {
   return parseAnalyticsRangeKey(range);
@@ -123,31 +133,45 @@ export async function loadEvaluationSnapshot(options: {
   housekeeperId?: string;
 }): Promise<EvaluationPageSnapshot> {
   const mock = getEvaluationSnapshot(options.filters);
-  const analytics = await loadAnalyticsSnapshot({
-    rangeKey: mapRangeKey(options.filters.range),
-    housekeeperId: options.housekeeperId,
-  });
 
-  const kpis = mergeKpis(mock.kpis, analytics);
-  const suggestionTrend = mergeSuggestionTrend(mock.suggestionTrend, analytics);
+  try {
+    const analytics = await loadAnalyticsSnapshot({
+      rangeKey: mapRangeKey(options.filters.range),
+      housekeeperId: options.housekeeperId,
+    });
 
-  const liveFields =
-    (analytics.discovered > 0 ? 1 : 0) +
-    (analytics.drivenAmount > 0 ? 1 : 0) +
-    (suggestionTrend !== mock.suggestionTrend ? 1 : 0);
+    const kpis = mergeKpis(mock.kpis, analytics);
+    const suggestionTrend = mergeSuggestionTrend(
+      mock.suggestionTrend,
+      analytics
+    );
 
-  const dataSource: EvaluationDataSource =
-    liveFields === 0
-      ? "mock"
-      : liveFields >= 3
-        ? "live"
-        : "mixed";
+    const liveFields =
+      (analytics.discovered > 0 ? 1 : 0) +
+      (analytics.drivenAmount > 0 ? 1 : 0) +
+      (suggestionTrend !== mock.suggestionTrend ? 1 : 0);
 
-  return {
-    ...mock,
-    kpis,
-    suggestionTrend,
-    dataSource,
-    rangeLabel: analytics.range.label,
-  };
+    const dataSource: EvaluationDataSource =
+      liveFields === 0
+        ? "mock"
+        : liveFields >= 3
+          ? "live"
+          : "mixed";
+
+    return {
+      ...mock,
+      kpis,
+      suggestionTrend,
+      dataSource,
+      rangeLabel: analytics.range.label,
+    };
+  } catch (err) {
+    console.error("[evaluation] loadAnalyticsSnapshot failed, using mock", err);
+    return {
+      ...mock,
+      dataSource: "mock",
+      rangeLabel: rangeLabelFor(options.filters),
+      analyticsLoadFailed: true,
+    };
+  }
 }

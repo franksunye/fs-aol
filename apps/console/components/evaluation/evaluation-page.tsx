@@ -16,8 +16,9 @@ export function EvaluationPage({
   data: EvaluationPageSnapshot;
   hk?: string;
 }) {
-  const sourceHint =
-    data.dataSource === "live"
+  const sourceHint = data.analyticsLoadFailed
+    ? "库内统计暂不可用（如 Turso 超时），展示演示数据"
+    : data.dataSource === "live"
       ? "部分指标来自库内真实统计"
       : data.dataSource === "mixed"
         ? "建议数/采纳率/业务价值等为库内统计，其余为演示数据"

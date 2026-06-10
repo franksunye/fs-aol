@@ -5,10 +5,7 @@ import {
   countInboxBuckets,
 } from "@/lib/suggestions";
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
-import { WorkbenchHeader } from "@/components/workbench/workbench-header";
-import { WorkbenchMetrics } from "@/components/workbench/workbench-metrics";
 import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
-import { WorkbenchTabs } from "@/components/workbench/workbench-tabs";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
 import { OpportunityList } from "@/components/workbench/opportunity-list";
 import { WorkbenchSearchBar } from "@/components/workbench/workbench-search-bar";
@@ -39,14 +36,29 @@ import {
   workbenchViewFromSearchParams,
 } from "@/lib/workbench-tabs";
 import { shellScrollClass } from "@/lib/shell-preferences";
+import { cn } from "@/lib/utils";
 import { CalendarView } from "@/components/workbench/calendar/calendar-view";
-import { ActionFlowHeader } from "@/components/workbench/my-actions/action-flow-header";
 import { MyActionsView } from "@/components/workbench/my-actions/my-actions-view";
-import { loadActionFlowSummary } from "@/lib/action-flow-metrics";
 import {
   countMyActionsPending,
   getMyActionsMockData,
 } from "@/lib/my-actions-mock";
+import { loadActionCenterPrimaryKpis } from "@/lib/action-center-metrics";
+import { loadActionFlowSummary } from "@/lib/action-flow-metrics";
+import {
+  buildCalendarSecondaryMetrics,
+  buildFlowSecondaryMetrics,
+  buildReviewSecondaryMetrics,
+} from "@/lib/action-center-secondary";
+import { ActionCenterShell } from "@/components/workbench/action-center/action-center-shell";
+import { ActionCenterSecondaryStrip } from "@/components/workbench/action-center/action-center-secondary-strip";
+import { ActionFlowTabToolbar } from "@/components/workbench/action-center/action-flow-tab-toolbar";
+import {
+  computeCalendarSummary,
+  filterCalendarActions,
+  getCalendarMockActions,
+  resolveCalendarAssigneeFromHk,
+} from "@/lib/calendar-mock";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +79,7 @@ export default async function WorkbenchPage({
     aquick?: string;
     aagent?: string;
     aq?: string;
+    astatus?: string;
     cfilter?: string;
   }>;
 }) {
@@ -91,15 +104,16 @@ export default async function WorkbenchPage({
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const actionsCount = countMyActionsPending(getMyActionsMockData());
-  const flowSummary = isActions
-    ? await loadActionFlowSummary(hkFilter)
-    : null;
-  const [rawRows, tabCounts] = await Promise.all([
+
+  const [primaryKpis, flowSummary, rawRows, tabCounts] = await Promise.all([
+    loadActionCenterPrimaryKpis(hkFilter),
+    loadActionFlowSummary(hkFilter),
     isInboxData
       ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
       : Promise.resolve([]),
     countInboxBuckets(hkOpts),
   ]);
+
   const sortKey = parseSuggestionSortKey(sp.sort);
   const sorted = sortSuggestions(rawRows, sortKey, pilots);
   const beforePriority = sorted;
@@ -120,6 +134,47 @@ export default async function WorkbenchPage({
     cfilter: sp.cfilter,
   });
   const hasRows = rows.length > 0;
+
+  const calendarAssignee = resolveCalendarAssigneeFromHk(hkFilter, pilots);
+  const calendarSummary = computeCalendarSummary(
+    filterCalendarActions(getCalendarMockActions(), {
+      agentId: "all",
+      priority: "all",
+      status: "all",
+      assigneeId: calendarAssignee ?? "all",
+    })
+  );
+
+  const secondaryStrip = isActions ? (
+    <ActionCenterSecondaryStrip
+      title="流转状态"
+      items={buildFlowSecondaryMetrics(flowSummary, hkFilter, {
+        status: sp.astatus,
+        quick: sp.aquick,
+      })}
+      trailing={<ActionFlowTabToolbar hk={hkFilter} />}
+    />
+  ) : isCalendar ? (
+    <ActionCenterSecondaryStrip
+      title="日历"
+      items={buildCalendarSecondaryMetrics(calendarSummary)}
+    />
+  ) : isActiveInbox && metrics ? (
+    <ActionCenterSecondaryStrip
+      title="待审核"
+      items={buildReviewSecondaryMetrics(metrics, hkFilter, sp.priority)}
+    />
+  ) : null;
+
+  const shellProps = {
+    pilots,
+    hkFilter,
+    workbenchView,
+    tabCounts,
+    actionsCount,
+    primaryKpis,
+    secondary: secondaryStrip,
+  };
 
   const listBody = !hasRows ? (
     <EmptyState
@@ -153,25 +208,12 @@ export default async function WorkbenchPage({
   );
 
   const listPane = (
-    <div className="px-3 py-4 lg:px-4 lg:py-5">
-      <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
-
-      <Suspense fallback={null}>
-        <WorkbenchTabs
-          current={workbenchView}
-          hk={hkFilter}
-          counts={tabCounts}
-          actionsCount={actionsCount}
-        />
-      </Suspense>
-
+    <div className="px-3 py-3 lg:px-4 lg:py-4">
       <div className="mb-3 md:hidden">
         <Suspense fallback={null}>
           <WorkbenchSearchBar className="max-w-none" />
         </Suspense>
       </div>
-
-      {metrics ? <WorkbenchMetrics metrics={metrics} compact /> : null}
 
       {isActiveInbox ? (
         <Suspense fallback={null}>
@@ -212,58 +254,33 @@ export default async function WorkbenchPage({
 
   if (isActions) {
     return (
-      <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
-        <div className="shrink-0 px-3 pt-4 lg:px-4 lg:pt-5">
-          <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
-          <Suspense fallback={null}>
-            <WorkbenchTabs
-              current={workbenchView}
-              hk={hkFilter}
-              counts={tabCounts}
-              actionsCount={actionsCount}
-            />
-          </Suspense>
-          {flowSummary ? (
-            <ActionFlowHeader summary={flowSummary} hk={hkFilter} />
-          ) : null}
-        </div>
+      <ActionCenterShell {...shellProps}>
         <Suspense fallback={null}>
           <MyActionsView hkFilter={hkFilter} pilots={pilots} />
         </Suspense>
-      </main>
+      </ActionCenterShell>
     );
   }
 
   if (isCalendar) {
     return (
-      <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
-        <div className={`${shellScrollClass} flex-1`}>
-          <div className="px-3 py-4 lg:px-4 lg:py-5">
-            <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
-            <Suspense fallback={null}>
-              <WorkbenchTabs
-                current={workbenchView}
-                hk={hkFilter}
-                counts={tabCounts}
-                actionsCount={actionsCount}
-              />
-            </Suspense>
-            <Suspense fallback={null}>
-              <CalendarView hkFilter={hkFilter} pilots={pilots} />
-            </Suspense>
-          </div>
+      <ActionCenterShell {...shellProps}>
+        <div className={cn(shellScrollClass, "h-full px-3 pb-4 lg:px-4")}>
+          <Suspense fallback={null}>
+            <CalendarView hkFilter={hkFilter} pilots={pilots} />
+          </Suspense>
         </div>
-      </main>
+      </ActionCenterShell>
     );
   }
 
   return (
-    <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+    <ActionCenterShell {...shellProps}>
       <WorkbenchSplitLayout
         list={listPane}
         detail={detailPane}
         selectedKey={selectedKey}
       />
-    </main>
+    </ActionCenterShell>
   );
 }
