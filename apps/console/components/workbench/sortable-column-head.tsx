@@ -2,10 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUpDown } from "lucide-react";
 import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
 import { nextSortSearchParams } from "@/lib/workbench-sort-nav";
 import { cn } from "@/lib/utils";
+
+const SORT_HINT: Partial<Record<SuggestionSortKey, string>> = {
+  priority: "按优先级排序",
+  stage: "按商机阶段排序",
+  quote: "按报价金额排序",
+  stale: "按停滞天数排序",
+  part: "按维修部位排序",
+  housekeeper: "按管家排序",
+  latest: "按最近处理时间排序",
+};
 
 export function SortableColumnHead({
   label,
@@ -25,6 +35,7 @@ export function SortableColumnHead({
   const active = activeSortKey === columnSortKey;
   const qs = nextSortSearchParams(sp, columnSortKey).toString();
   const href = qs ? `${pathname}?${qs}` : pathname;
+  const hint = SORT_HINT[columnSortKey] ?? `按${label}排序`;
 
   return (
     <th
@@ -38,16 +49,26 @@ export function SortableColumnHead({
       <Link
         href={href}
         scroll={false}
+        title={active ? `当前按${label}排序` : hint}
         className={cn(
-          "inline-flex items-center gap-0.5 transition-colors hover:text-foreground",
+          "group -mx-1 inline-flex cursor-pointer items-center gap-0.5 rounded px-1 py-0.5 transition-colors",
+          "hover:bg-muted/70 hover:text-foreground",
           align === "right" && "float-right",
-          active && "text-primary"
+          active && "text-primary hover:text-primary"
         )}
       >
         <span>{label}</span>
         {active ? (
-          <ArrowDown className="size-3 shrink-0 opacity-80" aria-hidden />
-        ) : null}
+          <ArrowDown
+            className="text-primary size-3 shrink-0"
+            aria-hidden
+          />
+        ) : (
+          <ArrowUpDown
+            className="size-3 shrink-0 opacity-35 transition-opacity group-hover:opacity-70"
+            aria-hidden
+          />
+        )}
       </Link>
     </th>
   );

@@ -27,28 +27,6 @@ function PriorityCell({ label }: { label: string }) {
   );
 }
 
-function StaticColumnHead({
-  label,
-  align = "left",
-  className,
-}: {
-  label: string;
-  align?: "left" | "right";
-  className?: string;
-}) {
-  return (
-    <th
-      className={cn(
-        "text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase",
-        align === "right" && "text-right",
-        className
-      )}
-    >
-      {label}
-    </th>
-  );
-}
-
 export function OpportunityTable({
   items,
   listContext,
@@ -75,13 +53,19 @@ export function OpportunityTable({
               activeSortKey={sortKey}
               className="w-10"
             />
-            <StaticColumnHead label="工单" />
-            <StaticColumnHead
+            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
+              工单
+            </th>
+            <SortableColumnHead
               label="阶段"
+              columnSortKey="stage"
+              activeSortKey={sortKey}
               className="hidden sm:table-cell"
             />
-            <StaticColumnHead
+            <SortableColumnHead
               label="金额"
+              columnSortKey="quote"
+              activeSortKey={sortKey}
               className="hidden md:table-cell"
             />
             <SortableColumnHead
@@ -90,8 +74,10 @@ export function OpportunityTable({
               activeSortKey={sortKey}
               align="right"
             />
-            <StaticColumnHead
+            <SortableColumnHead
               label="部位"
+              columnSortKey="part"
+              activeSortKey={sortKey}
               className="hidden md:table-cell"
             />
             <SortableColumnHead

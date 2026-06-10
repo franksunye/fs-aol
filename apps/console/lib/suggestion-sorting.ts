@@ -1,19 +1,27 @@
 import type { Decision, SuggestionRow } from "./suggestions";
 import type { PilotHousekeeper } from "./pilot-housekeepers";
 import { housekeeperName } from "./pilot-housekeepers";
-import { resolveStaleDays } from "./suggestion-list-display";
+import { opportunityStageLabel } from "./opportunity-display";
+import { parseQuoteAmountYuan } from "./workbench-metrics";
+import { repairPartLine, resolveStaleDays } from "./suggestion-list-display";
 
 export type SuggestionSortKey =
   | "latest"
-  | "housekeeper"
+  | "stage"
+  | "quote"
   | "stale"
+  | "part"
+  | "housekeeper"
   | "priority"
   | "disposition";
 
 const ALL_SORT_KEYS: SuggestionSortKey[] = [
   "latest",
-  "housekeeper",
+  "stage",
+  "quote",
   "stale",
+  "part",
+  "housekeeper",
   "priority",
   "disposition",
 ];
@@ -43,6 +51,10 @@ function cmpText(a: string, b: string): number {
   return a.localeCompare(b, "zh-CN");
 }
 
+function quoteAmount(row: SuggestionRow): number {
+  return parseQuoteAmountYuan(row.suggestion) ?? -1;
+}
+
 export function parseSuggestionSortKey(raw?: string | null): SuggestionSortKey {
   return (ALL_SORT_KEYS as string[]).includes(raw ?? "")
     ? (raw as SuggestionSortKey)
@@ -56,6 +68,23 @@ export function sortSuggestions(
 ): SuggestionRow[] {
   const next = [...rows];
   next.sort((a, b) => {
+    if (sortKey === "stage") {
+      const c = cmpText(opportunityStageLabel(a), opportunityStageLabel(b));
+      return c !== 0 ? c : cmpLatest(a, b);
+    }
+    if (sortKey === "quote") {
+      const qa = quoteAmount(a);
+      const qb = quoteAmount(b);
+      if (qb !== qa) return qb - qa;
+      return cmpLatest(a, b);
+    }
+    if (sortKey === "part") {
+      const c = cmpText(
+        repairPartLine(a.suggestion),
+        repairPartLine(b.suggestion)
+      );
+      return c !== 0 ? c : cmpLatest(a, b);
+    }
     if (sortKey === "housekeeper") {
       const na = housekeeperName(pilots, a.housekeeperId);
       const nb = housekeeperName(pilots, b.housekeeperId);
