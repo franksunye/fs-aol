@@ -68,6 +68,8 @@
 
 ### 侧栏导航（设计稿 → 路由映射）
 
+> **信息架构 SSOT** 以 [PUB-17-console-information-architecture.md](PUB-17-console-information-architecture.md) 为准（三层：Work / Agents / Systems、模块路由、Action 生命周期）。下表保留 v0.3 设计稿对照，**路由与 Tab 名可能已演进**。
+
 | 设计稿 | 图标语义 | v0.3 路由 | 说明 |
 |--------|----------|-----------|------|
 | **首页 / Inbox** | 收件箱 | `/` `?tab=active` | 主工作台；徽章 = 待处置数 |

@@ -7,7 +7,9 @@ Python 引擎在 GitHub Actions 里写入追踪库，本应用读取同一个库
 - **链接层**：libSQL/Turso。本地默认读 `data/agent_loop_tracking.db`（相对路径 `../../data/`）；
   生产把 `LIBSQL_URL` 指向同一个 Turso 库即可，**零后端改造**。
 - 表名 / DDL 真源：`../../contracts/aol_schema.sql`
-- 设计与纪律见 [`../../docs/public/PUB-07-product-surface.md`](../../docs/public/PUB-07-product-surface.md)。
+- 产品脊柱见 [`../../docs/public/PUB-07-product-surface.md`](../../docs/public/PUB-07-product-surface.md)。
+- **Console 信息架构（三层导航、Action 列表/详情纪律）**见 [`../../docs/public/PUB-17-console-information-architecture.md`](../../docs/public/PUB-17-console-information-architecture.md)。
+- 技术读模型与每版架构自检见 [`../../docs/public/PUB-16-architecture-evolution.md`](../../docs/public/PUB-16-architecture-evolution.md)。
 
 ## 本地运行
 

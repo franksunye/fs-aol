@@ -2,7 +2,7 @@
 
 > **核心命题**：FS-COS 是 **System of Cognition**，产品必须让用户**看见认知依据、决策建议、处置与结果**——可感知、可见。
 > 一个跑在后台的 cron + 通知，不是产品。本文定义产品化纪律与产品脊柱（UI/UE/UX 交付物）。
-> 配套：[PUB-05-releases.md](PUB-05-releases.md)（版本与 OKR/KPI）· [PUB-02-architecture.md](PUB-02-architecture.md)（FS-COS 分层）。
+> 配套：[PUB-05-releases.md](PUB-05-releases.md)（版本与 OKR/KPI）· [PUB-02-architecture.md](PUB-02-architecture.md)（FS-COS 分层）· [PUB-17-console-information-architecture.md](PUB-17-console-information-architecture.md)（Console 三层导航与 Action 生命周期）。
 
 ---
 

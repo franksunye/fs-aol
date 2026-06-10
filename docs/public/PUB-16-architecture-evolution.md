@@ -28,13 +28,13 @@
 
 | 模式 | 代码锚点 | 通用语义 |
 |------|----------|----------|
-| 分栏收件箱 | `WorkbenchSplitLayout` · `?key=` | 队列 → Case Workspace |
+| 分栏收件箱 | `ActionReviewSplitLayout` · `?key=` | 队列 → Action/Case 详情 |
 | Inbox 三桶 | `inbox_bucket` · 侧栏 Tab | pending / handled / archived |
 | HITL 处置 | `DispositionBar` · `POST /api/outcomes` | approve / reject / modify / acknowledge |
 | 结构化负反馈 | `POST /api/blockers` | 操作员对 Agent 的分类纠错 |
 | 多轮 Run | `?round=` · `/api/traces` | Agent 版本化分析 |
 | 双轨时间轴 | `lane: business \| agent` | 业务事实轨 + Agent 认知轨 |
-| URL 状态 | `lib/workbench-nav.ts` | 可分享深链，无全局 store |
+| URL 状态 | `lib/action-center-nav.ts` | 可分享深链，无全局 store |
 | Lite → Full 观测 | `getTraceLite` + 客户端拉全量 | 重 trace 的性能模式 |
 | Operator Shell | `AppShell` · `DesktopSidebar` | 侧栏 · 指标 · 筛选 · 详情侧栏 |
 
@@ -297,4 +297,5 @@ type ActivityEvent = {
 | [PUB-07](PUB-07-product-surface.md) | 产品脊柱与 UI 复用率 DoD |
 | [PUB-14](PUB-14-v030-scope.md) | v0.3 产品交付范围 |
 | [PUB-15](PUB-15-agentic-ui-design.md) | L0 Shell 视觉 SSOT |
+| [PUB-17](PUB-17-console-information-architecture.md) | **产品三层导航**（Work / Agents / Systems）；与本文技术分层正交 |
 | [PUB-changelog](PUB-changelog.md) | 版本摘要；架构项用 `[arch]` 标注 |
