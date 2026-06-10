@@ -20,14 +20,14 @@ export default function WorkbenchError({
       <AlertTriangle className="text-destructive mb-4 size-10" aria-hidden />
       <h1 className="text-lg font-semibold">工作台暂时不可用</h1>
       <p className="text-muted-foreground mt-2 max-w-md text-sm">
-        数据加载失败，常见于 Turso 超时。点击重试或返回首页。
+        数据加载失败，常见于 Turso 超时。点击重试或返回工作台。
       </p>
       <div className="mt-6 flex gap-2">
         <Button type="button" onClick={() => reset()}>
           重试
         </Button>
         <Button type="button" variant="outline" onClick={() => window.location.assign("/")}>
-          返回首页
+          返回工作台
         </Button>
       </div>
     </main>

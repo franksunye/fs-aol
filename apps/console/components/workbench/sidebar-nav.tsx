@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
-  Archive,
   BarChart3,
   Bot,
-  Calendar,
-  CheckCircle2,
   CircleHelp,
-  Inbox,
+  LayoutDashboard,
   Link2,
   PanelLeft,
   PanelLeftClose,
@@ -96,8 +93,7 @@ export function SidebarNav({
 }) {
   const pathname = usePathname();
   const sp = useSearchParams();
-  const tab = sp.get("tab") || "active";
-  const onHome = pathname === "/";
+  const onWorkbench = pathname === "/";
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
   const onIntegrations = pathname.startsWith("/integrations");
@@ -105,10 +101,10 @@ export function SidebarNav({
 
   const items: NavItem[] = [
     {
-      label: "首页",
-      icon: Inbox,
+      label: "工作台",
+      icon: LayoutDashboard,
       href: navHref("/", sp, hk),
-      active: onHome && tab === "active",
+      active: onWorkbench,
       badge: activeCount > 0 ? activeCount : undefined,
     },
     {
@@ -124,29 +120,10 @@ export function SidebarNav({
       active: onIntegrations,
     },
     {
-      label: "日历",
-      icon: Calendar,
-      href: "#",
-      disabled: true,
-    },
-    {
       label: "分析",
       icon: BarChart3,
       href: analyticsHref(sp, hk),
       active: onAnalytics,
-    },
-    {
-      label: "已处置",
-      icon: CheckCircle2,
-      href: navHref("/?tab=closed", sp, hk),
-      active: onHome && tab === "closed",
-      badge: closedCount && closedCount > 0 ? closedCount : undefined,
-    },
-    {
-      label: "归档",
-      icon: Archive,
-      href: navHref("/?tab=archived", sp, hk),
-      active: onHome && tab === "archived",
     },
   ];
 

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 export function WorkbenchSearchBar({
   className,
-  placeholder = "搜索工单号、摘要…",
+  placeholder = "搜索工作项、客户、合同…",
 }: {
   className?: string;
   placeholder?: string;

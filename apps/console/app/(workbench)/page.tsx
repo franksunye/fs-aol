@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { Calendar, ListTodo } from "lucide-react";
 import {
   listSuggestions,
   countInboxBuckets,
@@ -8,12 +9,13 @@ import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers
 import { WorkbenchHeader } from "@/components/workbench/workbench-header";
 import { WorkbenchMetrics } from "@/components/workbench/workbench-metrics";
 import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
+import { WorkbenchTabs } from "@/components/workbench/workbench-tabs";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
 import { OpportunityList } from "@/components/workbench/opportunity-list";
 import { WorkbenchSearchBar } from "@/components/workbench/workbench-search-bar";
 import { filterSuggestionsByQuery } from "@/lib/workbench-search";
 import { EmptyState } from "@/components/workbench/empty-state";
-import { INBOX_TAB_LABELS, inboxTabFromSearchParams } from "@/lib/labels";
+import { INBOX_TAB_LABELS } from "@/lib/labels";
 import {
   parseSuggestionSortKey,
   sortSuggestions,
@@ -31,6 +33,12 @@ import {
   parseWorkbenchPaneKey,
 } from "@/components/workbench/case-detail-pane";
 import { CaseDetailSkeleton } from "@/components/workbench/case-detail-skeleton";
+import {
+  isInboxDataView,
+  isWorkbenchPlaceholderView,
+  WORKBENCH_VIEW_LABELS,
+  workbenchViewFromSearchParams,
+} from "@/lib/workbench-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +58,10 @@ export default async function WorkbenchPage({
   }>;
 }) {
   const sp = await searchParams;
-  const inboxTab = inboxTabFromSearchParams(sp);
+  const workbenchView = workbenchViewFromSearchParams(sp);
+  const isPlaceholder = isWorkbenchPlaceholderView(workbenchView);
+  const isInboxData = isInboxDataView(workbenchView);
+  const inboxTab = isInboxData ? workbenchView : "active";
   const isActiveInbox = inboxTab === "active";
   const priorityFilter = parsePriorityFilter(sp.priority);
   const selectedKey = parseWorkbenchPaneKey(sp.key);
@@ -60,7 +71,9 @@ export default async function WorkbenchPage({
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const [rawRows, tabCounts] = await Promise.all([
-    listSuggestions({ inboxBucket: inboxTab, ...hkOpts }),
+    isPlaceholder
+      ? Promise.resolve([])
+      : listSuggestions({ inboxBucket: inboxTab, ...hkOpts }),
     countInboxBuckets(hkOpts),
   ]);
   const sortKey = parseSuggestionSortKey(sp.sort);
@@ -83,15 +96,58 @@ export default async function WorkbenchPage({
   });
   const hasRows = rows.length > 0;
 
+  const listBody = isPlaceholder ? (
+    <EmptyState
+      title={WORKBENCH_VIEW_LABELS[workbenchView]}
+      description={
+        workbenchView === "actions"
+          ? "跟进中、已认领的工单将集中展示于此（演示占位，即将开放）。"
+          : "按日查看待办与预约安排（演示占位，即将开放）。"
+      }
+      icon={workbenchView === "actions" ? ListTodo : Calendar}
+    />
+  ) : !hasRows ? (
+    <EmptyState
+      title={
+        sp.q?.trim()
+          ? `未找到「${sp.q.trim()}」相关工单`
+          : hkFilter
+            ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
+            : `暂无${INBOX_TAB_LABELS[inboxTab]}`
+      }
+      description={
+        sp.q?.trim()
+          ? "尝试工单号或摘要关键词，或清除搜索。"
+          : hkFilter
+            ? undefined
+            : inboxTab === "active" &&
+                tabCounts.archived + tabCounts.closed > 0
+              ? `另有 ${tabCounts.closed} 条已处理、${tabCounts.archived} 条归档，请切换上方 Tab 查看。`
+              : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
+      }
+    />
+  ) : (
+    <div role="listbox" aria-label="机会列表">
+      <OpportunityList
+        items={workItems}
+        listContext={listContext}
+        selectedKey={selectedKey}
+        sortKey={sortKey}
+      />
+    </div>
+  );
+
   const listPane = (
     <div className="px-3 py-4 lg:px-4 lg:py-5">
-      <WorkbenchHeader
-        displayName={displayName}
-        pendingCount={metrics?.pending ?? tabCounts.active}
-        pilots={pilots}
-        hkFilter={hkFilter}
-        compact
-      />
+      <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
+
+      <Suspense fallback={null}>
+        <WorkbenchTabs
+          current={workbenchView}
+          hk={hkFilter}
+          counts={tabCounts}
+        />
+      </Suspense>
 
       <div className="mb-3 md:hidden">
         <Suspense fallback={null}>
@@ -110,48 +166,19 @@ export default async function WorkbenchPage({
             compact
           />
         </Suspense>
-      ) : (
+      ) : isInboxData ? (
         <p className="text-muted-foreground mb-4 text-sm">
           {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
           {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
         </p>
-      )}
+      ) : null}
 
-      {!hasRows ? (
-        <EmptyState
-          title={
-            sp.q?.trim()
-              ? `未找到「${sp.q.trim()}」相关工单`
-              : hkFilter
-                ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
-                : `暂无${INBOX_TAB_LABELS[inboxTab]}`
-          }
-          description={
-            sp.q?.trim()
-              ? "尝试工单号或摘要关键词，或清除搜索。"
-              : hkFilter
-                ? undefined
-                : inboxTab === "active" &&
-                    tabCounts.archived + tabCounts.closed > 0
-                  ? `另有 ${tabCounts.archived} 条归档、${tabCounts.closed} 条已处置，请用侧栏查看。`
-                  : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
-          }
-        />
-      ) : (
-        <div role="listbox" aria-label="机会列表">
-          <OpportunityList
-            items={workItems}
-            listContext={listContext}
-            selectedKey={selectedKey}
-            sortKey={sortKey}
-          />
-        </div>
-      )}
+      {listBody}
     </div>
   );
 
   const detailPane =
-    selectedKey && hasRows ? (
+    !isPlaceholder && selectedKey && hasRows ? (
       <Suspense key={selectedKey} fallback={<CaseDetailSkeleton />}>
         <CaseDetailPane dedupeKey={selectedKey} searchParams={sp} />
       </Suspense>
@@ -162,7 +189,7 @@ export default async function WorkbenchPage({
       <WorkbenchSplitLayout
         list={listPane}
         detail={detailPane}
-        selectedKey={selectedKey}
+        selectedKey={isPlaceholder ? null : selectedKey}
       />
     </main>
   );

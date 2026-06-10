@@ -10,26 +10,19 @@ import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
 import { isAuthEnabled } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "早上好";
-  if (h < 18) return "下午好";
-  return "晚上好";
-}
-
 export function WorkbenchHeader({
-  displayName,
-  pendingCount,
   pilots,
   hkFilter,
   compact = false,
+  title = "工作台",
+  subtitle = "您的个人工作界面，集中处理 Agent 为您交付的各类工作项。",
 }: {
-  displayName: string;
-  pendingCount: number;
   pilots: PilotHousekeeper[];
   hkFilter?: string;
   /** 分栏列表区：压缩标题与工具栏，避免与指标卡重复占高 */
   compact?: boolean;
+  title?: string;
+  subtitle?: string;
 }) {
   const router = useRouter();
 
@@ -44,19 +37,19 @@ export function WorkbenchHeader({
         <h1
           className={cn(
             "font-semibold tracking-tight",
-            compact ? "truncate text-base" : "text-2xl"
+            compact ? "text-base" : "text-2xl"
           )}
         >
-          {greeting()}，{displayName}
-          {compact ? null : " 👋"}
+          {title}
         </h1>
-        {!compact ? (
-          <p className="text-muted-foreground mt-1 text-sm">
-            {pendingCount > 0
-              ? `今天有 ${pendingCount} 条机会待你处置`
-              : "暂无待处置机会，可查看归档或等待 Agent 下一轮分析"}
-          </p>
-        ) : null}
+        <p
+          className={cn(
+            "text-muted-foreground mt-1 leading-relaxed",
+            compact ? "text-xs" : "text-sm"
+          )}
+        >
+          {subtitle}
+        </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
         <Button

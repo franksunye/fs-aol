@@ -1,10 +1,13 @@
 import {
   encodeKey,
   INBOX_TAB_LABELS,
-  inboxTabFromSearchParams,
   parseInboxBucket,
   type InboxBucket,
 } from "./labels";
+import {
+  isInboxDataView,
+  workbenchViewFromSearchParams,
+} from "./workbench-tabs";
 
 /** 切换列表筛选/排序/收件箱时清除分栏选中态 */
 export type DetailPanel = "activity" | "agent";
@@ -39,9 +42,11 @@ export function workbenchListContextFromWorkbench(sp: {
   sort?: string;
   priority?: string;
 }): WorkbenchListContext {
-  const from = inboxTabFromSearchParams(sp);
+  const view = workbenchViewFromSearchParams(sp);
+  const from =
+    isInboxDataView(view) && view !== "active" ? view : undefined;
   return {
-    from: from === "active" ? undefined : from,
+    from,
     hk: sp.hk?.trim() || undefined,
     sort: sp.sort?.trim() || undefined,
     priority: sp.priority?.trim() || undefined,
