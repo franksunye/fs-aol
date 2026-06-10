@@ -9,6 +9,7 @@ import {
   CircleHelp,
   LayoutDashboard,
   Link2,
+  Play,
   PanelLeft,
   PanelLeftClose,
   Settings,
@@ -16,6 +17,8 @@ import {
 import { SidebarBrand } from "./sidebar-brand";
 import { cn } from "@/lib/utils";
 import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
+import { RUNS_HOME_PATH } from "@/lib/runs-nav";
+import { RUNS_TODAY_MOCK_COUNT } from "@/lib/runs-mock";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
 import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 import { Button } from "@/components/ui/button";
@@ -96,6 +99,7 @@ export function SidebarNav({
   const onWorkbench = pathname === "/";
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
+  const onRuns = pathname.startsWith("/runs");
   const onIntegrations = pathname.startsWith("/integrations");
   const onSettings = pathname.startsWith("/settings");
 
@@ -112,6 +116,13 @@ export function SidebarNav({
       icon: Bot,
       href: "/agents",
       active: onAgents,
+    },
+    {
+      label: "Runs",
+      icon: Play,
+      href: RUNS_HOME_PATH,
+      active: onRuns,
+      badge: RUNS_TODAY_MOCK_COUNT,
     },
     {
       label: "集成",
