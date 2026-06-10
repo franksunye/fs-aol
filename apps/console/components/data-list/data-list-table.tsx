@@ -64,17 +64,22 @@ export function DataListTable<TData>({
   const cellPad = DENSITY_CELL[density];
   const titleColumnId = "title";
 
+  const headerCellClass = cn(
+    "bg-muted text-muted-foreground border-border sticky top-0 z-10 border-b px-2 py-2 text-left text-[11px] font-semibold tracking-wide uppercase",
+    "shadow-[0_1px_0_0_var(--border)]"
+  );
+
   return (
     <table
       className={cn(
-        "w-full border-collapse text-sm",
+        "w-full border-separate border-spacing-0 text-sm",
         tableClassName
       )}
       style={{ minWidth }}
     >
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id} className="border-b border-border text-left">
+          <tr key={headerGroup.id}>
             {headerGroup.headers.map((header) => {
               const colId = header.column.id;
               const isTitle = stickyTitleColumn && colId === titleColumnId;
@@ -94,8 +99,8 @@ export function DataListTable<TData>({
                       : undefined
                   }
                   className={cn(
-                    "bg-muted/40 text-muted-foreground sticky top-0 z-10 px-2 py-2 text-[11px] font-semibold tracking-wide uppercase",
-                    isTitle && "left-0 z-20 shadow-[1px_0_0_0_var(--border)]"
+                    headerCellClass,
+                    isTitle && "left-0 z-30 shadow-[1px_0_0_0_var(--border)]"
                   )}
                 >
                   {header.isPlaceholder
@@ -114,10 +119,7 @@ export function DataListTable<TData>({
             <tr
               key={row.id}
               {...rowProps}
-              className={cn(
-                "border-b border-border/60 transition-colors last:border-0",
-                rowProps.className
-              )}
+              className={cn("transition-colors", rowProps.className)}
             >
               {row.getVisibleCells().map((cell) => {
                 const colId = cell.column.id;
@@ -126,7 +128,7 @@ export function DataListTable<TData>({
                   <td
                     key={cell.id}
                     className={cn(
-                      "align-middle",
+                      "border-border/60 align-middle border-b",
                       cellPad,
                       isTitle &&
                         "bg-background sticky left-0 z-[1] shadow-[1px_0_0_0_var(--border)]"
