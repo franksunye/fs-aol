@@ -9,6 +9,7 @@ import {
   type ExecutionQuickFilter,
   type ActionExecutionFilters,
 } from "@/lib/action-execution-mock";
+import { stripExecutionDataListParams } from "@/components/data-list";
 import { stripPaneSelectionParams } from "@/lib/action-center-nav";
 
 const QUICK_TABS: {
@@ -29,6 +30,7 @@ function buildHref(
 ): string {
   const q = new URLSearchParams(sp.toString());
   stripPaneSelectionParams(q);
+  stripExecutionDataListParams(q);
   q.set("tab", "execution");
   q.delete("action");
 

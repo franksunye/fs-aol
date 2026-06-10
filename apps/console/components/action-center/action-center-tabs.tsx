@@ -8,6 +8,7 @@ import {
   ACTION_CENTER_VIEW_LABELS,
   type ActionCenterView,
 } from "@/lib/action-center-tabs";
+import { stripDataListParamsForView } from "@/components/data-list";
 import { stripPaneSelectionParams } from "@/lib/action-center-nav";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ function buildHref(
 ): string {
   const q = new URLSearchParams(sp.toString());
   stripPaneSelectionParams(q);
+  stripDataListParamsForView(q, view === "execution" ? "execution" : "inbox");
   if (view === "active") {
     q.delete("tab");
   } else {

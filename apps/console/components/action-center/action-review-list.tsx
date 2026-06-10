@@ -10,8 +10,11 @@ import {
 import type { ActionReviewListContext } from "@/lib/action-center-nav";
 import { suggestionDetailHref } from "@/lib/action-center-nav";
 import {
+  DataListDensityToggle,
   DataListFrame,
   DataListPagination,
+  DataListToolbar,
+  dataListParamKey,
   paginateItems,
   useDataListDensity,
   useDataListUrlState,
@@ -34,7 +37,7 @@ export function ActionReviewList({
   layout?: DataListLayout;
 }) {
   const sp = useSearchParams();
-  const { density } = useDataListDensity();
+  const { density, setDensity } = useDataListDensity();
 
   const resetDeps = useMemo(
     () => [
@@ -61,12 +64,14 @@ export function ActionReviewList({
     setPageSize,
     toggleSort,
   } = useDataListUrlState<ActionReviewSortKey>({
+    scope: "inbox",
     defaultSort: serverSortKey,
     parseSort,
     resetDeps,
   });
 
-  const effectiveSort = sp.get("sort") ? sort : serverSortKey;
+  const sortParam = dataListParamKey("inbox", "sort");
+  const effectiveSort = sp.get(sortParam) ? sort : serverSortKey;
 
   const orderedItems = useMemo(
     () => (order === "asc" ? [...items].reverse() : items),
@@ -96,6 +101,16 @@ export function ActionReviewList({
       {({ keyboardIndex }) => (
         <DataListFrame
           className="h-full"
+          toolbar={
+            <DataListToolbar
+              end={
+                <DataListDensityToggle
+                  density={density}
+                  onDensityChange={setDensity}
+                />
+              }
+            />
+          }
           footer={
             total > 0 ? (
               <DataListPagination

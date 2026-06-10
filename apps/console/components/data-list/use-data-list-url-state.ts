@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { dataListParamKey } from "./data-list-url-scopes";
 import {
-  DATA_LIST_URL_PARAMS,
   parseDataListOrder,
   parseDataListPage,
   parseDataListPageSize,
   type DataListPageSize,
   type DataListSortOrder,
 } from "./data-list-types";
+import type { DataListUrlScope } from "./data-list-url-scopes";
 
 export type DataListUrlState<TSort extends string = string> = {
   page: number;
@@ -19,12 +20,15 @@ export type DataListUrlState<TSort extends string = string> = {
 };
 
 export function useDataListUrlState<TSort extends string>({
+  scope,
   defaultPageSize = 20,
   defaultSort,
   defaultOrder = "desc",
   parseSort,
   resetDeps = [],
 }: {
+  /** Namespace list params per surface (inbox vs execution). */
+  scope?: DataListUrlScope;
   defaultPageSize?: DataListPageSize;
   defaultSort: TSort;
   defaultOrder?: DataListSortOrder;
@@ -36,18 +40,33 @@ export function useDataListUrlState<TSort extends string>({
   const router = useRouter();
   const sp = useSearchParams();
 
+  const pageKey = dataListParamKey(scope, "page");
+  const pageSizeKey = dataListParamKey(scope, "pageSize");
+  const sortKey = dataListParamKey(scope, "sort");
+  const orderKey = dataListParamKey(scope, "order");
+
   const state = useMemo<DataListUrlState<TSort>>(() => {
-    const sortRaw = sp.get(DATA_LIST_URL_PARAMS.sort);
+    const sortRaw = sp.get(sortKey);
     return {
-      page: parseDataListPage(sp.get(DATA_LIST_URL_PARAMS.page)),
+      page: parseDataListPage(sp.get(pageKey)),
       pageSize: parseDataListPageSize(
-        sp.get(DATA_LIST_URL_PARAMS.pageSize),
+        sp.get(pageSizeKey),
         defaultPageSize
       ),
       sort: sortRaw ? parseSort(sortRaw) : defaultSort,
-      order: parseDataListOrder(sp.get(DATA_LIST_URL_PARAMS.order), defaultOrder),
+      order: parseDataListOrder(sp.get(orderKey), defaultOrder),
     };
-  }, [sp, defaultPageSize, defaultSort, defaultOrder, parseSort]);
+  }, [
+    sp,
+    pageKey,
+    pageSizeKey,
+    sortKey,
+    orderKey,
+    defaultPageSize,
+    defaultSort,
+    defaultOrder,
+    parseSort,
+  ]);
 
   const resetKey = JSON.stringify(resetDeps);
   const prevResetKey = useRef(resetKey);
@@ -58,10 +77,10 @@ export function useDataListUrlState<TSort extends string>({
     if (state.page === 1) return;
 
     const next = new URLSearchParams(sp.toString());
-    next.delete(DATA_LIST_URL_PARAMS.page);
+    next.delete(pageKey);
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [resetKey, state.page, sp, pathname, router]);
+  }, [resetKey, state.page, sp, pathname, router, pageKey]);
 
   const pushParams = useCallback(
     (mutate: (q: URLSearchParams) => void) => {
@@ -76,42 +95,50 @@ export function useDataListUrlState<TSort extends string>({
   const setPage = useCallback(
     (page: number) => {
       pushParams((q) => {
-        if (page <= 1) q.delete(DATA_LIST_URL_PARAMS.page);
-        else q.set(DATA_LIST_URL_PARAMS.page, String(page));
+        if (page <= 1) q.delete(pageKey);
+        else q.set(pageKey, String(page));
       });
     },
-    [pushParams]
+    [pushParams, pageKey]
   );
 
   const setPageSize = useCallback(
     (pageSize: DataListPageSize) => {
       pushParams((q) => {
-        q.delete(DATA_LIST_URL_PARAMS.page);
-        if (pageSize === defaultPageSize) q.delete(DATA_LIST_URL_PARAMS.pageSize);
-        else q.set(DATA_LIST_URL_PARAMS.pageSize, String(pageSize));
+        q.delete(pageKey);
+        if (pageSize === defaultPageSize) q.delete(pageSizeKey);
+        else q.set(pageSizeKey, String(pageSize));
       });
     },
-    [pushParams, defaultPageSize]
+    [pushParams, pageKey, pageSizeKey, defaultPageSize]
   );
 
   const setSort = useCallback(
     (sort: TSort, order?: DataListSortOrder) => {
       pushParams((q) => {
-        q.delete(DATA_LIST_URL_PARAMS.page);
+        q.delete(pageKey);
         q.delete("key");
         q.delete("round");
         q.delete("view");
         q.delete("panel");
 
-        if (sort === defaultSort) q.delete(DATA_LIST_URL_PARAMS.sort);
-        else q.set(DATA_LIST_URL_PARAMS.sort, sort);
+        if (sort === defaultSort) q.delete(sortKey);
+        else q.set(sortKey, sort);
 
         const nextOrder = order ?? state.order;
-        if (nextOrder === defaultOrder) q.delete(DATA_LIST_URL_PARAMS.order);
-        else q.set(DATA_LIST_URL_PARAMS.order, nextOrder);
+        if (nextOrder === defaultOrder) q.delete(orderKey);
+        else q.set(orderKey, nextOrder);
       });
     },
-    [pushParams, defaultSort, defaultOrder, state.order]
+    [
+      pushParams,
+      pageKey,
+      sortKey,
+      orderKey,
+      defaultSort,
+      defaultOrder,
+      state.order,
+    ]
   );
 
   const toggleSort = useCallback(

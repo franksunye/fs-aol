@@ -21,12 +21,17 @@ import {
   sortExecutionActions,
   type ExecutionSortKey,
 } from "@/lib/action-execution-sorting";
+import { terminalFeedbackDisplayState } from "@/lib/terminal-feedback-display";
 import {
+  DataListDensityToggle,
   DataListFrame,
   DataListPagination,
   DataListSortableHead,
   DataListStaticHead,
   DataListTable,
+  DataListToolbar,
+  PriorityBadge,
+  TerminalFeedbackBadge,
   paginateItems,
   useDataListDensity,
   useDataListUrlState,
@@ -34,22 +39,6 @@ import {
   type DataListSortOrder,
 } from "@/components/data-list";
 import { ExecutionStatusBadge } from "./execution-status-badge";
-
-function PriorityCell({ label }: { label: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex min-w-[2rem] justify-center rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums",
-        label === "高" && "bg-red-50 text-red-600",
-        label === "中" && "bg-amber-50 text-amber-700",
-        label === "低" && "bg-emerald-50 text-emerald-700",
-        label !== "高" && label !== "中" && label !== "低" && "bg-muted text-muted-foreground"
-      )}
-    >
-      {label}
-    </span>
-  );
-}
 
 function executionSourceAgent(item: ExecutionAction): ActionEntityRef {
   return { id: item.agentId, label: item.sourceAgent };
@@ -75,7 +64,7 @@ export function ActionExecutionList({
   className?: string;
 }) {
   const router = useRouter();
-  const { density } = useDataListDensity();
+  const { density, setDensity } = useDataListDensity();
 
   const parseSort = useCallback(
     (raw: string | null) => parseExecutionSortKey(raw),
@@ -91,6 +80,7 @@ export function ActionExecutionList({
     setPageSize,
     toggleSort,
   } = useDataListUrlState<ExecutionSortKey>({
+    scope: "execution",
     defaultSort: "due",
     parseSort,
     resetDeps,
@@ -130,6 +120,16 @@ export function ActionExecutionList({
   return (
     <DataListFrame
       className={cn("min-h-[12rem] flex-1", className)}
+      toolbar={
+        <DataListToolbar
+          end={
+            <DataListDensityToggle
+              density={density}
+              onDensityChange={setDensity}
+            />
+          }
+        />
+      }
       footer={
         <DataListPagination
           page={page}
@@ -151,7 +151,7 @@ export function ActionExecutionList({
           columns={columns}
           layout={layout}
           density={density}
-          minWidth={layout === "narrow" ? 560 : 920}
+          minWidth={layout === "narrow" ? 600 : 1040}
           getRowId={(row) => row.id}
           getRowProps={(row) => {
             const item = row.original;
@@ -199,7 +199,7 @@ function buildColumns({
         />
       ),
       cell: ({ row }) => (
-        <PriorityCell label={calendarPriorityLabel(row.original.priority)} />
+        <PriorityBadge label={calendarPriorityLabel(row.original.priority)} />
       ),
     },
     {
@@ -301,20 +301,6 @@ function buildColumns({
       ),
     },
     {
-      id: "status",
-      header: () => (
-        <DataListSortableHead
-          label="状态"
-          active={sort === "status"}
-          order={order}
-          onSort={() => toggleSort("status")}
-        />
-      ),
-      cell: ({ row }) => (
-        <ExecutionStatusBadge status={row.original.status} />
-      ),
-    },
-    {
       id: "due",
       header: () => (
         <DataListSortableHead
@@ -329,6 +315,36 @@ function buildColumns({
         <span className="text-muted-foreground text-right text-xs tabular-nums">
           {formatDueLabel(row.original.dueDate, row.original.dueTime)}
         </span>
+      ),
+    },
+    {
+      id: "status",
+      header: () => (
+        <DataListSortableHead
+          label="状态"
+          active={sort === "status"}
+          order={order}
+          onSort={() => toggleSort("status")}
+        />
+      ),
+      cell: ({ row }) => (
+        <ExecutionStatusBadge status={row.original.status} />
+      ),
+    },
+    {
+      id: "terminalFeedback",
+      header: () => (
+        <DataListSortableHead
+          label="终端反馈"
+          active={sort === "feedback"}
+          order={order}
+          onSort={() => toggleSort("feedback")}
+        />
+      ),
+      cell: ({ row }) => (
+        <TerminalFeedbackBadge
+          state={terminalFeedbackDisplayState(row.original)}
+        />
       ),
     },
   ];

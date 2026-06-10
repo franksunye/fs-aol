@@ -1,12 +1,14 @@
 import type { ExecutionAction } from "./action-execution-mock";
 import { calendarPriorityLabel } from "./action-list-display";
+import { terminalFeedbackSortRank } from "./terminal-feedback-display";
 
 export type ExecutionSortKey =
   | "due"
   | "priority"
   | "status"
   | "agent"
-  | "title";
+  | "title"
+  | "feedback";
 
 const ALL_KEYS: ExecutionSortKey[] = [
   "due",
@@ -14,6 +16,7 @@ const ALL_KEYS: ExecutionSortKey[] = [
   "status",
   "agent",
   "title",
+  "feedback",
 ];
 
 const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -47,6 +50,8 @@ export function sortExecutionActions(
       cmp = a.status.localeCompare(b.status, "zh-CN");
     } else if (sortKey === "agent") {
       cmp = a.sourceAgent.localeCompare(b.sourceAgent, "zh-CN");
+    } else if (sortKey === "feedback") {
+      cmp = terminalFeedbackSortRank(a) - terminalFeedbackSortRank(b);
     } else {
       cmp = a.title.localeCompare(b.title, "zh-CN");
     }
