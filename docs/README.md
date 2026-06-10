@@ -79,6 +79,6 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 ## 状态
 
-- 版本：**v0.2.5** 已封版；**v0.3 线**进行中（`v0.3.1`…`v0.3.5` 迭代打 tag），见 [PUB-14](public/PUB-14-v030-scope.md) §2.1 · [PUB-15](public/PUB-15-agentic-ui-design.md)
-- 阶段：Phase 1 → **工业级 Agentic UI**（3～5 步）+ 真发运营收官（`v0.3.5`）
-- 最近更新：2026-06-10（`PUB-19` DataList 列表控件；`PUB-18` 工业化计划；`PUB-17` Console 三层 IA）
+- 版本：**v0.3.5** 工业级 Agentic UI / pilot-cap 已进入收官口径；近端里程碑为 **v0.4 打穿 Follow-up 真实闭环 → v0.5 新增 2 个真实 Agent → v0.6 解耦配置化并准备开源**，见 [PUB-05](public/PUB-05-releases.md)。
+- 阶段：Phase 1 → **真实 Follow-up 楔子打穿**，随后验证多 Agent 复用与 AOL Core 抽象。
+- 最近更新：2026-06-10（`PUB-05` v0.4/v0.5/v0.6 里程碑；`PUB-19` DataList；`PUB-18` 工业化计划；`PUB-17` Console 三层 IA）

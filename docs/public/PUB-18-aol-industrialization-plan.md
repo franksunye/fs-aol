@@ -320,6 +320,14 @@ Suggestion -> 审核 / 修改 / 拒绝 -> Action -> 分发 -> 反馈 -> Outcome 
 
 ## 7. 推荐版本切分
 
+当前近端里程碑以 [PUB-05](PUB-05-releases.md) 为准：
+
+| 版本 | 主题 | AOL 工业化意义 |
+|------|------|----------------|
+| `v0.4.0` | followup-real-loop | 打穿真实 Follow-up 楔子，形成第一条可信执行闭环 |
+| `v0.5.0` | two-real-agents | 新增 2 个真实 Agent，证明 AOL 不是 Follow-up 专用实现 |
+| `v0.6.0` | configurable-oss-core | 解耦、配置化、产品化，准备开源 AOL Core / Console |
+
 若沿 `v0.3.x` 后续补丁 / `v0.4` 前置执行：
 
 | 迭代 | 建议 tag | 主题 |
@@ -329,13 +337,7 @@ Suggestion -> 审核 / 修改 / 拒绝 -> Action -> 分发 -> 反馈 -> Outcome 
 | I2 | `v0.3.7` | followup-chain |
 | I3 | `v0.3.8` | aol-cockpit |
 | I4 | `v0.3.9` | scenario-layer |
-| I5 + I6 | `v0.4.0` 或 `v1.0-rc1` | trust-proof + hardening |
-
-若希望保持既有 `v0.4.0 context-sop` 语义不变，则把 I1-I6 作为 `v1.0-rc` 前置线：
-
-```text
-v0.3.5 -> v1.0-rc.1 data-state -> v1.0-rc.2 chain -> v1.0-rc.3 cockpit -> v1.0
-```
+| I5 + I6 | 并入 `v0.4.0` | trust-proof + hardening，服务 Follow-up real loop |
 
 ---
 

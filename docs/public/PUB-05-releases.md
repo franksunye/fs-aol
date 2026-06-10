@@ -426,73 +426,138 @@ python run_cron.py --reset-tracking
 
 - **Tag**：`v0.3.0`
 - **周期**：建议 2–4 周真发试点后再打 tag（非「代码合并即 tag」）
-- **下一版**：`v0.4.0` context-sop（提质，依赖 v0.3 使用反馈）
+- **下一版**：`v0.4.0` followup-real-loop（打穿真实 Follow-up 楔子）
 
 ---
 
-## v0.4 · context-sop（建议 2–3 周）
+## v0.4 · followup-real-loop（建议 2–3 周）
 
-**目标**：提升建议质量——补全跟进文本素材，注入首版防水维修 SOP。
+**目标**：把 Follow-up 这个真实楔子打穿。
+v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务流里稳定完成：
+
+```text
+业务对象 -> Agent 判断 -> 人审 -> Action 生成 -> 执行分发 -> 状态回流 -> Run 追踪 -> Evaluation 复盘 -> Governance 约束
+```
+
+**产品判断**：若 Follow-up 不能闭环，其他 Agent 都只是样例；若 Follow-up 闭环成立，AOL 才有可复制的产品内核。
 
 ### 交付范围
 
-| 原语 | 本版增厚 |
+| 链路 | 本版必须打穿 |
+|------|----------------|
+| Business Object | Follow-up 绑定真实工单 / 商机 / 报价 / 合同上下文，关键字段可追溯 |
+| Decision | Agent 判断有版本、上下文快照、规则 / 模型依据，能回看为什么触发 |
+| Human Review | 人审支持批准、修改、拒绝、阻塞原因；审批记录进入 audit |
+| Action | 审核后生成正式 Action，进入待执行 / 已执行 / 异常 / 闭环生命周期 |
+| Execution | 至少打通一个真实或半自动执行分发通道；未接入写回必须明确标注 |
+| Feedback | 执行状态、终端反馈、阻塞信息能回流到 Action / Outcome |
+| Trace | Action 与 Run 双向链接；Run 展示触发、上下文、工具、模型、产出 |
+| Evaluation | 真实 Follow-up 样本形成准确率、采纳率、修改率、完成率、延迟、成本 |
+| Governance | Follow-up 审批策略、权限、动作边界、审计记录产品内可见 |
+
+### 工程项
+
+1. 固化 Follow-up `Run -> Suggestion -> Review -> Action -> Outcome` 数据契约。
+2. Action 写入与状态机收口：待审核、待执行、已闭环、异常、存档。
+3. 补齐 Follow-up 上下文快照：工单、报价、合同、workflowNode、阻塞类型。
+4. SOP v1 接入真实判断链：作为 Decision 的上下文输入，不作为孤立 prompt 优化。
+5. Run trace 加厚：模型/规则版本、上下文来源、Action 产出、补跑/异常标记。
+6. Evaluation 只先吃 Follow-up 真实样本；ROI / 业务价值全部标 `估算`。
+7. Governance 首先服务 Follow-up：审批矩阵、动作权限、审计日志、未接入防误触。
+
+### 明确不做
+
+- 不新增第二个真实 Agent。
+- 不做通用 Agent Studio / 任意配置化。
+- 不追求精确 ROI 归因；先保证真实链路和可复盘指标。
+- 不把未接入执行写回伪装成已生产闭环。
+
+### 发布与验证
+
+- **发布**：tag `v0.4.0`；Follow-up 试点用户切到新闭环，保留回滚路径。
+- **验证**：
+  - 随机抽样 ≥20 条 Follow-up Action，均可追溯到 Run、上下文、审批与结果。
+  - App 内处置率、采纳率、修改率、拒绝率、完成率能按统一口径产出。
+  - 试点用户能在产品内回答「为什么触发、谁批准、现在执行到哪、结果如何」。
+  - 未接入能力全部标注为 `未接入` 或 `场景样例`，无误触发风险。
+
+---
+
+## v0.5 · two-real-agents（建议 3–4 周）
+
+**目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。
+
+**产品判断**：v0.5 的价值不在“多两个页面”，而在证明 v0.4 的 Action 生命周期、Run trace、Evaluation、Governance 可以跨 Agent 复用。
+
+### 交付范围
+
+| 能力 | 本版要求 |
 |------|----------|
-| Event Ingestion | 防腐层扩展：按 `work_order_id` 关联 `workflowNode` / 关键 `exts`（只读） |
-| Reasoning | SOP v1（Markdown/JSON 配置）拼入 system prompt；可选「仅高优先级才推送」 |
-| 可观测 | `follow_up_logs` 增加 `sop_version`、`context_sources`；trace 增加 `context_snapshot` |
+| Agent 选择 | 从场景样例中选 2 个具备真实数据源和真实使用人的 Agent |
+| Definition | 每个 Agent 有业务对象、触发条件、上下文、输出 Action、审批规则 |
+| Reuse | 复用 v0.4 的 Action 生命周期、Run trace、Evaluation、Governance |
+| Data | 真实数据优先；缺口字段允许 `估算` / `未接入`，但必须标注 |
+| UX | Agents / Overview / Action / Runs / Evaluation 可按 Agent 过滤和下钻 |
+| Proof | 每个 Agent 至少跑通一个可验收的小闭环，不要求达到 Follow-up 深度 |
 
 ### 工程项
 
-1. `domain.py`：`enrich_work_order_context(wo)` 只读补全。
-2. `sops/waterproof-follow-up-v1.md`（配置，非硬编码业务 if-else）。
-3. 配置开关：`REQUIRE_FOLLOW_UP_ONLY_HIGH=false` 等试点调参。
-4. 把已采集的阻塞类型接入 SOP 话术分支（无采集仍走 `UNKNOWN` 通道）。
+1. 抽出 Agent Definition 最小结构：`agent_id`、业务对象、触发器、Action 类型、审批策略。
+2. 将 Follow-up 特有字段从通用 Action / Run / Eval 组件中剥离。
+3. 为新增 Agent 接入真实数据读取、上下文快照、Run trace 与 Action 生成。
+4. Evaluation 支持按 Agent 对比：准确率、采纳率、完成率、成本、延迟。
+5. Governance 支持 Agent 级审批策略与动作权限。
 
 ### 明确不做
 
-- Action Spec 协议升级（v1.1）。
-- business_3_0 嵌入（v1.2）。
+- 不做全量低代码 Studio。
+- 不开放外部开发者插件。
+- 不强求两个新 Agent 都达到 Follow-up 的深闭环，只要求真实小闭环。
 
 ### 发布与验证
 
-- **发布**：tag `v0.4.0`；试点群切换或并行 A/B（旧版 vs 新版）一周。
+- **发布**：tag `v0.5.0`；3 个真实 Agent（Follow-up + 2）在同一 AOL Console 内运行。
 - **验证**：
-  - 对比 v0.3：业务盲评「更有用」比例 ≥ 60%（样本≥20）。
-  - describe 为空的工单，补全后建议非空率提升可量化。
+  - 2 个新增 Agent 均有真实业务对象、真实上下文、真实人审或执行反馈。
+  - 至少 70% 通用 UI / 数据结构不需要为新增 Agent 重写。
+  - 管理者能在 Evaluation 中比较 3 个 Agent 的运行质量。
 
 ---
 
-## v0.5 · proof-metrics（建议 2 周）
+## v0.6 · configurable-oss-core（建议 3–4 周）
 
-**目标**：Stage 1 **可量化证明包**——管理层能看懂的数字，不是「感觉 AI 有用」。
-这正是 roadmap 强调的「必须先赢一个闭环业务指标」。
+**目标**：解耦、产品化、配置化，并准备开源。
+v0.6 开始把 v0.4/v0.5 证明过的共性抽象成 AOL Core，而不是继续堆业务特例。
 
-### 交付范围
+### 抽象对象
 
-| 能力 | 说明 |
+| 对象 | 说明 |
 |------|------|
-| 建议曝光 | 每条推送带 `suggestion_id`，企微卡片 footer 可选手工标记 |
-| 采纳信号 v1 | 轻量：群消息反应 / 表单链接「已处理/忽略」/ 或运营 Excel 回灌脚本 |
-| 效果指标 | 脚本 `scripts/weekly_proof_report.py`：推送数、采纳率、高优先级占比、token 成本 |
-| 业务对照 | 可选：与 Metabase/现有报表对齐「同期完工单 → 二次签约」粗对比 |
+| Agent Definition | Agent 身份、职责、触发条件、输入/输出、上线状态 |
+| Business Object Schema | 工单、商机、报价、合同等业务对象的字段映射 |
+| Trigger Policy | 何时触发 Agent、频率、幂等、水位线 |
+| Context Builder | 从业务系统构造上下文快照 |
+| Decision Policy | 规则 / 模型 / SOP / 阈值组合 |
+| Human Review Policy | 哪些动作需要人审、谁审批、如何留痕 |
+| Action Type | Action schema、状态机、执行目标、反馈字段 |
+| Execution Adapter | CRM / FSM / 企微 / Webhook 等执行通道 |
+| Run Trace | 触发、上下文、工具、模型、产出、错误、补跑 |
+| Evaluation Dataset | 真实样本、人工反馈、版本对比、回归评估 |
+| Governance Policy | 权限、预算、模型路由、脱敏、审计、发布流程 |
 
-### 工程项
+### 开源边界
 
-1. DB 表：`suggestion_outcomes`（work_order_id, suggestion_id, outcome, noted_at）。
-2. 周报 Markdown 自动生成（可贴企微文档或邮件）。
-
-### 明确不做
-
-- 全自动 CRM 写回（v1.1+）。
-- 精确归因（因果证明留业务分析，引擎只提供分母分子）。
+| 开源 | 不开源 / 示例化 |
+|------|----------------|
+| AOL Core 数据模型、状态机、Console 基础壳、mock adapter、示例 Agent | 客户真实数据、私有行业规则、XLink 凭证、生产 SOP 细节 |
 
 ### 发布与验证
 
-- **发布**：tag `v0.5.0`；连续 2 周出周报。
+- **发布**：tag `v0.6.0`；可作为 OSS preview / alpha。
 - **验证**：
-  - 至少 1 份对管理层可读的「AI 跟进试点周报」被采用。
-  - 有明确数字：如「推送 N 条，人工确认跟进 M 条，其中 X 条带来二次触达/签约线索」。
+  - 新增一个 mock/sample Agent 不需要改核心代码，只改配置和 adapter。
+  - 第三方可用样例数据在本地跑通 Console、Run、Action、Evaluation。
+  - README、安装、示例数据、边界说明完整；真实 Industry Pack 可保持私有。
 
 ---
 
