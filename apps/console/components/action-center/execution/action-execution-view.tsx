@@ -122,7 +122,13 @@ export function ActionExecutionView({
   );
 
   const listPane = (
-    <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
+    <div
+      className={
+        filtered.length > 0
+          ? "flex h-full min-h-0 flex-col px-3 pb-3 pt-0 lg:px-4 lg:pb-4"
+          : "flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4"
+      }
+    >
       {filtered.length === 0 ? (
         <div className="mb-3 shrink-0">
           <ActionExecutionFilters

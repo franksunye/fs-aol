@@ -12,18 +12,22 @@ export function ActionCenterSecondaryStrip({
   items,
   trailing,
   className,
+  compact = false,
 }: {
   title?: string;
   items: SecondaryMetricItem[];
   trailing?: ReactNode;
   className?: string;
+  /** Flush against list toolbar below — no extra bottom margin */
+  compact?: boolean;
 }) {
   if (items.length === 0 && !trailing) return null;
 
   return (
     <div
       className={cn(
-        "border-border/70 mb-3 flex flex-wrap items-center justify-between gap-2 border-b pb-3",
+        "flex flex-wrap items-center justify-between gap-2",
+        compact ? "pt-2 pb-2" : "border-border/70 mb-3 border-b pb-3",
         className
       )}
     >

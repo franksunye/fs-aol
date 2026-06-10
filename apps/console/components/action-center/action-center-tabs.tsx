@@ -78,7 +78,7 @@ export function ActionCenterTabs({
 
   return (
     <nav
-      className="mb-4 flex gap-1 overflow-x-auto border-b border-border"
+      className="flex gap-1 overflow-x-auto border-b border-border"
       aria-label="Action中心视图"
     >
       {ACTION_CENTER_TAB_ORDER.map((view) => {

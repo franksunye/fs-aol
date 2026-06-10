@@ -174,6 +174,7 @@ export default async function ActionCenterPage({
 
   const secondaryStrip = isExecution ? (
     <ActionCenterSecondaryStrip
+      compact
       title="流转状态"
       items={buildFlowSecondaryMetrics(flowSummary, hkFilter, {
         status: sp.astatus,
@@ -183,6 +184,7 @@ export default async function ActionCenterPage({
     />
   ) : isActiveInbox && metrics ? (
     <ActionCenterSecondaryStrip
+      compact
       title="待审核"
       items={buildReviewSecondaryMetrics(metrics, hkFilter, sp.priority)}
     />
@@ -258,14 +260,11 @@ export default async function ActionCenterPage({
     </div>
   );
 
-  const listPaneTightTop =
-    hasRows && isInboxData && !isActiveInbox && !isClosedLoop;
-
   const listPane = (
     <div
       className={
-        listPaneTightTop
-          ? "flex h-full min-h-0 flex-col px-3 pb-3 pt-1 lg:px-4 lg:pb-4 lg:pt-2"
+        hasRows
+          ? "flex h-full min-h-0 flex-col px-3 pb-3 pt-0 lg:px-4 lg:pb-4"
           : "flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4"
       }
     >
