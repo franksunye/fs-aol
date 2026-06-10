@@ -23,6 +23,8 @@ import {
 } from "@/lib/action-execution-sorting";
 import { terminalFeedbackDisplayState } from "@/lib/terminal-feedback-display";
 import {
+  ACTION_EXECUTION_COLUMN_PREFS,
+  DataListColumnSettings,
   DataListDensityToggle,
   DataListFrame,
   DataListPagination,
@@ -33,8 +35,10 @@ import {
   PriorityBadge,
   TerminalFeedbackBadge,
   paginateItems,
+  useDataListColumnPreferences,
   useDataListDensity,
   useDataListUrlState,
+  DATA_LIST_TABLE_IDS,
   type DataListLayout,
   type DataListSortOrder,
 } from "@/components/data-list";
@@ -65,6 +69,15 @@ export function ActionExecutionList({
 }) {
   const router = useRouter();
   const { density, setDensity } = useDataListDensity();
+  const {
+    hiddenIds,
+    isColumnHidden,
+    setColumnHidden,
+    resetColumns,
+  } = useDataListColumnPreferences(
+    DATA_LIST_TABLE_IDS.actionExecution,
+    ACTION_EXECUTION_COLUMN_PREFS
+  );
 
   const parseSort = useCallback(
     (raw: string | null) => parseExecutionSortKey(raw),
@@ -123,10 +136,18 @@ export function ActionExecutionList({
       toolbar={
         <DataListToolbar
           end={
-            <DataListDensityToggle
-              density={density}
-              onDensityChange={setDensity}
-            />
+            <>
+              <DataListColumnSettings
+                columns={ACTION_EXECUTION_COLUMN_PREFS}
+                isColumnHidden={isColumnHidden}
+                setColumnHidden={setColumnHidden}
+                onReset={resetColumns}
+              />
+              <DataListDensityToggle
+                density={density}
+                onDensityChange={setDensity}
+              />
+            </>
           }
         />
       }
@@ -151,6 +172,7 @@ export function ActionExecutionList({
           columns={columns}
           layout={layout}
           density={density}
+          userHiddenColumnIds={hiddenIds}
           minWidth={layout === "narrow" ? 600 : 1040}
           getRowId={(row) => row.id}
           getRowProps={(row) => {

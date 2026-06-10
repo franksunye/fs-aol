@@ -23,6 +23,7 @@ export function DataListTable<TData>({
   density = "comfortable",
   minWidth = 880,
   stickyTitleColumn = true,
+  userHiddenColumnIds,
   getRowId,
   getRowProps,
   tableClassName,
@@ -33,6 +34,8 @@ export function DataListTable<TData>({
   density?: DataListDensity;
   minWidth?: number;
   stickyTitleColumn?: boolean;
+  /** User-hidden columns from column settings (persisted). */
+  userHiddenColumnIds?: Set<string>;
   getRowId?: (row: TData) => string;
   getRowProps?: (row: Row<TData>) => {
     className?: string;
@@ -46,7 +49,9 @@ export function DataListTable<TData>({
   const visibleColumns = columns.filter((col) => {
     const id = col.id ?? (col as { accessorKey?: string }).accessorKey;
     if (!id) return true;
-    return isColumnVisibleInLayout(String(id), layout);
+    const colId = String(id);
+    if (userHiddenColumnIds?.has(colId)) return false;
+    return isColumnVisibleInLayout(colId, layout);
   });
 
   const table = useReactTable({

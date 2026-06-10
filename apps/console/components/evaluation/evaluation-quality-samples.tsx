@@ -3,38 +3,16 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   evaluationAgentsHref,
   evaluationExecutionActionsHref,
-  evaluationRuleHref,
-  evaluationSampleHref,
   evaluationActionReviewHref,
-  QUALITY_SAMPLE_TAG_LABELS,
   type EvaluationQualitySample,
   type EvaluationQualitySampleTag,
 } from "@/lib/evaluation-mock";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
-
-const TAG_CLASSES: Record<EvaluationQualitySampleTag, string> = {
-  false_positive: "border-red-200 bg-red-50 text-red-700",
-  needs_edit: "border-amber-200 bg-amber-50 text-amber-800",
-  rejected: "border-slate-200 bg-slate-50 text-slate-700",
-  low_confidence: "border-violet-200 bg-violet-50 text-violet-800",
-};
-
-const SEVERITY_LABELS = {
-  high: "高",
-  medium: "中",
-  low: "低",
-} as const;
-
-const SEVERITY_CLASSES = {
-  high: "text-red-600",
-  medium: "text-amber-700",
-  low: "text-muted-foreground",
-} as const;
+import { EvaluationQualitySamplesTable } from "./evaluation-quality-samples-table";
 
 const FILTER_OPTIONS: { id: "all" | EvaluationQualitySampleTag; label: string }[] =
   [
@@ -113,90 +91,13 @@ export function EvaluationQualitySamples({
         ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-xs">
-          <thead>
-            <tr className="text-muted-foreground border-b border-border">
-              <th className="pb-2 pr-3 font-medium">时间</th>
-              <th className="pb-2 pr-3 font-medium">Agent / Action</th>
-              <th className="pb-2 pr-3 font-medium">问题描述</th>
-              <th className="pb-2 pr-3 font-medium">建议处理</th>
-              <th className="pb-2 pr-3 font-medium">严重度</th>
-              <th className="pb-2 font-medium">标签</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-muted-foreground py-8 text-center">
-                  当前筛选下暂无样本
-                </td>
-              </tr>
-            ) : (
-              filtered.map((sample, i) => (
-                <tr
-                  key={`${sample.time}-${i}`}
-                  className="border-b border-border/60 last:border-0"
-                >
-                  <td className="text-muted-foreground py-3 pr-3 whitespace-nowrap tabular-nums">
-                    {sample.time}
-                  </td>
-                  <td className="py-3 pr-3">
-                    <Link
-                      href={evaluationSampleHref(sample, hk)}
-                      className="hover:text-primary font-medium"
-                    >
-                      {sample.agentName}
-                      {sample.agentVersion ? (
-                        <span className="text-muted-foreground font-normal">
-                          {" "}
-                          {sample.agentVersion}
-                        </span>
-                      ) : null}
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        / {sample.actionLabel}
-                      </span>
-                    </Link>
-                    {sample.ruleId ? (
-                      <div className="mt-1">
-                        <Link
-                          href={evaluationRuleHref(sample.ruleId, hk)}
-                          className="text-muted-foreground hover:text-primary text-[10px]"
-                        >
-                          规则：{sample.ruleId}
-                        </Link>
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="text-muted-foreground max-w-[220px] py-3 pr-3 leading-relaxed">
-                    {sample.issue}
-                  </td>
-                  <td className="py-3 pr-3 leading-relaxed">{sample.suggestion}</td>
-                  <td
-                    className={cn(
-                      "py-3 pr-3 font-medium tabular-nums",
-                      SEVERITY_CLASSES[sample.severity]
-                    )}
-                  >
-                    {SEVERITY_LABELS[sample.severity]}
-                  </td>
-                  <td className="py-3">
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[10px] font-medium", TAG_CLASSES[sample.tag])}
-                    >
-                      {QUALITY_SAMPLE_TAG_LABELS[sample.tag]}
-                    </Badge>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <EvaluationQualitySamplesTable
+        samples={filtered}
+        hk={hk}
+        resetDeps={[tagFilter]}
+      />
+
       <p className="text-muted-foreground mt-3 text-xs">
-        共 {filtered.length} 条样本 ·{" "}
         <Link href={evaluationActionReviewHref(hk)} className="hover:text-primary">
           查看待审核队列 →
         </Link>

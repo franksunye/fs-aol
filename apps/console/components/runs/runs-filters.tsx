@@ -12,6 +12,7 @@ import {
   type RunQuickFilter,
   type RunsFilters,
 } from "@/lib/runs-mock";
+import { stripRunsDataListParams } from "@/components/data-list";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
 
 const QUICK_TABS: { key: RunQuickFilter; label: string }[] = [
@@ -32,6 +33,7 @@ function buildHref(
   sp: URLSearchParams
 ): string {
   const q = new URLSearchParams(sp.toString());
+  stripRunsDataListParams(q);
   q.delete("run");
   if (patch.quick !== undefined) {
     if (patch.quick === "all") q.delete("rquick");

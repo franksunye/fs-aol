@@ -31,6 +31,7 @@ export function ActionReviewTable({
   keyboardIndex,
   layout = "wide",
   density = "comfortable",
+  userHiddenColumnIds,
 }: {
   items: WorkItem[];
   listContext?: ActionReviewListContext;
@@ -41,6 +42,7 @@ export function ActionReviewTable({
   keyboardIndex?: number;
   layout?: DataListLayout;
   density?: DataListDensity;
+  userHiddenColumnIds?: Set<string>;
 }) {
   const router = useRouter();
 
@@ -222,6 +224,7 @@ export function ActionReviewTable({
         columns={columns}
         layout={layout}
         density={density}
+        userHiddenColumnIds={userHiddenColumnIds}
         minWidth={layout === "narrow" ? 520 : 880}
         getRowId={(row) => row.id}
         getRowProps={(row) => {

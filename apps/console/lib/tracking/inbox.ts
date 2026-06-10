@@ -91,15 +91,17 @@ export async function countInboxBuckets(options?: {
   };
 }
 
-export async function listSuggestions(options?: {
+type InboxListQuery = {
   housekeeperId?: string;
   inboxBucket?: InboxBucket;
-  limit?: number;
-}): Promise<SuggestionRow[]> {
-  const hasInbox = await ensureInboxColumnsReady();
-  const hk = options?.housekeeperId?.trim();
-  const bucket = options?.inboxBucket ?? "active";
-  const limit = Math.min(Math.max(options?.limit ?? 100, 1), 500);
+};
+
+function buildInboxWhere(
+  hasInbox: boolean,
+  options: InboxListQuery
+): { where: string[]; args: (string | number)[] } {
+  const hk = options.housekeeperId?.trim();
+  const bucket = options.inboxBucket ?? "active";
   const where: string[] = [];
   const args: (string | number)[] = [];
   if (hasInbox) {
@@ -114,21 +116,78 @@ export async function listSuggestions(options?: {
     where.push("housekeeper_id = ?");
     args.push(hk);
   }
-  args.push(limit);
-  const sql =
-    where.length > 0
-      ? `SELECT * FROM ${TABLE_LOGS} WHERE ${where.join(
-          " AND "
-        )} ORDER BY processed_at DESC LIMIT ?`
-      : `SELECT * FROM ${TABLE_LOGS} ORDER BY processed_at DESC LIMIT ?`;
-  const res = await db.execute({ sql, args });
-  const logRows = res.rows as unknown as Record<string, unknown>[];
+  return { where, args };
+}
+
+async function hydrateSuggestionRows(
+  logRows: Record<string, unknown>[]
+): Promise<SuggestionRow[]> {
   const keys = logRows.map((r) => str(r.dedupe_key)).filter(Boolean);
   const [outcomes, blockers] = await Promise.all([
     latestOutcomesForKeys(keys),
     latestBlockersForKeys(keys),
   ]);
   return logRows.map((r) => mapSuggestion(r, outcomes, blockers));
+}
+
+export async function countSuggestions(
+  options?: InboxListQuery
+): Promise<number> {
+  const hasInbox = await ensureInboxColumnsReady();
+  const { where, args } = buildInboxWhere(hasInbox, options ?? {});
+  const sql =
+    where.length > 0
+      ? `SELECT COUNT(*) AS c FROM ${TABLE_LOGS} WHERE ${where.join(" AND ")}`
+      : `SELECT COUNT(*) AS c FROM ${TABLE_LOGS}`;
+  const res = await db.execute({ sql, args });
+  return Number((res.rows as { c?: number }[])[0]?.c ?? 0);
+}
+
+export async function listSuggestionsPage(options: {
+  housekeeperId?: string;
+  inboxBucket?: InboxBucket;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: SuggestionRow[]; total: number }> {
+  const hasInbox = await ensureInboxColumnsReady();
+  const page = Math.max(1, Math.floor(options.page));
+  const pageSize = Math.min(Math.max(options.pageSize, 1), 100);
+  const offset = (page - 1) * pageSize;
+  const { where, args } = buildInboxWhere(hasInbox, options);
+  const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+
+  const [countRes, listRes] = await Promise.all([
+    db.execute({
+      sql: `SELECT COUNT(*) AS c FROM ${TABLE_LOGS} ${whereSql}`,
+      args: [...args],
+    }),
+    db.execute({
+      sql: `SELECT * FROM ${TABLE_LOGS} ${whereSql} ORDER BY processed_at DESC LIMIT ? OFFSET ?`,
+      args: [...args, pageSize, offset],
+    }),
+  ]);
+
+  const total = Number((countRes.rows as { c?: number }[])[0]?.c ?? 0);
+  const logRows = listRes.rows as unknown as Record<string, unknown>[];
+  const rows = await hydrateSuggestionRows(logRows);
+  return { rows, total };
+}
+
+export async function listSuggestions(options?: {
+  housekeeperId?: string;
+  inboxBucket?: InboxBucket;
+  limit?: number;
+  offset?: number;
+}): Promise<SuggestionRow[]> {
+  const hasInbox = await ensureInboxColumnsReady();
+  const limit = Math.min(Math.max(options?.limit ?? 100, 1), 500);
+  const offset = Math.max(0, options?.offset ?? 0);
+  const { where, args } = buildInboxWhere(hasInbox, options ?? {});
+  const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+  const sql = `SELECT * FROM ${TABLE_LOGS} ${whereSql} ORDER BY processed_at DESC LIMIT ? OFFSET ?`;
+  const res = await db.execute({ sql, args: [...args, limit, offset] });
+  const logRows = res.rows as unknown as Record<string, unknown>[];
+  return hydrateSuggestionRows(logRows);
 }
 
 export async function getSuggestion(

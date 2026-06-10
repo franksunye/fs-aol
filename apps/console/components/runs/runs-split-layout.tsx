@@ -66,8 +66,7 @@ export function RunsSplitLayout({
     >
       <section
         className={cn(
-          shellScrollClass,
-          "shrink-0 transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
+          "flex h-full min-h-0 shrink-0 flex-col overflow-hidden transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
           sidebarOpen
             ? "w-full max-w-full basis-full lg:w-[min(58%,720px)] lg:max-w-[720px] lg:basis-[min(58%,720px)] lg:border-r lg:border-border"
             : "min-w-0 flex-1"

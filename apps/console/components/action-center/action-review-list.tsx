@@ -10,14 +10,18 @@ import {
 import type { ActionReviewListContext } from "@/lib/action-center-nav";
 import { suggestionDetailHref } from "@/lib/action-center-nav";
 import {
+  ACTION_REVIEW_COLUMN_PREFS,
+  DataListColumnSettings,
   DataListDensityToggle,
   DataListFrame,
   DataListPagination,
   DataListToolbar,
   dataListParamKey,
   paginateItems,
+  useDataListColumnPreferences,
   useDataListDensity,
   useDataListUrlState,
+  DATA_LIST_TABLE_IDS,
   type DataListLayout,
 } from "@/components/data-list";
 import { ActionReviewListKeyboard } from "./action-review-list-keyboard";
@@ -25,12 +29,15 @@ import { ActionReviewTable } from "./action-review-table";
 
 export function ActionReviewList({
   items,
+  totalCount,
   listContext,
   selectedKey,
   sortKey: serverSortKey,
   layout = "wide",
 }: {
   items: WorkItem[];
+  /** When set, items are already the current page (server-side pagination). */
+  totalCount?: number;
   listContext?: ActionReviewListContext;
   selectedKey: string | null;
   sortKey: ActionReviewSortKey;
@@ -38,6 +45,15 @@ export function ActionReviewList({
 }) {
   const sp = useSearchParams();
   const { density, setDensity } = useDataListDensity();
+  const {
+    hiddenIds,
+    isColumnHidden,
+    setColumnHidden,
+    resetColumns,
+  } = useDataListColumnPreferences(
+    DATA_LIST_TABLE_IDS.actionReview,
+    ACTION_REVIEW_COLUMN_PREFS
+  );
 
   const resetDeps = useMemo(
     () => [
@@ -78,10 +94,13 @@ export function ActionReviewList({
     [items, order]
   );
 
-  const { pageItems, total, pageCount } = useMemo(
-    () => paginateItems(orderedItems, page, pageSize),
-    [orderedItems, page, pageSize]
-  );
+  const { pageItems, total, pageCount } = useMemo(() => {
+    if (totalCount != null) {
+      const pageCount = Math.max(1, Math.ceil(totalCount / pageSize) || 1);
+      return { pageItems: orderedItems, total: totalCount, pageCount };
+    }
+    return paginateItems(orderedItems, page, pageSize);
+  }, [orderedItems, page, pageSize, totalCount]);
 
   const itemHrefs = useMemo(
     () =>
@@ -104,10 +123,18 @@ export function ActionReviewList({
           toolbar={
             <DataListToolbar
               end={
-                <DataListDensityToggle
-                  density={density}
-                  onDensityChange={setDensity}
-                />
+                <>
+                  <DataListColumnSettings
+                    columns={ACTION_REVIEW_COLUMN_PREFS}
+                    isColumnHidden={isColumnHidden}
+                    setColumnHidden={setColumnHidden}
+                    onReset={resetColumns}
+                  />
+                  <DataListDensityToggle
+                    density={density}
+                    onDensityChange={setDensity}
+                  />
+                </>
               }
             />
           }
@@ -134,6 +161,7 @@ export function ActionReviewList({
             keyboardIndex={keyboardIndex}
             layout={layout}
             density={density}
+            userHiddenColumnIds={hiddenIds}
           />
         </DataListFrame>
       )}

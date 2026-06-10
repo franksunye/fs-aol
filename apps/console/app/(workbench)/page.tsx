@@ -3,8 +3,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   listSuggestions,
+  listSuggestionsPage,
   countInboxBuckets,
 } from "@/lib/suggestions";
+import {
+  parseDataListPage,
+  parseDataListPageSize,
+} from "@/components/data-list/data-list-types";
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
 import { ActionReviewFilters } from "@/components/action-center/action-review-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
@@ -73,6 +78,8 @@ export default async function ActionCenterPage({
     aq?: string;
     astatus?: string;
     cfilter?: string;
+    page?: string;
+    pageSize?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -100,22 +107,57 @@ export default async function ActionCenterPage({
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const executionCount = countExecutionActionsPending(getExecutionActionsMockData());
-
-  const [primaryKpis, flowSummary, rawRows, tabCounts] = await Promise.all([
-    loadActionCenterPrimaryKpis(hkFilter),
-    loadExecutionMetrics(hkFilter),
-    isInboxData
-      ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
-      : Promise.resolve([]),
-    countInboxBuckets(hkOpts),
-  ]);
-
   const sortKey = parseActionReviewSortKey(sp.sort);
+  const listPage = parseDataListPage(sp.page);
+  const listPageSize = parseDataListPageSize(sp.pageSize);
+  const canDbPaginate =
+    isInboxData &&
+    sortKey === "latest" &&
+    !sp.q?.trim() &&
+    !priorityFilter;
+
+  const [primaryKpis, flowSummary, tabCounts, inboxPageResult, metricsRawRows] =
+    await Promise.all([
+      loadActionCenterPrimaryKpis(hkFilter),
+      loadExecutionMetrics(hkFilter),
+      countInboxBuckets(hkOpts),
+      canDbPaginate
+        ? listSuggestionsPage({
+            inboxBucket: inboxTab,
+            ...hkOpts,
+            page: listPage,
+            pageSize: listPageSize,
+          })
+        : Promise.resolve(null),
+      isInboxData
+        ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts, limit: 500 })
+        : Promise.resolve([]),
+    ]);
+
+  const rawRows =
+    canDbPaginate && inboxPageResult
+      ? inboxPageResult.rows
+      : metricsRawRows;
+
   const sorted = sortActionReviews(rawRows, sortKey, pilots);
-  const beforePriority = sorted;
+  const beforePriority = sortActionReviews(metricsRawRows, sortKey, pilots);
   const priorityRows = filterByPriority(sorted, priorityFilter);
-  const rows = filterActionReviewsByQuery(priorityRows, sp.q);
-  const workItems = rows.map(mapFollowUpRow);
+  const filteredRows = filterActionReviewsByQuery(priorityRows, sp.q);
+
+  const listTotal =
+    canDbPaginate && inboxPageResult
+      ? inboxPageResult.total
+      : filteredRows.length;
+
+  const pageRows =
+    canDbPaginate && inboxPageResult
+      ? filteredRows
+      : filteredRows.slice(
+          (listPage - 1) * listPageSize,
+          listPage * listPageSize
+        );
+
+  const workItems = pageRows.map(mapFollowUpRow);
   const metrics = isActiveInbox
     ? computeActionReviewMetricCards(beforePriority)
     : null;
@@ -129,7 +171,7 @@ export default async function ActionCenterPage({
     priority: sp.priority,
     cfilter: sp.cfilter,
   });
-  const hasRows = rows.length > 0;
+  const hasRows = listTotal > 0;
 
   const secondaryStrip = isExecution ? (
     <ActionCenterSecondaryStrip
@@ -186,6 +228,7 @@ export default async function ActionCenterPage({
       <Suspense fallback={<ActionReviewListSkeleton />}>
         <ActionReviewList
           items={workItems}
+          totalCount={listTotal}
           listContext={listContext}
           selectedKey={selectedKey}
           sortKey={sortKey}
@@ -219,13 +262,13 @@ export default async function ActionCenterPage({
               <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
             </Suspense>
             <p className="text-muted-foreground mb-4 text-sm">
-              {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
+              {INBOX_TAB_LABELS[inboxTab]} · {listTotal} 条
               {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
             </p>
           </>
         ) : isInboxData ? (
           <p className="text-muted-foreground mb-4 text-sm">
-            {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
+            {INBOX_TAB_LABELS[inboxTab]} · {listTotal} 条
             {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
           </p>
         ) : null}

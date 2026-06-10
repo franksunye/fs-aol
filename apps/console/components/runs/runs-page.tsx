@@ -14,7 +14,7 @@ import {
 } from "@/lib/runs-mock";
 import { RunsSummaryCards } from "./runs-summary-cards";
 import { RunsFilters } from "./runs-filters";
-import { RunsTable } from "./runs-table";
+import { RunsList } from "./runs-list";
 import { RunsDetailEmpty, RunsDetailPanel } from "./runs-detail-panel";
 import { RunsSplitLayout } from "./runs-split-layout";
 
@@ -81,8 +81,21 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
   }, [selectedId, filtered, selectedRun, sp, router]);
 
   const listPane = (
-    <div className="px-3 py-3 lg:px-4 lg:py-4">
-      <RunsTable items={filtered} selectedId={selectedId} hk={hkFilter} />
+    <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
+      <RunsList
+        className="min-h-0 flex-1"
+        items={filtered}
+        selectedId={selectedId}
+        hk={hkFilter}
+        layout={selectedId ? "narrow" : "wide"}
+        resetDeps={[
+          filters.quick,
+          filters.agentId,
+          filters.status,
+          filters.model,
+          filters.query,
+        ]}
+      />
     </div>
   );
 
