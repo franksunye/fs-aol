@@ -13,10 +13,10 @@ export function parseDetailPanel(
   panel?: string | null,
   legacyView?: string | null
 ): DetailPanel {
-  if (panel === "agent") return "agent";
   if (panel === "activity") return "activity";
+  if (panel === "agent") return "agent";
   if (legacyView === "feed") return "activity";
-  return "activity";
+  return "agent";
 }
 
 export function stripPaneSelectionParams(q: URLSearchParams) {

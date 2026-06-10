@@ -6,8 +6,8 @@ import type { DetailPanel } from "@/lib/workbench-nav";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: DetailPanel; label: string }[] = [
-  { id: "activity", label: "活动时间线" },
   { id: "agent", label: "Agent 分析" },
+  { id: "activity", label: "活动时间线" },
 ];
 
 export function CaseDetailTabs({ active }: { active: DetailPanel }) {
@@ -16,11 +16,11 @@ export function CaseDetailTabs({ active }: { active: DetailPanel }) {
 
   function hrefFor(panel: DetailPanel): string {
     const q = new URLSearchParams(sp.toString());
-    if (panel === "activity") {
+    if (panel === "agent") {
       q.delete("panel");
       q.delete("view");
     } else {
-      q.set("panel", panel);
+      q.set("panel", "activity");
       q.delete("view");
     }
     const s = q.toString();

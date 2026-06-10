@@ -41,7 +41,7 @@ export function CaseWorkspace({
       ? detailBase.split("?", 2)
       : [detailBase, ""];
     const q = new URLSearchParams(qs);
-    q.delete("panel");
+    q.set("panel", "activity");
     q.delete("view");
     const s = q.toString();
     return s ? `${base}?${s}` : base;
