@@ -4,15 +4,14 @@ import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
 import { formatDateKey } from "@/lib/calendar-mock";
+import type { ActionFlowStatus } from "@/lib/action-flow-status";
 import {
-  computeMyActionsSummary,
   filterMyActions,
   getMyActionsMockData,
   resolveMyActionsAssigneeFromHk,
   type MyActionQuickFilter,
   type MyActionsFilters as MyActionsFilterState,
 } from "@/lib/my-actions-mock";
-import { MyActionsSummaryCards } from "./my-actions-summary-cards";
 import { MyActionsFilters } from "./my-actions-filters";
 import { MyActionsList } from "./my-actions-list";
 import {
@@ -31,6 +30,25 @@ function parseQuickFilter(value?: string | null): MyActionQuickFilter {
     return value;
   }
   return "all";
+}
+
+function parseStatusFilter(
+  value?: string | null
+): ActionFlowStatus | "timeout_anomaly" | undefined {
+  const v = value?.trim();
+  if (v === "timeout_anomaly") return "timeout_anomaly";
+  if (
+    v === "pending_dispatch" ||
+    v === "dispatched" ||
+    v === "in_progress" ||
+    v === "completed" ||
+    v === "rejected" ||
+    v === "timeout" ||
+    v === "no_feedback"
+  ) {
+    return v;
+  }
+  return undefined;
 }
 
 export function MyActionsView({
@@ -54,6 +72,7 @@ export function MyActionsView({
       agentId: sp.get("aagent")?.trim() || "all",
       query: sp.get("aq")?.trim() || "",
       hk: hkAssignee,
+      status: parseStatusFilter(sp.get("astatus")),
     }),
     [sp, hkAssignee]
   );
@@ -61,11 +80,6 @@ export function MyActionsView({
   const filtered = useMemo(
     () => filterMyActions(allActions, filters),
     [allActions, filters]
-  );
-
-  const summary = useMemo(
-    () => computeMyActionsSummary(filtered),
-    [filtered]
   );
 
   const quickCounts = useMemo(() => {
@@ -112,7 +126,6 @@ export function MyActionsView({
 
   const listPane = (
     <div className="px-3 py-3 lg:px-4 lg:py-4">
-      <MyActionsSummaryCards summary={summary} />
       <MyActionsFilters hk={hkFilter} counts={quickCounts} filters={filters} />
       <MyActionsList
         items={filtered}

@@ -56,12 +56,14 @@ export type MyAction = {
 export type MyActionsSummary = {
   pendingDispatch: number;
   pendingDispatchDelta: number;
-  dueToday: number;
-  dueTodayDelta: number;
+  dispatched: number;
+  dispatchedDelta: number;
   inProgress: number;
   inProgressDelta: number;
   withFeedback: number;
   withFeedbackDelta: number;
+  timeoutAnomaly: number;
+  timeoutAnomalyDelta: number;
 };
 
 export const MY_ACTIONS_AGENT_OPTIONS = [
@@ -408,34 +410,41 @@ export function countMyActionsPending(actions: MyAction[]): number {
   return actions.filter((a) => ACTIVE_FLOW_STATUSES.includes(a.status)).length;
 }
 
+function deltaFromCount(current: number, seed: number): number {
+  if (current === 0) return 0;
+  const magnitude = Math.max(1, Math.round(current * 0.12) + (seed % 2));
+  return seed % 2 === 0 ? magnitude : -magnitude;
+}
+
 export function computeMyActionsSummary(actions: MyAction[]): MyActionsSummary {
-  const today = formatDateKey(new Date());
   const pendingDispatch = actions.filter(
     (a) => a.status === "pending_dispatch"
   ).length;
-  const dueToday = actions.filter(
-    (a) =>
-      a.dueDate === today &&
-      ACTIVE_FLOW_STATUSES.includes(a.status)
-  ).length;
-  const inProgress = actions.filter(
-    (a) => a.status === "in_progress" || a.status === "dispatched"
-  ).length;
+  const dispatched = actions.filter((a) => a.status === "dispatched").length;
+  const inProgress = actions.filter((a) => a.status === "in_progress").length;
   const withFeedback = actions.filter(
     (a) =>
       a.status === "completed" ||
+      a.status === "rejected" ||
       Boolean(a.terminalFeedback && a.terminalFeedback !== "终端尚未回写")
+  ).length;
+  const timeoutAnomaly = actions.filter(
+    (a) =>
+      a.status === "timeout" ||
+      a.status === "no_feedback"
   ).length;
 
   return {
     pendingDispatch,
-    pendingDispatchDelta: 2,
-    dueToday,
-    dueTodayDelta: 1,
+    pendingDispatchDelta: deltaFromCount(pendingDispatch, 1),
+    dispatched,
+    dispatchedDelta: deltaFromCount(dispatched, 2),
     inProgress,
-    inProgressDelta: 1,
+    inProgressDelta: deltaFromCount(inProgress, 3),
     withFeedback,
-    withFeedbackDelta: 5,
+    withFeedbackDelta: deltaFromCount(withFeedback, 4),
+    timeoutAnomaly,
+    timeoutAnomalyDelta: deltaFromCount(timeoutAnomaly, 5),
   };
 }
 
@@ -444,6 +453,7 @@ export type MyActionsFilters = {
   agentId: string;
   query: string;
   hk?: string;
+  status?: ActionFlowStatus | "timeout_anomaly";
 };
 
 export function filterMyActions(
@@ -464,6 +474,14 @@ export function filterMyActions(
       item.status !== "no_feedback"
     )
       return false;
+
+    if (filters.status === "timeout_anomaly") {
+      if (item.status !== "timeout" && item.status !== "no_feedback") {
+        return false;
+      }
+    } else if (filters.status && item.status !== filters.status) {
+      return false;
+    }
     if (
       filters.quick === "agent" &&
       filters.agentId === "all"
@@ -484,6 +502,22 @@ export function filterMyActions(
     }
     return true;
   });
+}
+
+export function actionFlowStatusHref(
+  status: ActionFlowStatus | "timeout_anomaly",
+  hk?: string
+): string {
+  const q = new URLSearchParams();
+  q.set("tab", "actions");
+  if (status === "timeout_anomaly") {
+    q.set("aquick", "overdue");
+  } else {
+    q.set("astatus", status);
+    q.set("aquick", "all");
+  }
+  if (hk) q.set("hk", hk);
+  return `/?${q.toString()}`;
 }
 
 export function myActionHref(

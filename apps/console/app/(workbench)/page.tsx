@@ -40,7 +40,9 @@ import {
 } from "@/lib/workbench-tabs";
 import { shellScrollClass } from "@/lib/shell-preferences";
 import { CalendarView } from "@/components/workbench/calendar/calendar-view";
+import { ActionFlowHeader } from "@/components/workbench/my-actions/action-flow-header";
 import { MyActionsView } from "@/components/workbench/my-actions/my-actions-view";
+import { loadActionFlowSummary } from "@/lib/action-flow-metrics";
 import {
   countMyActionsPending,
   getMyActionsMockData,
@@ -89,6 +91,9 @@ export default async function WorkbenchPage({
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const actionsCount = countMyActionsPending(getMyActionsMockData());
+  const flowSummary = isActions
+    ? await loadActionFlowSummary(hkFilter)
+    : null;
   const [rawRows, tabCounts] = await Promise.all([
     isInboxData
       ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
@@ -218,6 +223,9 @@ export default async function WorkbenchPage({
               actionsCount={actionsCount}
             />
           </Suspense>
+          {flowSummary ? (
+            <ActionFlowHeader summary={flowSummary} hk={hkFilter} />
+          ) : null}
         </div>
         <Suspense fallback={null}>
           <MyActionsView hkFilter={hkFilter} pilots={pilots} />
