@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, Clock, ListTodo, PlayCircle } from "lucide-react";
+import { CheckCircle2, Clock, ListTodo, Radio } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { MyActionsSummary } from "@/lib/my-actions-mock";
@@ -51,12 +51,12 @@ export function MyActionsSummaryCards({
   return (
     <section
       className="mb-3 grid grid-cols-2 gap-2 xl:grid-cols-4"
-      aria-label="我的行动概览"
+      aria-label="Action 流转概览"
     >
       <SummaryCard
-        label="待执行"
-        value={summary.pending}
-        delta={summary.pendingDelta}
+        label="待分发"
+        value={summary.pendingDispatch}
+        delta={summary.pendingDispatchDelta}
         icon={<ListTodo className="size-3.5" aria-hidden />}
         iconClassName="bg-primary/10 text-primary"
       />
@@ -68,16 +68,16 @@ export function MyActionsSummaryCards({
         iconClassName="bg-amber-100 text-amber-700"
       />
       <SummaryCard
-        label="进行中"
+        label="执行中"
         value={summary.inProgress}
         delta={summary.inProgressDelta}
-        icon={<PlayCircle className="size-3.5" aria-hidden />}
+        icon={<Radio className="size-3.5" aria-hidden />}
         iconClassName="bg-sky-100 text-sky-700"
       />
       <SummaryCard
-        label="已完成"
-        value={summary.completed}
-        delta={summary.completedDelta}
+        label="已反馈"
+        value={summary.withFeedback}
+        delta={summary.withFeedbackDelta}
         icon={<CheckCircle2 className="size-3.5" aria-hidden />}
         iconClassName="bg-emerald-100 text-emerald-700"
       />

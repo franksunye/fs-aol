@@ -15,7 +15,7 @@ export function WorkbenchHeader({
   hkFilter,
   compact = false,
   title = "工作台",
-  subtitle = "您的个人工作界面，集中处理 Agent 为您交付的各类工作项。",
+  subtitle = "统一查看 Agent 生成的建议、Action 分发状态与业务反馈。",
 }: {
   pilots: PilotHousekeeper[];
   hkFilter?: string;

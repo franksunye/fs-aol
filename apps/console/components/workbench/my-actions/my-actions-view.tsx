@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
 import { formatDateKey } from "@/lib/calendar-mock";
@@ -9,7 +9,6 @@ import {
   filterMyActions,
   getMyActionsMockData,
   resolveMyActionsAssigneeFromHk,
-  type MyAction,
   type MyActionQuickFilter,
   type MyActionsFilters as MyActionsFilterState,
 } from "@/lib/my-actions-mock";
@@ -80,7 +79,9 @@ export function MyActionsView({
       all: base.length,
       today: base.filter((a) => a.dueDate === today).length,
       high: base.filter((a) => a.priority === "high").length,
-      overdue: base.filter((a) => a.status === "overdue").length,
+      overdue: base.filter(
+        (a) => a.status === "timeout" || a.status === "no_feedback"
+      ).length,
       agent: base.length,
     };
   }, [allActions, filters]);
@@ -91,16 +92,7 @@ export function MyActionsView({
     [filtered, selectedId]
   );
 
-  const [localStatus, setLocalStatus] = useState<
-    Record<string, MyAction["status"]>
-  >({});
-
-  const displayAction = selectedAction
-    ? {
-        ...selectedAction,
-        status: localStatus[selectedAction.id] ?? selectedAction.status,
-      }
-    : null;
+  const displayAction = selectedAction;
 
   useEffect(() => {
     if (!selectedId && filtered.length > 0) {
@@ -123,10 +115,7 @@ export function MyActionsView({
       <MyActionsSummaryCards summary={summary} />
       <MyActionsFilters hk={hkFilter} counts={quickCounts} filters={filters} />
       <MyActionsList
-        items={filtered.map((item) => ({
-          ...item,
-          status: localStatus[item.id] ?? item.status,
-        }))}
+        items={filtered}
         selectedId={selectedId}
         hk={hkFilter}
       />
@@ -134,17 +123,7 @@ export function MyActionsView({
   );
 
   const detailPane = displayAction ? (
-    <MyActionsDetail
-      key={displayAction.id}
-      action={displayAction}
-      hk={hkFilter}
-      onStart={() =>
-        setLocalStatus((prev) => ({
-          ...prev,
-          [displayAction.id]: "in_progress",
-        }))
-      }
-    />
+    <MyActionsDetail key={displayAction.id} action={displayAction} hk={hkFilter} />
   ) : (
     <MyActionsDetailEmpty />
   );

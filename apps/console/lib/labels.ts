@@ -71,9 +71,9 @@ export function encodeKey(key: string): string {
 export type InboxBucket = "active" | "closed" | "archived";
 
 export const INBOX_TAB_LABELS: Record<InboxBucket, string> = {
-  active: "待处理",
-  closed: "已处理",
-  archived: "归档",
+  active: "待审核",
+  closed: "已闭环",
+  archived: "已归档",
 };
 
 export const ARCHIVE_REASON_LABELS: Record<string, string> = {

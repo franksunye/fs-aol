@@ -32,8 +32,10 @@ import {
   parseWorkbenchPaneKey,
 } from "@/components/workbench/case-detail-pane";
 import { CaseDetailSkeleton } from "@/components/workbench/case-detail-skeleton";
+import { parseClosedLoopFilter } from "@/lib/action-flow-status";
+import { ClosedLoopFilters } from "@/components/workbench/closed-loop-filters";
 import {
-  isInboxDataView,
+  inboxBucketForWorkbenchView,
   workbenchViewFromSearchParams,
 } from "@/lib/workbench-tabs";
 import { shellScrollClass } from "@/lib/shell-preferences";
@@ -63,15 +65,19 @@ export default async function WorkbenchPage({
     aquick?: string;
     aagent?: string;
     aq?: string;
+    cfilter?: string;
   }>;
 }) {
   const sp = await searchParams;
   const workbenchView = workbenchViewFromSearchParams(sp);
   const isCalendar = workbenchView === "calendar";
   const isActions = workbenchView === "actions";
-  const isInboxData = isInboxDataView(workbenchView);
-  const inboxTab = isInboxData ? workbenchView : "active";
+  const closedLoopFilter = parseClosedLoopFilter(sp.cfilter);
+  const inboxBucket = inboxBucketForWorkbenchView(workbenchView, sp.cfilter);
+  const isInboxData = inboxBucket !== null;
+  const inboxTab = inboxBucket ?? "active";
   const isActiveInbox = inboxTab === "active";
+  const isClosedLoop = workbenchView === "closed";
   const priorityFilter = parsePriorityFilter(sp.priority);
   const selectedKey = parseWorkbenchPaneKey(sp.key);
   const cookieStore = await cookies();
@@ -103,6 +109,7 @@ export default async function WorkbenchPage({
     hk: hkFilter,
     sort: sp.sort,
     priority: sp.priority,
+    cfilter: sp.cfilter,
   });
   const hasRows = rows.length > 0;
 
@@ -122,7 +129,7 @@ export default async function WorkbenchPage({
             ? undefined
             : inboxTab === "active" &&
                 tabCounts.archived + tabCounts.closed > 0
-              ? `另有 ${tabCounts.closed} 条已处理、${tabCounts.archived} 条归档，请切换上方 Tab 查看。`
+              ? `另有 ${tabCounts.closed} 条已闭环记录，请切换「已闭环」Tab 查看。`
               : "暂无建议。可先运行引擎：FSM_SOURCE=mock LLM_PROVIDER=heuristic python run_cron.py"
       }
     />
@@ -167,6 +174,16 @@ export default async function WorkbenchPage({
             compact
           />
         </Suspense>
+      ) : isClosedLoop ? (
+        <>
+          <Suspense fallback={null}>
+            <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
+          </Suspense>
+          <p className="text-muted-foreground mb-4 text-sm">
+            {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
+            {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
+          </p>
+        </>
       ) : isInboxData ? (
         <p className="text-muted-foreground mb-4 text-sm">
           {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条

@@ -19,7 +19,7 @@ const QUICK_TABS: {
   { key: "all", label: "全部", short: "全部" },
   { key: "today", label: "今日", short: "今日" },
   { key: "high", label: "高优先级", short: "高优" },
-  { key: "overdue", label: "逾期", short: "逾期" },
+  { key: "overdue", label: "异常", short: "异常" },
 ];
 
 function buildHref(
@@ -124,7 +124,7 @@ export function MyActionsFilters({
         <input
           name="aq"
           defaultValue={filters.query}
-          placeholder="搜索行动、商机、客户…"
+          placeholder="搜索 Action、商机、客户…"
           className="border-input bg-background placeholder:text-muted-foreground h-8 w-full rounded-lg border pr-3 pl-8 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
       </form>

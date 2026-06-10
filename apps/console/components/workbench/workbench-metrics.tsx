@@ -63,7 +63,7 @@ export function WorkbenchMetrics({
     >
       <MetricCard
         compact={compact}
-        label="待处理"
+        label="待审核"
         value={metrics.pending}
         footer={
           <span className="text-muted-foreground text-xs">
@@ -97,7 +97,7 @@ export function WorkbenchMetrics({
         icon={<Flame className="size-3 text-red-500" aria-hidden />}
         footer={
           <span className="text-muted-foreground text-xs tabular-nums">
-            占待处理 {metrics.highPriorityShare}%
+            占待审核 {metrics.highPriorityShare}%
           </span>
         }
       />

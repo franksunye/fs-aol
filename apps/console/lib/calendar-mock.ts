@@ -29,7 +29,7 @@ export type CalendarAction = {
   status: CalendarActionStatus;
   icon: LucideIcon;
   workOrderKey?: string;
-  /** 对应「我的行动」条目，用于跨 Tab 跳转 */
+  /** 对应 Action 流转条目，用于跨 Tab 跳转 */
   myActionId?: string;
 };
 

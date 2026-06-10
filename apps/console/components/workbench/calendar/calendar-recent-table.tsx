@@ -29,9 +29,9 @@ export function CalendarRecentTable({
   const listContext = { hk, from: "active" as const };
 
   return (
-    <section className="mt-6" aria-label="近期行动">
+    <section className="mt-6" aria-label="近期 Action">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">近期行动（未来 7 天）</h2>
+        <h2 className="text-sm font-semibold">近期 Action（未来 7 天）</h2>
         <Button
           type="button"
           variant="ghost"

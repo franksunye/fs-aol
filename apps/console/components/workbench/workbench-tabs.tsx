@@ -49,10 +49,6 @@ function tabBadge(
     const n = counts.closed;
     return n > 0 ? n : undefined;
   }
-  if (view === "archived") {
-    const n = counts.archived;
-    return n > 0 ? n : undefined;
-  }
   return undefined;
 }
 

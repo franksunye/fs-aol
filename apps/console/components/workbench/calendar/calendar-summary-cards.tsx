@@ -53,7 +53,7 @@ export function CalendarSummaryCards({ summary }: { summary: CalendarSummary }) 
       aria-label="日历概览"
     >
       <SummaryCard
-        label="今日行动"
+        label="今日 Action"
         value={summary.todayActions}
         delta={summary.todayActionsDelta}
         icon={<ListTodo className="size-4" aria-hidden />}

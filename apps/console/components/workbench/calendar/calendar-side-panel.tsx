@@ -111,7 +111,7 @@ function ScheduleItem({
           className="h-7 text-xs"
           render={<Link href={href} scroll={false} />}
         >
-          {isActive ? "查看" : "开始执行"}
+          {isActive ? "查看流转" : "查看流转"}
         </Button>
       </div>
     </li>

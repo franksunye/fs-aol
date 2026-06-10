@@ -72,7 +72,7 @@ export function MyActionsSplitLayout({
             ? "w-full max-w-full basis-full lg:w-[min(42%,440px)] lg:max-w-[440px] lg:basis-[min(42%,440px)] lg:border-r lg:border-border"
             : "min-w-0 flex-1"
         )}
-        aria-label="行动列表"
+        aria-label="Action 流转列表"
       >
         {list}
       </section>
@@ -93,7 +93,7 @@ export function MyActionsSplitLayout({
 
       <aside
         role="complementary"
-        aria-label="行动详情"
+        aria-label="Action 详情"
         aria-labelledby={sidebarOpen ? titleId : undefined}
         aria-hidden={!sidebarOpen}
         {...(!sidebarOpen ? { inert: true } : {})}
@@ -128,7 +128,7 @@ export function MyActionsSplitLayout({
               id={titleId}
               className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
             >
-              行动详情
+              Action 详情
             </span>
           </div>
           <Button

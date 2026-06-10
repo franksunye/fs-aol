@@ -5,7 +5,7 @@ import {
   type InboxBucket,
 } from "./labels";
 import {
-  isInboxDataView,
+  inboxBucketForWorkbenchView,
   workbenchViewFromSearchParams,
 } from "./workbench-tabs";
 
@@ -31,6 +31,7 @@ export function stripPaneSelectionParams(q: URLSearchParams) {
   q.delete("aquick");
   q.delete("aagent");
   q.delete("aq");
+  q.delete("cfilter");
 }
 
 export type WorkbenchListContext = {
@@ -45,10 +46,11 @@ export function workbenchListContextFromWorkbench(sp: {
   hk?: string;
   sort?: string;
   priority?: string;
+  cfilter?: string;
 }): WorkbenchListContext {
   const view = workbenchViewFromSearchParams(sp);
-  const from =
-    isInboxDataView(view) && view !== "active" ? view : undefined;
+  const bucket = inboxBucketForWorkbenchView(view, sp.cfilter);
+  const from = bucket && bucket !== "active" ? bucket : undefined;
   return {
     from,
     hk: sp.hk?.trim() || undefined,
@@ -70,7 +72,14 @@ function appendListContextQuery(q: URLSearchParams, ctx: WorkbenchListContext) {
 export function workbenchHref(ctx: WorkbenchListContext = {}): string {
   const q = new URLSearchParams();
   const from = ctx.from ?? "active";
-  if (from !== "active") q.set("tab", from);
+  if (from === "archived") {
+    q.set("tab", "closed");
+    q.set("cfilter", "archived");
+  } else if (from === "closed") {
+    q.set("tab", "closed");
+  } else if (from !== "active") {
+    q.set("tab", from);
+  }
   if (ctx.hk) q.set("hk", ctx.hk);
   if (from === "active") {
     if (ctx.sort) q.set("sort", ctx.sort);
@@ -82,7 +91,14 @@ export function workbenchHref(ctx: WorkbenchListContext = {}): string {
 
 function appendWorkbenchListQuery(q: URLSearchParams, ctx: WorkbenchListContext) {
   const from = ctx.from ?? "active";
-  if (from !== "active") q.set("tab", from);
+  if (from === "archived") {
+    q.set("tab", "closed");
+    q.set("cfilter", "archived");
+  } else if (from === "closed") {
+    q.set("tab", "closed");
+  } else if (from !== "active") {
+    q.set("tab", from);
+  }
   if (ctx.hk) q.set("hk", ctx.hk);
   if (from === "active") {
     if (ctx.sort) q.set("sort", ctx.sort);
@@ -137,10 +153,19 @@ export function listContextFromDetailSearchParams(sp: {
 }
 
 export function resolveWorkbenchBack(
-  sp: { from?: string; hk?: string; sort?: string; priority?: string },
+  sp: {
+    from?: string;
+    hk?: string;
+    sort?: string;
+    priority?: string;
+    tab?: string;
+    cfilter?: string;
+  },
   fallbackBucket: InboxBucket
 ): { href: string; label: string } {
-  const ctx = listContextFromDetailSearchParams(sp);
+  const ctx = sp.tab
+    ? workbenchListContextFromWorkbench(sp)
+    : listContextFromDetailSearchParams(sp);
   const from = ctx.from ?? fallbackBucket;
   const href = workbenchHref({ ...ctx, from });
   const label =
