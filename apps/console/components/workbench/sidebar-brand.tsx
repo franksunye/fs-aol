@@ -35,10 +35,10 @@ export function SidebarBrand({
               compact ? "text-sm" : "text-[15px]"
             )}
           >
-            Follow-up Agent
+            Agent Console
           </div>
           <div className="text-muted-foreground mt-1 truncate text-xs font-normal">
-            Agent Console
+            FS-AOL
           </div>
         </div>
       ) : null}
@@ -53,7 +53,7 @@ export function SidebarBrand({
         "hover:opacity-90 flex min-w-0 items-center transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar rounded-lg",
         collapsed ? "justify-center" : "gap-3"
       )}
-      aria-label="Follow-up Agent · Agent Console"
+      aria-label="Agent Console · FS-AOL"
     >
       {content}
     </Link>
@@ -64,8 +64,8 @@ export function SidebarBrand({
       <Tooltip>
         <TooltipTrigger render={link} />
         <TooltipContent side="right" sideOffset={8}>
-          Follow-up Agent
-          <span className="text-muted-foreground block text-xs">Agent Console</span>
+          Agent Console
+          <span className="text-muted-foreground block text-xs">FS-AOL</span>
         </TooltipContent>
       </Tooltip>
     );
