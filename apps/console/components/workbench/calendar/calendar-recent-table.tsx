@@ -15,6 +15,7 @@ import {
   formatShortDateTime,
   type CalendarAction,
 } from "@/lib/calendar-mock";
+import { myActionHref } from "@/lib/my-actions-mock";
 import { workbenchPaneHref } from "@/lib/workbench-nav";
 import { CalendarPriorityBadge, CalendarStatusBadge } from "./calendar-badges";
 
@@ -64,11 +65,13 @@ export function CalendarRecentTable({
           <TableBody>
             {actions.map((item) => {
               const Icon = item.icon;
-              const href = item.workOrderKey
-                ? workbenchPaneHref(item.workOrderKey, listContext)
-                : hk
-                  ? `/?hk=${hk}`
-                  : "/";
+              const href = item.myActionId
+                ? myActionHref(item.myActionId, hk)
+                : item.workOrderKey
+                  ? workbenchPaneHref(item.workOrderKey, listContext)
+                  : hk
+                    ? `/?hk=${hk}`
+                    : "/";
               return (
                 <TableRow key={item.id}>
                   <TableCell>

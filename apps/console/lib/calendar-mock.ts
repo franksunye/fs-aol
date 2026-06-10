@@ -29,6 +29,8 @@ export type CalendarAction = {
   status: CalendarActionStatus;
   icon: LucideIcon;
   workOrderKey?: string;
+  /** 对应「我的行动」条目，用于跨 Tab 跳转 */
+  myActionId?: string;
 };
 
 export type CalendarSummary = {
@@ -152,6 +154,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       status: "in_progress",
       icon: Phone,
       workOrderKey: "demo:sz-zhizao-001",
+      myActionId: "ma-1",
     }),
     action({
       id: "cal-2",
@@ -167,6 +170,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       assigneeId: "liwei",
       status: "pending",
       icon: ClipboardCheck,
+      myActionId: "ma-2",
     }),
     action({
       id: "cal-3",
@@ -182,6 +186,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       assigneeId: "wangfang",
       status: "pending",
       icon: Truck,
+      myActionId: "ma-10",
     }),
     action({
       id: "cal-4",

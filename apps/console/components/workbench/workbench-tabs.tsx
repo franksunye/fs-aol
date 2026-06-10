@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { InboxBucket } from "@/lib/labels";
 import {
-  WORKBENCH_ACTIONS_MOCK_COUNT,
   WORKBENCH_TAB_ORDER,
   WORKBENCH_VIEW_LABELS,
   type WorkbenchView,
@@ -34,15 +33,17 @@ function buildHref(
   return s ? `/?${s}` : "/";
 }
 
-function tabBadge(view: WorkbenchView, counts: Record<InboxBucket, number>): number | undefined {
+function tabBadge(
+  view: WorkbenchView,
+  counts: Record<InboxBucket, number>,
+  actionsCount?: number
+): number | undefined {
   if (view === "active") {
     const n = counts.active;
     return n > 0 ? n : undefined;
   }
   if (view === "actions") {
-    return WORKBENCH_ACTIONS_MOCK_COUNT > 0
-      ? WORKBENCH_ACTIONS_MOCK_COUNT
-      : undefined;
+    return actionsCount && actionsCount > 0 ? actionsCount : undefined;
   }
   if (view === "closed") {
     const n = counts.closed;
@@ -59,10 +60,12 @@ export function WorkbenchTabs({
   current,
   hk,
   counts,
+  actionsCount,
 }: {
   current: WorkbenchView;
   hk?: string;
   counts: Record<InboxBucket, number>;
+  actionsCount?: number;
 }) {
   const sp = useSearchParams();
 
@@ -73,7 +76,7 @@ export function WorkbenchTabs({
     >
       {WORKBENCH_TAB_ORDER.map((view) => {
         const active = view === current;
-        const badge = tabBadge(view, counts);
+        const badge = tabBadge(view, counts, actionsCount);
         return (
           <Link
             key={view}

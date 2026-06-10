@@ -27,6 +27,10 @@ export function stripPaneSelectionParams(q: URLSearchParams) {
   q.delete("round");
   q.delete("view");
   q.delete("panel");
+  q.delete("action");
+  q.delete("aquick");
+  q.delete("aagent");
+  q.delete("aq");
 }
 
 export type WorkbenchListContext = {

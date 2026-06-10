@@ -15,6 +15,7 @@ import {
   overdueDays,
   type CalendarAction,
 } from "@/lib/calendar-mock";
+import { myActionHref } from "@/lib/my-actions-mock";
 import { workbenchPaneHref } from "@/lib/workbench-nav";
 import { CalendarStatusBadge } from "./calendar-badges";
 
@@ -79,11 +80,13 @@ function ScheduleItem({
   hk?: string;
 }) {
   const listContext = { hk, from: "active" as const };
-  const href = item.workOrderKey
-    ? workbenchPaneHref(item.workOrderKey, listContext)
-    : hk
-      ? `/?hk=${hk}`
-      : "/";
+  const href = item.myActionId
+    ? myActionHref(item.myActionId, hk)
+    : item.workOrderKey
+      ? workbenchPaneHref(item.workOrderKey, listContext)
+      : hk
+        ? `/?tab=actions&hk=${hk}`
+        : "/?tab=actions";
   const isActive = item.status === "in_progress";
 
   return (

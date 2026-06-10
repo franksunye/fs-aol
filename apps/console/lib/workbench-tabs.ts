@@ -23,9 +23,6 @@ export const WORKBENCH_TAB_ORDER: WorkbenchView[] = [
   "archived",
 ];
 
-/** 「我的行动」占位数量（演示） */
-export const WORKBENCH_ACTIONS_MOCK_COUNT = 4;
-
 export function workbenchViewFromSearchParams(sp: {
   tab?: string;
 }): WorkbenchView {
@@ -40,6 +37,6 @@ export function isInboxDataView(
   return view === "active" || view === "closed" || view === "archived";
 }
 
-export function isWorkbenchPlaceholderView(view: WorkbenchView): boolean {
-  return view === "actions";
+export function isWorkbenchPlaceholderView(_view: WorkbenchView): boolean {
+  return false;
 }

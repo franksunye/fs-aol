@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { ListTodo } from "lucide-react";
 import {
   listSuggestions,
   countInboxBuckets,
@@ -35,12 +34,15 @@ import {
 import { CaseDetailSkeleton } from "@/components/workbench/case-detail-skeleton";
 import {
   isInboxDataView,
-  isWorkbenchPlaceholderView,
-  WORKBENCH_VIEW_LABELS,
   workbenchViewFromSearchParams,
 } from "@/lib/workbench-tabs";
 import { shellScrollClass } from "@/lib/shell-preferences";
 import { CalendarView } from "@/components/workbench/calendar/calendar-view";
+import { MyActionsView } from "@/components/workbench/my-actions/my-actions-view";
+import {
+  countMyActionsPending,
+  getMyActionsMockData,
+} from "@/lib/my-actions-mock";
 
 export const dynamic = "force-dynamic";
 
@@ -57,12 +59,16 @@ export default async function WorkbenchPage({
     view?: string;
     panel?: string;
     q?: string;
+    action?: string;
+    aquick?: string;
+    aagent?: string;
+    aq?: string;
   }>;
 }) {
   const sp = await searchParams;
   const workbenchView = workbenchViewFromSearchParams(sp);
   const isCalendar = workbenchView === "calendar";
-  const isPlaceholder = isWorkbenchPlaceholderView(workbenchView);
+  const isActions = workbenchView === "actions";
   const isInboxData = isInboxDataView(workbenchView);
   const inboxTab = isInboxData ? workbenchView : "active";
   const isActiveInbox = inboxTab === "active";
@@ -73,6 +79,7 @@ export default async function WorkbenchPage({
   const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
+  const actionsCount = countMyActionsPending(getMyActionsMockData());
   const [rawRows, tabCounts] = await Promise.all([
     isInboxData
       ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
@@ -99,13 +106,7 @@ export default async function WorkbenchPage({
   });
   const hasRows = rows.length > 0;
 
-  const listBody = isPlaceholder ? (
-    <EmptyState
-      title={WORKBENCH_VIEW_LABELS[workbenchView]}
-      description="跟进中、已认领的工单将集中展示于此（演示占位，即将开放）。"
-      icon={ListTodo}
-    />
-  ) : !hasRows ? (
+  const listBody = !hasRows ? (
     <EmptyState
       title={
         sp.q?.trim()
@@ -145,6 +146,7 @@ export default async function WorkbenchPage({
           current={workbenchView}
           hk={hkFilter}
           counts={tabCounts}
+          actionsCount={actionsCount}
         />
       </Suspense>
 
@@ -177,11 +179,32 @@ export default async function WorkbenchPage({
   );
 
   const detailPane =
-    !isPlaceholder && selectedKey && hasRows ? (
+    selectedKey && hasRows ? (
       <Suspense key={selectedKey} fallback={<CaseDetailSkeleton />}>
         <CaseDetailPane dedupeKey={selectedKey} searchParams={sp} />
       </Suspense>
     ) : null;
+
+  if (isActions) {
+    return (
+      <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+        <div className="shrink-0 px-3 pt-4 lg:px-4 lg:pt-5">
+          <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
+          <Suspense fallback={null}>
+            <WorkbenchTabs
+              current={workbenchView}
+              hk={hkFilter}
+              counts={tabCounts}
+              actionsCount={actionsCount}
+            />
+          </Suspense>
+        </div>
+        <Suspense fallback={null}>
+          <MyActionsView hkFilter={hkFilter} pilots={pilots} />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (isCalendar) {
     return (
@@ -194,6 +217,7 @@ export default async function WorkbenchPage({
                 current={workbenchView}
                 hk={hkFilter}
                 counts={tabCounts}
+                actionsCount={actionsCount}
               />
             </Suspense>
             <Suspense fallback={null}>
@@ -210,7 +234,7 @@ export default async function WorkbenchPage({
       <WorkbenchSplitLayout
         list={listPane}
         detail={detailPane}
-        selectedKey={isPlaceholder ? null : selectedKey}
+        selectedKey={selectedKey}
       />
     </main>
   );
