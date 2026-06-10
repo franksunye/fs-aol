@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Play, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import {
   computeRunsSummary,
   filterRuns,
@@ -110,9 +111,15 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
               </h1>
             </div>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              观测 Agent 技术运行时状态：触发链路、模型成本、工具 I/O 与 Action
-              产出（非业务 Action 流转）
+              观测 Agent 信任轨：触发链路、上下文、模型成本、工具 I/O 与 Action 产出。
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <DataStateBadge state="live" label="Follow-up trace" />
+              <DataStateBadge state="scenario" label="多 Agent Run 样例" />
+            </div>
+            <DataStateNote className="mt-2 max-w-2xl">
+              真实 Follow-up Action 应能从这里追溯到触发、判断依据和执行结果；非 Follow-up Run 用于展示未来可观测形态。
+            </DataStateNote>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button

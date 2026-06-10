@@ -16,6 +16,7 @@ import { CalendarMonthGrid } from "./calendar-month-grid";
 import { CalendarAgenda } from "./calendar-agenda";
 import { CalendarRecentTable } from "./calendar-recent-table";
 import { CalendarSidePanel } from "./calendar-side-panel";
+import { DataStateNote } from "@/components/data-state-badge";
 
 export function CalendarView({
   hkFilter,
@@ -81,6 +82,9 @@ export function CalendarView({
 
   return (
     <div className="pb-6">
+      <DataStateNote className="mb-3 max-w-3xl">
+        SLA 日历复用 Follow-up Action 数据形成执行时间视图；跨 CRM/FSM 日程写回仍处于未接入阶段。
+      </DataStateNote>
       <CalendarSummaryCards summary={summary} />
 
       <CalendarToolbar

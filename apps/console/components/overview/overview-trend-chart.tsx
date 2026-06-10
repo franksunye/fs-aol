@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { overviewActionsHref } from "@/lib/overview-nav";
 import type { OverviewTrendPoint } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 const SUGGESTION_COLOR = "oklch(0.541 0.281 293.009)";
 const ACTION_COLOR = "oklch(0.623 0.214 259.815)";
@@ -41,7 +42,10 @@ export function OverviewTrendChart({
   return (
     <Card className="rounded-xl border-border bg-card p-5 shadow-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">建议数 vs Actions（近 7 天趋势）</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold">建议数 vs Actions（近 7 天趋势）</h2>
+          <DataStateBadge state="scenario" />
+        </div>
         <div className="flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">
             <span className="size-2 rounded-full" style={{ backgroundColor: SUGGESTION_COLOR }} aria-hidden />

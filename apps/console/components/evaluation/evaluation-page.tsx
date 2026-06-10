@@ -3,6 +3,7 @@ import { BarChart3 } from "lucide-react";
 import { shellScrollClass } from "@/lib/shell-preferences";
 import { cn } from "@/lib/utils";
 import type { EvaluationPageSnapshot } from "@/lib/evaluation";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { EvaluationFiltersBar } from "./evaluation-filters";
 import { EvaluationKpiCards } from "./evaluation-kpi-cards";
 import { EvaluationOpsMetrics } from "./evaluation-ops-metrics";
@@ -18,12 +19,12 @@ export function EvaluationPage({
   hk?: string;
 }) {
   const sourceHint = data.analyticsLoadFailed
-    ? "库内统计暂不可用（如 Turso 超时），展示演示数据"
+    ? "库内统计暂不可用（如 Turso 超时），展示场景样例"
     : data.dataSource === "live"
-      ? "部分指标来自库内真实统计"
+      ? "Follow-up 试点统计已接入，价值与 ROI 仍按估算口径展示"
       : data.dataSource === "mixed"
-        ? "建议准确率/采纳率/转化增量等为库内统计，其余为演示数据"
-        : "当前时段暂无库内记录，展示演示数据";
+        ? "建议准确率/采纳率/转化增量等来自库内统计，其余为场景样例或估算"
+        : "当前时段暂无库内记录，展示 AOL 场景样例";
 
   return (
     <main className={cn(shellScrollClass, "h-full w-full px-6 py-8 lg:px-8")}>
@@ -39,7 +40,18 @@ export function EvaluationPage({
             <p className="text-muted-foreground mt-2 text-sm">
               Agent 效果评估：准确率、采纳与误报、成本延迟 ROI，非普通经营报表
             </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <DataStateBadge
+                state={data.dataSource === "mock" ? "scenario" : "live"}
+                label={data.dataSource === "mock" ? "场景样例" : "Follow-up 统计"}
+              />
+              <DataStateBadge state="estimated" label="ROI 估算" />
+              <DataStateBadge state="scenario" label="多 Agent 对比样例" />
+            </div>
             <p className="text-muted-foreground mt-1 text-xs">{sourceHint}</p>
+            <DataStateNote className="mt-2 max-w-3xl">
+              评估页应成为 AOL 的度量层：先用真实 Follow-up 样本校准准确率、采纳和延迟，再用样例数据展示未来多 Agent 横向比较。
+            </DataStateNote>
           </div>
         </div>
         <Suspense fallback={null}>

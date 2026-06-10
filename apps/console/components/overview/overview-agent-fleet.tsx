@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { agentDetailHref } from "@/lib/agents-nav";
 import { overviewRunsHref } from "@/lib/overview-nav";
+import { DataStateBadge } from "@/components/data-state-badge";
 import type {
   OverviewAgentFleetItem,
   OverviewAgentRunState,
@@ -42,7 +43,13 @@ function AgentFleetCard({ agent }: { agent: OverviewAgentFleetItem }) {
       <Card className="h-full gap-2 rounded-xl border-border bg-card p-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium leading-snug">{agent.name}</p>
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <p className="truncate text-sm font-medium leading-snug">{agent.name}</p>
+              <DataStateBadge
+                state={agent.id === "follow-up" ? "live" : "scenario"}
+                className="h-4 px-1.5 text-[10px]"
+              />
+            </div>
             <p className="text-muted-foreground mt-0.5 text-[10px]">
               最近 {agent.lastRunLabel}
             </p>

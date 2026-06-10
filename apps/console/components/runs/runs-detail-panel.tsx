@@ -34,6 +34,7 @@ import {
   runsEvaluationHref,
 } from "@/lib/runs-nav";
 import { RunStatusBadge } from "./run-status-badge";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 
 const STAGE_STATUS_META: Record<
   PipelineStageStatus,
@@ -176,6 +177,10 @@ export function RunsDetailPanel({
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-mono text-base font-semibold">{run.id}</h1>
           <RunStatusBadge status={run.status} />
+          <DataStateBadge
+            state={run.agentId === "follow-up" ? "live" : "scenario"}
+            label={run.agentId === "follow-up" ? "真实 trace" : "Run 样例"}
+          />
           {run.analysisRound ? (
             <Badge variant="secondary">{run.analysisRound} 次分析</Badge>
           ) : null}
@@ -194,6 +199,11 @@ export function RunsDetailPanel({
           {" · "}
           <span className="font-mono text-xs">{run.relatedObjectId}</span>
         </p>
+        <DataStateNote>
+          {run.agentId === "follow-up"
+            ? "该 Run 展示真实楔子的信任轨：从触发、上下文、规则/模型判断到 Action 产出。"
+            : "该 Run 用于展示多 Agent 可观测形态；上线前需接入真实触发源、上下文和执行结果。"}
+        </DataStateNote>
 
         <div className="flex flex-wrap gap-2">
           <Button
@@ -285,6 +295,42 @@ export function RunsDetailPanel({
             </div>
           ))}
         </dl>
+      </CaseSection>
+
+      <CaseSection title="业务影响">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-muted/20 p-3">
+            <p className="text-muted-foreground text-xs">关联对象</p>
+            <p className="mt-1 font-mono text-sm font-semibold">
+              {run.relatedObjectId}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {run.relatedObjectType}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/20 p-3">
+            <p className="text-muted-foreground text-xs">Action 产出</p>
+            <p className="mt-1 text-sm font-semibold">
+              {run.actionGenerated ? "已生成 Action" : "未生成 Action"}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {run.actionId ?? "无正式执行动作"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/20 p-3">
+            <p className="text-muted-foreground text-xs">补救建议</p>
+            <p className="mt-1 text-sm font-semibold">
+              {run.status === "anomaly"
+                ? "检查上下文源并补跑"
+                : run.status === "retried"
+                  ? "确认重试后的 Action 质量"
+                  : "进入 Action 流转复核"}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {run.errorSummary ?? "无阻断错误"}
+            </p>
+          </div>
+        </div>
       </CaseSection>
 
       <CaseSection

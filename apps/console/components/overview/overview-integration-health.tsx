@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { integrationHref } from "@/lib/integrations-nav";
 import { overviewIntegrationsHref } from "@/lib/overview-nav";
 import type { OverviewIntegrationHealth } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 function HealthBar({ pct, warn }: { pct: number; warn?: boolean }) {
   return (
@@ -16,7 +17,10 @@ function HealthBar({ pct, warn }: { pct: number; warn?: boolean }) {
 export function OverviewIntegrationHealthPanel({ items }: { items: OverviewIntegrationHealth[] }) {
   return (
     <Card className="flex h-full flex-col rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">集成系统健康度</h2>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">集成系统健康度</h2>
+        <DataStateBadge state="scenario" />
+      </div>
       <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

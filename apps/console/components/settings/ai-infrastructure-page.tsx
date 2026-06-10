@@ -9,6 +9,7 @@ import { SETTINGS_HOME_PATH } from "@/lib/settings-nav";
 import { MOCK_LLM_PROVIDERS } from "@/lib/ai-infrastructure-mock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { AiInfrastructureSummaryCards } from "./ai-infrastructure-summary-cards";
 import { ProviderListPanel } from "./provider-list-panel";
 import { ProviderDetailPanel } from "./provider-detail-panel";
@@ -65,16 +66,23 @@ export function AiInfrastructurePage() {
                 </h1>
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                统一接入、治理与监控平台使用的 LLM / 模型能力（演示数据，暂未接入真实配置）
+                统一接入、治理与监控平台使用的 LLM / 模型能力。
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <DataStateBadge state="scenario" label="模型治理样例" />
+                <DataStateBadge state="not_connected" label="供应商配置未接入" />
+              </div>
+              <DataStateNote className="mt-2 max-w-2xl">
+                AOL 的核心不在模型供应商；本页展示模型可替换、可观测、可治理的基础设施形态。
+              </DataStateNote>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "新建供应商向导",
+                  toast.message("新建供应商暂未接入真实配置", {
+                    description: "新建供应商向导暂未接入真实配置",
                   })
                 }
               >
@@ -85,8 +93,8 @@ export function AiInfrastructurePage() {
                 type="button"
                 variant="outline"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "查看 LLM 调用日志",
+                  toast.message("LLM 调用日志暂未接入真实数据", {
+                    description: "LLM 调用日志暂为场景样例",
                   })
                 }
               >

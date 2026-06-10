@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SettingsSectionCard } from "@/components/agents/settings-section-card";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import {
   Table,
   TableBody,
@@ -43,8 +44,8 @@ function DemoButton({
       variant={variant}
       size={size}
       onClick={() =>
-        toast.message("演示数据，暂未接入", {
-          description: "该操作仅为 UI 预览",
+        toast.message("集成操作暂未接入真实配置", {
+          description: "集成控制面尚未接入真实配置",
         })
       }
     >
@@ -80,6 +81,7 @@ export function IntegrationDetailPanel({
                   <Badge className={integrationStatusClass(integration.status)}>
                     {INTEGRATION_STATUS_LABEL[integration.status]}
                   </Badge>
+                  <DataStateBadge state="scenario" label="场景样例" />
                   <Badge variant="outline">{integration.environment}</Badge>
                   <Badge variant="secondary">{integration.version}</Badge>
                 </div>
@@ -109,6 +111,9 @@ export function IntegrationDetailPanel({
                     </dd>
                   </div>
                 </dl>
+                <DataStateNote className="mt-3 max-w-2xl">
+                  该连接展示业务上下文、触发事件与写回权限的目标形态；真实接入前需完成授权、字段映射和审批策略。
+                </DataStateNote>
               </div>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -142,8 +147,8 @@ export function IntegrationDetailPanel({
                 size="icon-sm"
                 aria-label="更多操作"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "更多集成操作",
+                  toast.message("更多集成操作暂未接入真实配置", {
+                    description: "当前展示集成场景样例",
                   })
                 }
               >

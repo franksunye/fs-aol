@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { DataStateBadge } from "@/components/data-state-badge";
 import { cn } from "@/lib/utils";
 import { agentDetailHref } from "@/lib/agents-nav";
 import {
@@ -118,14 +119,18 @@ export function RunsList({
         <DataListToolbar
           start={
             hk ? (
-              <span className="text-muted-foreground text-xs">
-                演示数据 ·{" "}
+              <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+                <DataStateBadge state="live" className="h-4 px-1.5 text-[10px]" />
+                <span>Follow-up trace ·</span>
                 <Link href={agentDetailHref("follow-up")} className="hover:text-primary">
                   Agent 配置
                 </Link>
               </span>
             ) : (
-              <span className="text-muted-foreground text-xs">演示数据</span>
+              <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+                <DataStateBadge state="scenario" className="h-4 px-1.5 text-[10px]" />
+                <span>多 Agent Run 样例</span>
+              </span>
             )
           }
           end={

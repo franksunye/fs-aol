@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { overviewActionsHref, overviewPendingReviewHref } from "@/lib/overview-nav";
 import type { OverviewTodayPulse } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 function Delta({ delta }: { delta: number }) {
   if (delta === 0) {
@@ -31,7 +32,9 @@ export function OverviewTodayPulseBar({
     >
       <Link href={overviewPendingReviewHref(hk)} scroll={false} className="block">
         <Card className="flex h-full flex-col justify-center gap-1 rounded-xl border-border bg-card px-4 py-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
-          <span className="text-muted-foreground text-[11px] font-medium">今日建议</span>
+          <span className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-[11px] font-medium">
+            今日建议 <DataStateBadge state="live" className="h-4 px-1.5 text-[10px]" />
+          </span>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
               {today.suggestionsToday}
@@ -42,7 +45,9 @@ export function OverviewTodayPulseBar({
       </Link>
       <Link href={overviewActionsHref(hk)} scroll={false} className="block">
         <Card className="flex h-full flex-col justify-center gap-1 rounded-xl border-border bg-card px-4 py-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
-          <span className="text-muted-foreground text-[11px] font-medium">今日 Actions</span>
+          <span className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-[11px] font-medium">
+            今日 Actions <DataStateBadge state="live" className="h-4 px-1.5 text-[10px]" />
+          </span>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
               {today.actionsToday}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { overviewActionsHref } from "@/lib/overview-nav";
 import type { OverviewActionStatusSlice } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -40,7 +41,10 @@ export function OverviewActionStatusChart({
 
   return (
     <Card className="rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">Actions 状态分布</h2>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">Actions 状态分布</h2>
+        <DataStateBadge state="scenario" />
+      </div>
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
         <div className="relative shrink-0">
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Actions 状态分布环形图">

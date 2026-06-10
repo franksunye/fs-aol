@@ -5,13 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { overviewPendingReviewHref } from "@/lib/overview-nav";
 import type { OverviewAttentionItem } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 const ICONS = [TriangleAlert, Clock, MessageSquareWarning, AlertCircle] as const;
 
 export function OverviewAttentionList({ items, hk }: { items: OverviewAttentionItem[]; hk?: string }) {
   return (
     <Card className="flex h-full flex-col rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">异常与待关注</h2>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">今日需要处理</h2>
+        <DataStateBadge state="live" />
+      </div>
       <ul className="min-h-0 flex-1 space-y-3">
         {items.map((item, index) => {
           const Icon = ICONS[index % ICONS.length];

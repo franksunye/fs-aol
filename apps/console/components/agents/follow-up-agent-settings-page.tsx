@@ -99,7 +99,10 @@ function DemoActionButton({
       size={size}
       onClick={
         onClick ??
-        (() => toast.message("演示数据，暂未接入", { description: "该操作仅为 UI 预览" }))
+        (() =>
+          toast.message("配置动作暂未接入真实发布", {
+            description: "当前为 Follow-up Agent 配置样例",
+          }))
       }
     >
       {children}
@@ -189,7 +192,7 @@ export function FollowUpAgentSettingsPage() {
                 <Badge variant="secondary">{mock.version}</Badge>
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                定义目标、触发条件、数据来源与人在回路规则（演示配置，暂未接入真实发布）
+                定义目标、触发条件、数据来源与人在回路规则（配置样例，暂未接入真实发布）
               </p>
             </div>
 
@@ -354,8 +357,8 @@ export function FollowUpAgentSettingsPage() {
                               size="icon-sm"
                               aria-label={`编辑 ${rule.name}`}
                               onClick={() =>
-                                toast.message("演示数据，暂未接入", {
-                                  description: `编辑规则：${rule.name}`,
+                                toast.message("规则编辑暂未接入真实发布", {
+                                  description: `配置样例：${rule.name}`,
                                 })
                               }
                             >
@@ -368,8 +371,8 @@ export function FollowUpAgentSettingsPage() {
                               className="text-destructive"
                               aria-label={`删除 ${rule.name}`}
                               onClick={() =>
-                                toast.message("演示数据，暂未接入", {
-                                  description: `删除规则：${rule.name}`,
+                                toast.message("规则删除暂未接入真实发布", {
+                                  description: `配置样例：${rule.name}`,
                                 })
                               }
                             >
@@ -604,8 +607,8 @@ export function FollowUpAgentSettingsPage() {
                   type="button"
                   className="text-primary text-xs font-medium hover:underline"
                   onClick={() =>
-                    toast.message("演示数据，暂未接入", {
-                      description: "查看完整发布历史",
+                    toast.message("发布历史暂未接入真实记录", {
+                      description: "当前展示配置样例",
                     })
                   }
                 >

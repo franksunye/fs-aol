@@ -11,6 +11,7 @@ import {
 } from "@/lib/agents-mock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { AgentsSummaryCards } from "./agents-summary-cards";
 import { AgentsListPanel } from "./agents-list-panel";
 import { AgentDetailPanel } from "./agent-detail-panel";
@@ -82,14 +83,22 @@ export function AgentsPage() {
               <h1 className="text-xl font-semibold tracking-tight">Agent 团队</h1>
             </div>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-              管理你的业务 Agents、能力边界与运行状态（演示数据，暂未接入真实配置）
+              管理业务 Agents、能力边界与运行状态；Follow-up 为真实试点，其余为 AOL 场景样例。
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <DataStateBadge state="live" label="Follow-up 真实运行" />
+              <DataStateBadge state="scenario" label="未来 Agent 样例" />
+              <DataStateBadge state="not_connected" label="配置未接入" />
+            </div>
+            <DataStateNote className="mt-2 max-w-2xl">
+              Agent 列表用于展示能力目录和上线状态；非 Follow-up Agent 不代表已经生产运行。
+            </DataStateNote>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              title="演示数据，暂未接入"
+              title="未接入真实创建流程"
               onClick={() => {}}
             >
               <Plus className="size-4" aria-hidden />
@@ -98,7 +107,7 @@ export function AgentsPage() {
             <Button
               type="button"
               variant="outline"
-              title="演示数据，暂未接入"
+              title="未接入真实模板导入"
               onClick={() => {}}
             >
               导入模板

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CaseSection } from "@/components/case/case-section";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import {
   formatDueLabel,
   isDueToday,
@@ -56,24 +57,28 @@ export function ActionExecutionDetail({
             <Badge variant="destructive">异常关注</Badge>
           )}
           <Badge variant="secondary">来自 {action.sourceAgent}</Badge>
+          <DataStateBadge state="live" label="真实 Action" />
         </div>
+        <DataStateNote>
+          Action 来自 Follow-up 审核后的真实执行链；终端任务跳转、催办、撤回等动作仍是待接入的控制面。
+        </DataStateNote>
 
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             size="sm"
-            className="gap-1.5"
-            onClick={() => toast.message("跳转终端任务（演示）")}
-          >
+          className="gap-1.5"
+          onClick={() => toast.message("终端任务暂未接入真实跳转")}
+        >
             <ExternalLink className="size-3.5" aria-hidden />
             查看终端任务
           </Button>
           <Button
             type="button"
             size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => toast.success("已发送催办（演示）")}
+          variant="outline"
+          className="gap-1.5"
+          onClick={() => toast.message("催办暂未接入真实发送")}
           >
             <Send className="size-3.5" aria-hidden />
             催办
@@ -101,9 +106,9 @@ export function ActionExecutionDetail({
           <Button
             type="button"
             size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => toast.success("已标记异常（演示）")}
+          variant="outline"
+          className="gap-1.5"
+          onClick={() => toast.message("异常标记暂未接入真实写回")}
           >
             <AlertTriangle className="size-3.5" aria-hidden />
             标记异常

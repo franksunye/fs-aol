@@ -27,7 +27,7 @@ export function ExecutionToolbar({ hk }: { hk?: string }) {
         size="sm"
         className="h-8 gap-1 px-2.5 text-xs"
         onClick={() =>
-          toast.message("演示数据，暂未接入", {
+          toast.message("导出暂未接入真实生成", {
             description: "导出将在后续版本开放。",
           })
         }

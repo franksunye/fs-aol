@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { formatYuanCompact } from "@/lib/format-yuan";
 import { overviewAnalyticsHref } from "@/lib/overview-nav";
 import type { OverviewRateMetrics } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 function RateDelta({
   value,
@@ -55,7 +56,10 @@ function RateCard({
           highlight ? "border-primary/20 bg-primary/[0.03]" : "bg-card"
         )}
       >
-        <div className="text-muted-foreground text-[11px] font-medium">{label}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-muted-foreground text-[11px] font-medium">
+          <span>{label}</span>
+          <DataStateBadge state="estimated" className="h-4 px-1.5 text-[10px]" />
+        </div>
         <div className="text-foreground text-xl font-semibold tabular-nums tracking-tight">
           {value}
         </div>

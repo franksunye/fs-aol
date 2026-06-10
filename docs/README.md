@@ -47,7 +47,7 @@ Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 *
 | [PUB-15-agentic-ui-design.md](public/PUB-15-agentic-ui-design.md) | **v0.3 Agentic UI 视觉规范**（色彩、侧栏框架、设计稿映射） |
 | [PUB-16-architecture-evolution.md](public/PUB-16-architecture-evolution.md) | **架构演进纪律**：每版架构自检、Operator 读模型、渐进式边界微调 |
 | [PUB-17-console-information-architecture.md](public/PUB-17-console-information-architecture.md) | **Console 三层信息架构**：Work / Agents / Systems 导航、Action 生命周期、列表与 KPI 纪律 |
-| [PUB-18-aol-industrialization-plan.md](public/PUB-18-aol-industrialization-plan.md) | **AOL 工业化打磨计划**：真实楔子与场景样例混合态的执行路线 |
+| [PUB-18-aol-industrialization-plan.md](public/PUB-18-aol-industrialization-plan.md) | **AOL 工业化打磨计划**：真实 Follow-up 楔子 + 场景样例层，小闭环迭代到 v1.0 |
 | [PUB-19-console-data-list.md](public/PUB-19-console-data-list.md) | **Console 企业级列表控件**：DataList 布局、URL scope、分页与列设置纪律 |
 | [sops/](../sops/README.md) | **L2 SOP**（v0.4 启用，当前为大纲） |
 | [PUB-private-docs-template.md](public/PUB-private-docs-template.md) | 私有文档管理模板与边界 |

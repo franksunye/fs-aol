@@ -6,6 +6,7 @@ import {
   ListTodo,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { DataStateBadge } from "@/components/data-state-badge";
 import { cn } from "@/lib/utils";
 import type { CalendarSummary } from "@/lib/calendar-mock";
 
@@ -28,7 +29,10 @@ function SummaryCard({
   return (
     <Card className="gap-2 rounded-xl border-border bg-card p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-muted-foreground text-xs font-medium">{label}</div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">{label}</span>
+          <DataStateBadge state="live" className="h-4 px-1.5 text-[10px]" />
+        </div>
         <span
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-lg",

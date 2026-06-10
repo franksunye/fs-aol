@@ -14,6 +14,7 @@ import {
   type OverviewKpi,
   type OverviewKpiKey,
 } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 const KPI_ICONS: Record<OverviewKpiKey, { icon: ReactNode; iconClassName: string }> = {
   pendingReview: {
@@ -60,7 +61,10 @@ function KpiCard({ kpi, hk }: { kpi: OverviewKpi; hk?: string }) {
     <Link href={overviewKpiHref(kpi.key, hk)} scroll={false} className="block">
       <Card className="gap-1.5 rounded-xl border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
         <div className="flex items-start justify-between gap-2">
-          <div className="text-muted-foreground text-[11px] font-medium">{kpi.label}</div>
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-muted-foreground text-[11px] font-medium">
+            <span>{kpi.label}</span>
+            <DataStateBadge state="live" className="h-4 px-1.5 text-[10px]" />
+          </div>
           <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg", iconClassName)}>
             {icon}
           </span>

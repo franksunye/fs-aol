@@ -89,8 +89,8 @@ function DemoButton({
       onClick={
         onClick ??
         (() =>
-          toast.message("演示数据，暂未接入", {
-            description: "该操作仅为 UI 预览",
+          toast.message("模型策略操作暂未接入真实发布", {
+            description: "模型策略控制面尚未接入真实发布",
           }))
       }
     >
@@ -181,7 +181,7 @@ export function FollowUpModelStrategyPage() {
                 <Badge variant="secondary">{mock.version}</Badge>
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                为各任务节点选择模型、约束与评估方式（演示数据，暂未接入真实发布）
+                为各任务节点选择模型、约束与评估方式（策略样例，暂未接入真实发布）
               </p>
             </div>
 
@@ -342,8 +342,8 @@ export function FollowUpModelStrategyPage() {
                           size="icon-sm"
                           aria-label={`编辑 ${route.task}`}
                           onClick={() =>
-                            toast.message("演示数据，暂未接入", {
-                              description: `编辑任务路由：${route.task}`,
+                            toast.message("任务路由暂未接入真实发布", {
+                              description: `策略样例：${route.task}`,
                             })
                           }
                         >

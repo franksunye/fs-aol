@@ -5,6 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGovernanceMockData } from "@/lib/governance-mock";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { GovernanceSummaryCards } from "./governance-summary-cards";
 import { RolesPermissionsSection } from "./roles-permissions-section";
 import { ActionPermissionsSection } from "./action-permissions-section";
@@ -36,8 +37,16 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
                 </h1>
               </div>
               <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed">
-                企业级治理：角色权限、动作执行、Agent 数据范围、人在回路审批、敏感字段脱敏、配置发布（测试/生产）、审计与成本限额（演示数据）
+                企业级治理：角色权限、动作执行、Agent 数据范围、人在回路审批、敏感字段脱敏、配置发布、审计与成本限额。
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <DataStateBadge state="live" label="Follow-up 审批真实" />
+                <DataStateBadge state="scenario" label="企业治理样例" />
+                <DataStateBadge state="not_connected" label="发布未接入" />
+              </div>
+              <DataStateNote className="mt-2 max-w-3xl">
+                当前真实边界是 Follow-up 的人在回路审批与追踪记录；多角色矩阵、预算、脱敏和发布流用于展示企业版控制面。
+              </DataStateNote>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -45,8 +54,8 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
                 type="button"
                 variant="outline"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "治理配置草稿已保存",
+                  toast.message("治理草稿暂未接入真实发布", {
+                    description: "治理配置草稿暂未接入真实发布",
                   })
                 }
               >
@@ -55,8 +64,8 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
               <Button
                 type="button"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "发布治理配置",
+                  toast.message("生产发布暂未接入真实写路径", {
+                    description: "生产发布暂未接入真实写路径",
                   })
                 }
               >

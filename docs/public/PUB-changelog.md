@@ -117,6 +117,7 @@
 | 2026-05-29 | ADR-006/007 | 知识分层；Agent 展示轨与主轨并行 |
 | 2026-06-09 | **PUB-16** | Operator Platform 架构演进纪律：L0/L1/L2 分层、WorkItem 读模型、每版 A1–A7 自检、v0.3～v1.0 渐进微调路线图 |
 | 2026-06-10 | **PUB-17** | Console 三层信息架构 SSOT：Work / Agents / Systems、Action 生命周期（建议→待执行→闭环）、列表字段与 KPI 下钻纪律、模块路由映射 |
+| 2026-06-10 | **PUB-18** | AOL 工业化打磨计划：数据状态四态、真实 Follow-up 执行链、Scenario Layer、Overview 驾驶舱、小闭环迭代 I0–I6 |
 | 2026-06-10 | **PUB-19** | Console DataList 企业级列表 SSOT：Frame 内滚动、URL 命名空间、Turso 分页、列设置与 Runs/评估接入纪律 |
 
 ---

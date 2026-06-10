@@ -16,6 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { DataStateBadge, type DataState } from "@/components/data-state-badge";
+
+function agentDataState(agent: MockAgent): DataState {
+  if (agent.id === "follow-up") return "live";
+  if (agent.status === "draft") return "not_connected";
+  return "scenario";
+}
 
 function StatusBadge({ status }: { status: MockAgent["status"] }) {
   if (status === "enabled") {
@@ -68,6 +75,17 @@ function AgentListRow({
               {agent.name}
             </span>
             <StatusBadge status={agent.status} />
+            <DataStateBadge
+              state={agentDataState(agent)}
+              className="h-4 px-1.5 text-[10px]"
+              label={
+                agent.id === "follow-up"
+                  ? "真实"
+                  : agent.status === "draft"
+                    ? "规划中"
+                    : "样例"
+              }
+            />
             <Badge variant="outline">{agent.businessLine}</Badge>
             {agent.beta ? (
               <Badge variant="secondary" className="text-[10px]">

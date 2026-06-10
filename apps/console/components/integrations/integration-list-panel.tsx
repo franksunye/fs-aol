@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 function StatusBadge({ status }: { status: IntegrationStatus }) {
   return (
@@ -62,6 +63,7 @@ function IntegrationRow({
               {integration.name}
             </span>
             <StatusBadge status={integration.status} />
+            <DataStateBadge state="scenario" className="h-4 px-1.5 text-[10px]" />
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             {integration.categoryLabel} · 最近活动 {integration.lastActivity}
@@ -142,7 +144,7 @@ export function IntegrationListPanel({
           </select>
           <button
             type="button"
-            title="演示数据，暂未接入"
+            title="集成筛选暂未接入真实配置"
             className="border-input text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-lg border"
             aria-label="筛选"
           >

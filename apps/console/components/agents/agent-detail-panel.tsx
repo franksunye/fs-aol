@@ -20,6 +20,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { DataStateBadge, DataStateNote, type DataState } from "@/components/data-state-badge";
+
+function agentDataState(agent: MockAgent): DataState {
+  if (agent.id === "follow-up") return "live";
+  if (agent.status === "draft") return "not_connected";
+  return "scenario";
+}
 
 function DemoButton({
   children,
@@ -38,7 +45,7 @@ function DemoButton({
       variant={variant}
       size={size}
       className={className}
-      title="演示数据，暂未接入"
+      title="未接入真实执行"
       onClick={() => {}}
     >
       {children}
@@ -104,11 +111,30 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
                     </Badge>
                   )}
                   <Badge variant="outline">{agent.businessLine}</Badge>
+                  <DataStateBadge
+                    state={agentDataState(agent)}
+                    label={
+                      agent.id === "follow-up"
+                        ? "真实运行"
+                        : agent.status === "draft"
+                          ? "规划中"
+                          : "场景样例"
+                    }
+                  />
                   {agent.beta ? <Badge variant="secondary">Beta</Badge> : null}
                 </div>
                 <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
                   {agent.description}
                 </p>
+                {agent.id !== "follow-up" ? (
+                  <DataStateNote className="mt-2 max-w-2xl">
+                    该 Agent 用于展示 AOL 可复用到其他业务阶段的形态；上线前需完成真实数据源、审批规则与执行写回接入。
+                  </DataStateNote>
+                ) : (
+                  <DataStateNote className="mt-2 max-w-2xl">
+                    当前真实楔子：从工单/报价上下文生成 Follow-up 建议，经人工审批后进入执行闭环。
+                  </DataStateNote>
+                )}
               </div>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -255,7 +281,7 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
           <button
             type="button"
             className="text-primary mt-3 inline-flex items-center gap-1 text-xs font-medium hover:underline"
-            title="演示数据，暂未接入"
+            title="Run 列表按当前接入状态展示"
           >
             查看全部
             <ArrowRight className="size-3" aria-hidden />
@@ -300,7 +326,7 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
           <button
             type="button"
             className="text-primary mt-4 inline-flex items-center gap-1 text-xs font-medium hover:underline"
-            title="演示数据，暂未接入"
+            title="能力说明暂未接入完整文档"
           >
             查看详细能力说明
             <ArrowRight className="size-3" aria-hidden />

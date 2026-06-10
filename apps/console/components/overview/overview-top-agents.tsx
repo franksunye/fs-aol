@@ -3,11 +3,15 @@ import { Card } from "@/components/ui/card";
 import { agentDetailHref } from "@/lib/agents-nav";
 import { overviewAgentsHref } from "@/lib/overview-nav";
 import type { OverviewTopAgent } from "@/lib/overview-mock";
+import { DataStateBadge } from "@/components/data-state-badge";
 
 export function OverviewTopAgents({ agents }: { agents: OverviewTopAgent[] }) {
   return (
     <Card className="flex h-full flex-col rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">Top Agents（按已闭环 Actions）</h2>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-semibold">Top Agents（按已闭环 Actions）</h2>
+        <DataStateBadge state="scenario" />
+      </div>
       <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

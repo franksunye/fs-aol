@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai-infrastructure-mock";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { DataStateBadge } from "@/components/data-state-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ function ProviderRow({
             </span>
             <ProviderStatusBadge status={provider.status} />
             <Badge variant="outline">{provider.environment}</Badge>
+            <DataStateBadge state="scenario" className="h-4 px-1.5 text-[10px]" />
           </div>
           <p className="text-muted-foreground mt-1.5 text-xs">
             上次同步 · {provider.lastSync}
@@ -133,7 +135,7 @@ export function ProviderListPanel({
           </div>
           <button
             type="button"
-            title="演示数据，暂未接入"
+            title="供应商筛选暂未接入真实配置"
             className="border-input text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors"
             aria-label="筛选"
           >

@@ -15,14 +15,15 @@ import { OverviewIntegrationHealthPanel } from "./overview-integration-health";
 import { OverviewAttentionList } from "./overview-attention-list";
 import { OverviewSiteSelect } from "./overview-site-select";
 import { OverviewRefreshButton } from "./overview-refresh-button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 
 const DATA_SOURCE_HINT: Record<
   OverviewPageSnapshot["dataSource"],
   string
 > = {
-  live: "核心数量与效率指标均来自库内统计",
-  mixed: "待审核/流转数量为库内统计；今日产出、效率与 Agent 状态为演示参考",
-  mock: "当前展示演示数据，库内统计暂不可用",
+  live: "Follow-up 试点数据已接入；估算与场景样例单独标注",
+  mixed: "Follow-up 待审核/流转为真实统计；多 Agent 与部分价值指标为场景样例或估算",
+  mock: "当前展示 AOL 场景样例，库内统计暂不可用",
 };
 
 export function OverviewPage({
@@ -45,9 +46,19 @@ export function OverviewPage({
           <p className="text-muted-foreground mt-2 text-sm">
             AOL 运营驾驶舱 · 一眼掌握 Agent 运行、Action 流转与业务影响
           </p>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <DataStateBadge
+              state={data.dataSource === "mock" ? "scenario" : "live"}
+              label={data.dataSource === "mock" ? "场景样例" : "真实试点"}
+            />
+            {data.dataSource !== "live" ? (
+              <DataStateBadge state="scenario" label="多 Agent 样例" />
+            ) : null}
+            <DataStateBadge state="estimated" label="价值估算" />
+          </div>
+          <DataStateNote className="mt-2 max-w-3xl">
             {DATA_SOURCE_HINT[data.dataSource]}
-          </p>
+          </DataStateNote>
         </div>
         <div className="flex items-center gap-2">
           <OverviewRefreshButton />
@@ -59,22 +70,22 @@ export function OverviewPage({
 
       <div className="space-y-6">
         <div>
-          <OverviewSectionTitle>今日产出</OverviewSectionTitle>
+          <OverviewSectionTitle>真实试点运行</OverviewSectionTitle>
           <OverviewTodayPulseBar today={data.today} hk={hk} />
         </div>
 
         <div>
-          <OverviewSectionTitle>核心运营指标</OverviewSectionTitle>
+          <OverviewSectionTitle>Follow-up 执行链</OverviewSectionTitle>
           <OverviewKpiCards kpis={data.kpis} hk={hk} />
         </div>
 
         <div>
-          <OverviewSectionTitle>效率与业务影响</OverviewSectionTitle>
+          <OverviewSectionTitle>效率与业务影响（估算）</OverviewSectionTitle>
           <OverviewRateMetrics rates={data.rates} hk={hk} />
         </div>
 
         <div>
-          <OverviewSectionTitle>Agent 运行状态</OverviewSectionTitle>
+          <OverviewSectionTitle>AOL 场景版图</OverviewSectionTitle>
           <OverviewAgentFleet agents={data.agentFleet} />
         </div>
 
@@ -91,7 +102,7 @@ export function OverviewPage({
         </div>
 
         <div>
-          <OverviewSectionTitle>绩效 · 集成 · 异常</OverviewSectionTitle>
+          <OverviewSectionTitle>场景扩展 · 集成 · 今日需要处理</OverviewSectionTitle>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <OverviewTopAgents agents={data.topAgents} />
             <OverviewIntegrationHealthPanel items={data.integrationHealth} />

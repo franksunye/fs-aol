@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { HousekeeperFilter } from "@/components/housekeeper-filter";
 import { LogoutButton } from "@/components/logout-button";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
@@ -51,6 +52,18 @@ export function ActionCenterHeader({
         >
           {subtitle}
         </p>
+        {!compact ? (
+          <>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <DataStateBadge state="live" label="Follow-up 真实试点" />
+              <DataStateBadge state="estimated" label="效果估算" />
+            </div>
+            <DataStateNote className="mt-2 max-w-3xl">
+              Action 中心是当前真实楔子：建议、审核、Action 流转来自已接入的
+              Follow-up 场景；终端写回和跨系统闭环仍需逐步接入。
+            </DataStateNote>
+          </>
+        ) : null}
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
         <Button

@@ -196,6 +196,40 @@ export const OVERVIEW_TREND: OverviewTrendPoint[] = [
   { date: "2026-06-05", label: "06/05", suggestions: 30, actions: 23 },
 ];
 
+const TREND_SHAPE = [
+  { suggestions: 18, actions: 12 },
+  { suggestions: 22, actions: 14 },
+  { suggestions: 20, actions: 16 },
+  { suggestions: 25, actions: 18 },
+  { suggestions: 28, actions: 20 },
+  { suggestions: 24, actions: 19 },
+  { suggestions: 30, actions: 23 },
+] as const;
+
+function formatDateParts(d: Date) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return {
+    date: `${year}-${month}-${day}`,
+    label: `${month}/${day}`,
+  };
+}
+
+function buildRollingTrend(): OverviewTrendPoint[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return TREND_SHAPE.map((shape, index) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (TREND_SHAPE.length - 1 - index));
+    return {
+      ...formatDateParts(d),
+      suggestions: shape.suggestions,
+      actions: shape.actions,
+    };
+  });
+}
+
 export const OVERVIEW_ACTION_STATUS: OverviewSnapshot["actionStatus"] = {
   total: 57,
   slices: [
@@ -278,7 +312,7 @@ export function getOverviewMockData(
     today: overrides?.today ?? OVERVIEW_TODAY,
     rates: overrides?.rates ?? OVERVIEW_RATES,
     agentFleet: OVERVIEW_AGENT_FLEET,
-    trend: OVERVIEW_TREND,
+    trend: buildRollingTrend(),
     actionStatus: OVERVIEW_ACTION_STATUS,
     topAgents: OVERVIEW_TOP_AGENTS,
     integrationHealth: OVERVIEW_INTEGRATION_HEALTH,

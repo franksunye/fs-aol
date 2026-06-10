@@ -9,6 +9,7 @@ import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { MOCK_INTEGRATIONS } from "@/lib/integrations-mock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
 import { IntegrationDetailPanel } from "./integration-detail-panel";
@@ -66,16 +67,23 @@ export function IntegrationsPage() {
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
                 连接 CRM、FSM、沟通与企业协作系统，为 Agent
-                提供业务上下文与执行能力（演示数据，暂未接入真实配置）
+                提供业务上下文与执行能力。
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <DataStateBadge state="scenario" label="集成场景样例" />
+                <DataStateBadge state="not_connected" label="写回未接入" />
+              </div>
+              <DataStateNote className="mt-2 max-w-2xl">
+                当前页展示 AOL Business Harness 的目标形态；真实试点仍以 Follow-up 追踪库和 XLink 工单数据为主。
+              </DataStateNote>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "新建连接向导",
+                  toast.message("新建连接暂未接入真实配置", {
+                    description: "新建连接向导暂未接入真实配置",
                   })
                 }
               >
@@ -86,8 +94,8 @@ export function IntegrationsPage() {
                 type="button"
                 variant="outline"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "查看集成事件日志",
+                  toast.message("集成日志暂未接入真实数据", {
+                    description: "集成日志暂为场景样例",
                   })
                 }
               >

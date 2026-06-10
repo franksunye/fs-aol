@@ -16,6 +16,7 @@ import { PROVIDER_STATUS_LABEL } from "@/lib/ai-infrastructure-mock";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import { SettingsSectionCard } from "@/components/agents/settings-section-card";
 import {
   Table,
@@ -42,8 +43,8 @@ function DemoButton({
       variant={variant}
       size={size}
       onClick={() =>
-        toast.message("演示数据，暂未接入", {
-          description: "该操作仅为 UI 预览",
+        toast.message("供应商操作暂未接入真实配置", {
+          description: "供应商控制面尚未接入真实配置",
         })
       }
     >
@@ -90,7 +91,11 @@ export function ProviderDetailPanel({
                     </Badge>
                   )}
                   <Badge variant="outline">{provider.environment}</Badge>
+                  <DataStateBadge state="scenario" label="模型治理样例" />
                 </div>
+                <DataStateNote className="mt-3 max-w-2xl">
+                  供应商、模型库与路由策略用于展示 AOL 基础设施目标形态；生产授权、密钥与调用链路尚未接入。
+                </DataStateNote>
                 <dl className="text-muted-foreground mt-3 grid gap-1 text-xs sm:grid-cols-2">
                   <div>
                     <dt className="inline">API 端点 </dt>
@@ -141,8 +146,8 @@ export function ProviderDetailPanel({
                   toast.success("连接测试完成（演示）", {
                     description:
                       provider.status === "abnormal"
-                        ? "连接失败，已记录事件"
-                        : `${provider.name} 响应正常`,
+                        ? "样例连接失败，已记录事件"
+                        : `${provider.name} 样例响应正常`,
                   })
                 }
               >
@@ -159,8 +164,8 @@ export function ProviderDetailPanel({
                 size="icon-sm"
                 aria-label="更多操作"
                 onClick={() =>
-                  toast.message("演示数据，暂未接入", {
-                    description: "更多供应商操作",
+                  toast.message("更多供应商操作暂未接入真实配置", {
+                    description: "更多供应商操作尚未接入真实配置",
                   })
                 }
               >

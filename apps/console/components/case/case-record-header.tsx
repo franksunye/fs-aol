@@ -8,6 +8,7 @@ import {
 } from "@/lib/labels";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 import { BadgeStack } from "@/components/action-center/badge-stack";
+import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import type { ListBadge } from "@/lib/list-display";
 
 export function CaseRecordHeader({
@@ -87,7 +88,16 @@ export function CaseRecordHeader({
         </div>
       </div>
       <div className="mt-3">
-        <BadgeStack items={badges} max={3} />
+        <div className="flex flex-wrap items-center gap-1.5">
+          <DataStateBadge state="live" label="真实建议" />
+          <BadgeStack items={badges} max={3} />
+        </div>
+        {!compact ? (
+          <DataStateNote className="mt-2 max-w-3xl">
+            该记录来自 Follow-up 真实试点链路，适合作为 Agent 判断依据、人工审批与
+            Action 生成的可追溯样本。
+          </DataStateNote>
+        ) : null}
       </div>
     </header>
   );

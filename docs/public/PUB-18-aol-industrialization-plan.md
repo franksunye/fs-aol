@@ -361,4 +361,3 @@ v0.3.5 -> v1.0-rc.1 data-state -> v1.0-rc.2 chain -> v1.0-rc.3 cockpit -> v1.0
 2. 若改动导航 / 生命周期，更新 [PUB-17](PUB-17-console-information-architecture.md)。
 3. 若改变产品脊柱或 DoD，更新 [PUB-07](PUB-07-product-surface.md)。
 4. 若改变版本切分，更新 [PUB-05](PUB-05-releases.md)。
-
