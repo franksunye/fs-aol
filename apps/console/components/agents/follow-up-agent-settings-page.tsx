@@ -25,6 +25,11 @@ import {
   FOLLOW_UP_MODEL_STRATEGY_PATH,
   agentDetailHref,
 } from "@/lib/agents-nav";
+import {
+  INTEGRATIONS_HOME_PATH,
+  integrationHref,
+} from "@/lib/integrations-nav";
+import { AGENT_DATA_SOURCE_INTEGRATION } from "@/lib/integrations-mock";
 import { AgentSettingsSubNav } from "./agent-settings-sub-nav";
 import {
   FOLLOW_UP_SETTINGS_MOCK,
@@ -382,31 +387,61 @@ export function FollowUpAgentSettingsPage() {
             <SettingsSectionCard
               title="数据来源"
               action={
-                <DemoActionButton size="sm">
-                  <Plus className="size-3.5" aria-hidden />
-                  添加来源
-                </DemoActionButton>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  render={<Link href={INTEGRATIONS_HOME_PATH} />}
+                >
+                  管理系统集成
+                </Button>
               }
             >
+              <p className="text-muted-foreground mb-3 text-xs">
+                数据来源由系统集成统一接入，点击可查看连接详情。
+              </p>
               <div className="flex flex-wrap gap-2">
-                {mock.dataSources.map((source) => (
-                  <div
-                    key={source.id}
-                    className="border-border bg-muted/30 flex items-center gap-2 rounded-lg border px-3 py-2"
-                  >
-                    <Database className="text-muted-foreground size-3.5" aria-hidden />
-                    <span className="text-sm font-medium">{source.name}</span>
-                    {source.permissions.map((perm) => (
-                      <Badge
-                        key={perm}
-                        variant={perm === "写" ? "default" : "secondary"}
-                        className="text-[10px]"
+                {mock.dataSources.map((source) => {
+                  const integrationId =
+                    AGENT_DATA_SOURCE_INTEGRATION[source.id];
+                  const content = (
+                    <>
+                      <Database
+                        className="text-muted-foreground size-3.5"
+                        aria-hidden
+                      />
+                      <span className="text-sm font-medium">{source.name}</span>
+                      {source.permissions.map((perm) => (
+                        <Badge
+                          key={perm}
+                          variant={perm === "写" ? "default" : "secondary"}
+                          className="text-[10px]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </>
+                  );
+                  if (!integrationId) {
+                    return (
+                      <div
+                        key={source.id}
+                        className="border-border bg-muted/30 flex items-center gap-2 rounded-lg border px-3 py-2"
                       >
-                        {perm}
-                      </Badge>
-                    ))}
-                  </div>
-                ))}
+                        {content}
+                      </div>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={source.id}
+                      href={integrationHref(integrationId)}
+                      className="border-border bg-muted/30 hover:border-primary/30 hover:bg-primary/5 flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors"
+                    >
+                      {content}
+                    </Link>
+                  );
+                })}
               </div>
             </SettingsSectionCard>
 

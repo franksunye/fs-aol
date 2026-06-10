@@ -11,12 +11,14 @@ import {
   CheckCircle2,
   CircleHelp,
   Inbox,
+  Link2,
   PanelLeft,
   PanelLeftClose,
   Settings,
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
 import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 import { Button } from "@/components/ui/button";
@@ -98,6 +100,7 @@ export function SidebarNav({
   const onHome = pathname === "/";
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
+  const onIntegrations = pathname.startsWith("/integrations");
   const onSettings = pathname.startsWith("/settings");
 
   const items: NavItem[] = [
@@ -113,6 +116,12 @@ export function SidebarNav({
       icon: Bot,
       href: "/agents",
       active: onAgents,
+    },
+    {
+      label: "集成",
+      icon: Link2,
+      href: INTEGRATIONS_HOME_PATH,
+      active: onIntegrations,
     },
     {
       label: "日历",
