@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { EvaluationPageSnapshot } from "@/lib/evaluation";
 import { EvaluationFiltersBar } from "./evaluation-filters";
 import { EvaluationKpiCards } from "./evaluation-kpi-cards";
+import { EvaluationOpsMetrics } from "./evaluation-ops-metrics";
 import { EvaluationCharts } from "./evaluation-charts";
 import { EvaluationMiddleSections } from "./evaluation-middle-sections";
 import { EvaluationQualitySamples } from "./evaluation-quality-samples";
@@ -21,7 +22,7 @@ export function EvaluationPage({
     : data.dataSource === "live"
       ? "部分指标来自库内真实统计"
       : data.dataSource === "mixed"
-        ? "建议数/采纳率/业务价值等为库内统计，其余为演示数据"
+        ? "建议准确率/采纳率/转化增量等为库内统计，其余为演示数据"
         : "当前时段暂无库内记录，展示演示数据";
 
   return (
@@ -36,7 +37,7 @@ export function EvaluationPage({
               <h1 className="text-xl font-semibold tracking-tight">评估分析</h1>
             </div>
             <p className="text-muted-foreground mt-2 text-sm">
-              评估 Agent 与 Actions 的效果、质量与业务影响
+              Agent 效果评估：准确率、采纳与误报、成本延迟 ROI，非普通经营报表
             </p>
             <p className="text-muted-foreground mt-1 text-xs">{sourceHint}</p>
           </div>
@@ -48,6 +49,7 @@ export function EvaluationPage({
 
       <div className="space-y-6">
         <EvaluationKpiCards kpis={data.kpis} hk={hk} />
+        <EvaluationOpsMetrics metrics={data.opsMetrics} hk={hk} />
         <EvaluationCharts
           suggestionTrend={data.suggestionTrend}
           actionStatusTrend={data.actionStatusTrend}
@@ -55,6 +57,8 @@ export function EvaluationPage({
         />
         <EvaluationMiddleSections
           agents={data.agents}
+          versions={data.versions}
+          rules={data.rules}
           problemCases={data.problemCases}
           roles={data.roles}
           modules={data.modules}

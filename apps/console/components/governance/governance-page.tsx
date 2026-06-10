@@ -7,8 +7,10 @@ import { getGovernanceMockData } from "@/lib/governance-mock";
 import { Button } from "@/components/ui/button";
 import { GovernanceSummaryCards } from "./governance-summary-cards";
 import { RolesPermissionsSection } from "./roles-permissions-section";
+import { ActionPermissionsSection } from "./action-permissions-section";
 import { ApprovalMatrixSection } from "./approval-matrix-section";
 import { AccessBoundariesSection } from "./access-boundaries-section";
+import { SensitiveFieldMaskingSection } from "./sensitive-field-masking-section";
 import { ReleaseGovernanceSection } from "./release-governance-section";
 import { GovernanceSidebar } from "./governance-sidebar";
 
@@ -33,8 +35,8 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
                   Governance 治理
                 </h1>
               </div>
-              <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-                管理权限、审批矩阵、访问边界、发布与审计规则（演示数据，暂未接入真实配置）
+              <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed">
+                企业级治理：角色权限、动作执行、Agent 数据范围、人在回路审批、敏感字段脱敏、配置发布（测试/生产）、审计与成本限额（演示数据）
               </p>
             </div>
 
@@ -70,11 +72,13 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] xl:items-start">
             <div className="space-y-6">
               <RolesPermissionsSection roles={data.roles} hk={hkFilter} />
+              <ActionPermissionsSection policies={data.actionPermissions} />
               <ApprovalMatrixSection rules={data.approvalMatrix} />
               <AccessBoundariesSection
                 dataPolicies={data.dataPolicies}
                 modelPolicies={data.modelPolicies}
               />
+              <SensitiveFieldMaskingSection policies={data.sensitiveFields} />
               <ReleaseGovernanceSection
                 environments={data.releaseEnvironments}
               />

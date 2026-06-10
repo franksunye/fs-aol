@@ -66,21 +66,23 @@ function mergeKpis(
       ? Math.round((analytics.prevActions / analytics.prevDiscovered) * 100)
       : 0;
 
+  const prevSuccessRate =
+    analytics.prevDiscovered > 0
+      ? Math.round((analytics.prevActions / analytics.prevDiscovered) * 100)
+      : 0;
+
   return mockKpis.map((kpi) => {
     switch (kpi.key) {
-      case "suggestions": {
+      case "accuracy": {
         const delta = buildKpiDelta(
-          analytics.discovered,
-          analytics.prevDiscovered,
-          ""
+          analytics.successRate,
+          prevSuccessRate,
+          "pp"
         );
         return {
           ...kpi,
-          value: String(analytics.discovered),
-          deltaText:
-            delta.tone === "flat"
-              ? "较前 7 天 持平"
-              : delta.deltaText.replace("pp", "%"),
+          value: `${analytics.successRate}%`,
+          deltaText: delta.deltaText.replace("%", "pp"),
           tone: delta.tone,
         };
       }
@@ -93,26 +95,37 @@ function mergeKpis(
           tone: delta.tone,
         };
       }
-      case "value": {
-        if (analytics.drivenAmount <= 0) return kpi;
-        const delta = buildKpiDelta(
-          analytics.drivenAmount,
-          analytics.prevDrivenAmount,
-          ""
-        );
-        return {
-          ...kpi,
-          value: formatEvaluationYuan(analytics.drivenAmount),
-          deltaText:
-            delta.tone === "flat"
-              ? "较前 7 天 持平"
-              : delta.deltaText.replace("pp", "%"),
-          tone: delta.tone,
-        };
-      }
       default:
         return kpi;
     }
+  });
+}
+
+function mergeOpsMetrics(
+  mockOps: EvaluationPageSnapshot["opsMetrics"],
+  analytics: Awaited<ReturnType<typeof loadAnalyticsSnapshot>>
+): EvaluationPageSnapshot["opsMetrics"] {
+  const hasLive = analytics.discovered > 0 || analytics.drivenAmount > 0;
+  if (!hasLive) return mockOps;
+
+  return mockOps.map((metric) => {
+    if (metric.key !== "conversionIncrement" || analytics.drivenAmount <= 0) {
+      return metric;
+    }
+    const delta = buildKpiDelta(
+      analytics.drivenAmount,
+      analytics.prevDrivenAmount,
+      ""
+    );
+    return {
+      ...metric,
+      value: formatEvaluationYuan(analytics.drivenAmount),
+      deltaText:
+        delta.tone === "flat"
+          ? "较前 7 天 持平"
+          : delta.deltaText.replace("pp", "%"),
+      tone: delta.tone,
+    };
   });
 }
 
@@ -141,6 +154,7 @@ export async function loadEvaluationSnapshot(options: {
     });
 
     const kpis = mergeKpis(mock.kpis, analytics);
+    const opsMetrics = mergeOpsMetrics(mock.opsMetrics, analytics);
     const suggestionTrend = mergeSuggestionTrend(
       mock.suggestionTrend,
       analytics
@@ -161,6 +175,7 @@ export async function loadEvaluationSnapshot(options: {
     return {
       ...mock,
       kpis,
+      opsMetrics,
       suggestionTrend,
       dataSource,
       rangeLabel: analytics.range.label,

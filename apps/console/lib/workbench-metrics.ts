@@ -1,5 +1,8 @@
 import type { SuggestionDoc, SuggestionRow } from "./suggestions";
 import { computeStats, type DashboardStats } from "./suggestions";
+import { formatYuanCompact } from "./format-yuan";
+
+export { formatYuanCompact };
 
 /** 从 Action Spec 金额与方案字段解析报价金额（元） */
 export function parseQuoteAmountYuan(s: SuggestionDoc): number | null {
@@ -12,16 +15,6 @@ export function parseQuoteAmountYuan(s: SuggestionDoc): number | null {
   if (!m) return null;
   const n = Number(m[1].replace(/,/g, ""));
   return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-export function formatYuanCompact(n: number): string {
-  if (n >= 10_000) {
-    const wan = n / 10_000;
-    return wan >= 100
-      ? `¥${Math.round(n).toLocaleString("zh-CN")}`
-      : `¥${wan % 1 === 0 ? wan : wan.toFixed(1)}万`;
-  }
-  return `¥${Math.round(n).toLocaleString("zh-CN")}`;
 }
 
 function processedMs(row: SuggestionRow): number | null {

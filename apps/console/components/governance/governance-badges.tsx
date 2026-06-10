@@ -1,8 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
+  GOVERNANCE_ACTION_MODE_LABELS,
+  GOVERNANCE_MASKING_STRATEGY_LABELS,
   GOVERNANCE_PERMISSION_LABELS,
+  type ActionExecutionMode,
   type GovernancePermission,
+  type MaskingStrategy,
 } from "@/lib/governance-mock";
 
 export function PermissionBadge({
@@ -13,6 +17,50 @@ export function PermissionBadge({
   className?: string;
 }) {
   const meta = GOVERNANCE_PERMISSION_LABELS[permission];
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded-md px-1.5 py-0 text-[10px] font-medium",
+        meta.className,
+        className
+      )}
+    >
+      {meta.label}
+    </Badge>
+  );
+}
+
+export function ActionExecutionModeBadge({
+  mode,
+  className,
+}: {
+  mode: ActionExecutionMode;
+  className?: string;
+}) {
+  const meta = GOVERNANCE_ACTION_MODE_LABELS[mode];
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded-md px-1.5 py-0 text-[10px] font-medium",
+        meta.className,
+        className
+      )}
+    >
+      {meta.label}
+    </Badge>
+  );
+}
+
+export function MaskingStrategyBadge({
+  strategy,
+  className,
+}: {
+  strategy: MaskingStrategy;
+  className?: string;
+}) {
+  const meta = GOVERNANCE_MASKING_STRATEGY_LABELS[strategy];
   return (
     <Badge
       variant="outline"

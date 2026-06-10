@@ -66,8 +66,43 @@ export type OverviewSiteOption = {
   label: string;
 };
 
+export type OverviewTodayPulse = {
+  suggestionsToday: number;
+  actionsToday: number;
+  suggestionsDelta: number;
+  actionsDelta: number;
+};
+
+export type OverviewRateMetrics = {
+  adoptionRate: number;
+  adoptionDeltaPp: number;
+  feedbackRate: number;
+  feedbackDeltaPp: number;
+  timeoutRate: number;
+  timeoutDeltaPp: number;
+  businessValue: number;
+  businessValueDeltaPct: number;
+};
+
+export type OverviewAgentRunState = "healthy" | "warn" | "offline" | "draft";
+
+export type OverviewAgentFleetItem = {
+  id: string;
+  name: string;
+  runState: OverviewAgentRunState;
+  statusLabel: string;
+  runsToday: number;
+  lastRunLabel: string;
+  agentHrefId: string;
+};
+
+export type OverviewDataSource = "live" | "mixed" | "mock";
+
 export type OverviewSnapshot = {
   kpis: OverviewKpi[];
+  today: OverviewTodayPulse;
+  rates: OverviewRateMetrics;
+  agentFleet: OverviewAgentFleetItem[];
   trend: OverviewTrendPoint[];
   actionStatus: {
     total: number;
@@ -76,6 +111,7 @@ export type OverviewSnapshot = {
   topAgents: OverviewTopAgent[];
   integrationHealth: OverviewIntegrationHealth[];
   attentionItems: OverviewAttentionItem[];
+  dataSource: OverviewDataSource;
 };
 
 export const OVERVIEW_SITE_OPTIONS: OverviewSiteOption[] = [
@@ -83,6 +119,63 @@ export const OVERVIEW_SITE_OPTIONS: OverviewSiteOption[] = [
   { id: "east", label: "华东大区" },
   { id: "south", label: "华南大区" },
   { id: "north", label: "华北大区" },
+];
+
+export const OVERVIEW_TODAY: OverviewTodayPulse = {
+  suggestionsToday: 35,
+  actionsToday: 23,
+  suggestionsDelta: 5,
+  actionsDelta: 4,
+};
+
+export const OVERVIEW_RATES: OverviewRateMetrics = {
+  adoptionRate: 78,
+  adoptionDeltaPp: 6,
+  feedbackRate: 72,
+  feedbackDeltaPp: 5,
+  timeoutRate: 8,
+  timeoutDeltaPp: -2,
+  businessValue: 328_600,
+  businessValueDeltaPct: 18,
+};
+
+export const OVERVIEW_AGENT_FLEET: OverviewAgentFleetItem[] = [
+  {
+    id: "follow-up",
+    name: "Follow-up Agent",
+    runState: "healthy",
+    statusLabel: "运行正常",
+    runsToday: 42,
+    lastRunLabel: "今天 10:24",
+    agentHrefId: "follow-up",
+  },
+  {
+    id: "estimate",
+    name: "Estimate Agent",
+    runState: "healthy",
+    statusLabel: "运行正常",
+    runsToday: 28,
+    lastRunLabel: "今天 09:48",
+    agentHrefId: "quote-review",
+  },
+  {
+    id: "inspection",
+    name: "Inspection Agent",
+    runState: "healthy",
+    statusLabel: "运行正常",
+    runsToday: 31,
+    lastRunLabel: "今天 08:02",
+    agentHrefId: "inspection-reminder",
+  },
+  {
+    id: "collection",
+    name: "Collection Agent",
+    runState: "warn",
+    statusLabel: "异常偏高",
+    runsToday: 18,
+    lastRunLabel: "今天 07:15",
+    agentHrefId: "follow-up",
+  },
 ];
 
 export const OVERVIEW_KPIS: OverviewKpi[] = [
@@ -174,13 +267,22 @@ export function overviewKpiHref(key: OverviewKpiKey, hk?: string): string {
   }
 }
 
-export function getOverviewMockData(hk?: string): OverviewSnapshot {
+export function getOverviewMockData(
+  hk?: string,
+  overrides?: Partial<
+    Pick<OverviewSnapshot, "kpis" | "today" | "rates" | "dataSource">
+  >
+): OverviewSnapshot {
   return {
-    kpis: OVERVIEW_KPIS,
+    kpis: overrides?.kpis ?? OVERVIEW_KPIS,
+    today: overrides?.today ?? OVERVIEW_TODAY,
+    rates: overrides?.rates ?? OVERVIEW_RATES,
+    agentFleet: OVERVIEW_AGENT_FLEET,
     trend: OVERVIEW_TREND,
     actionStatus: OVERVIEW_ACTION_STATUS,
     topAgents: OVERVIEW_TOP_AGENTS,
     integrationHealth: OVERVIEW_INTEGRATION_HEALTH,
     attentionItems: buildOverviewAttentionItems(hk),
+    dataSource: overrides?.dataSource ?? "mock",
   };
 }

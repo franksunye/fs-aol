@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
+
 export default function GlobalError({
   error,
   reset,
@@ -31,8 +33,12 @@ export default function GlobalError({
         <Button type="button" onClick={() => reset()}>
           重试
         </Button>
-        <Button type="button" variant="outline" onClick={() => window.location.assign("/")}>
-          返回 Action中心
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => window.location.assign(OVERVIEW_HOME_PATH)}
+        >
+          返回运营总览
         </Button>
       </div>
     </main>

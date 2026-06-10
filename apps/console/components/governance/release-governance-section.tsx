@@ -62,7 +62,14 @@ export function ReleaseGovernanceSection({
   }
 
   return (
-    <SettingsSectionCard title="配置发布治理">
+    <SettingsSectionCard
+      title="配置发布审批"
+      action={
+        <span className="text-muted-foreground text-[11px]">
+          测试 / 生产环境
+        </span>
+      }
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -77,14 +84,29 @@ export function ReleaseGovernanceSection({
         <TableBody>
           {environments.map((env) => (
             <TableRow key={env.id}>
-              <TableCell className="font-medium">{env.name}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "rounded-md px-1.5 py-0 text-[10px] font-medium",
+                      env.id === "prod"
+                        ? "border-violet-200 bg-violet-50 text-violet-700"
+                        : "border-sky-200 bg-sky-50 text-sky-700"
+                    )}
+                  >
+                    {env.id === "prod" ? "PROD" : "TEST"}
+                  </Badge>
+                  {env.name}
+                </div>
+              </TableCell>
               <TableCell>
                 {env.requiresApproval ? (
                   <Badge className="border-violet-200 bg-violet-50 text-violet-700">
-                    需要
+                    需发布审批
                   </Badge>
                 ) : (
-                  <Badge variant="secondary">无需</Badge>
+                  <Badge variant="secondary">直接发布</Badge>
                 )}
               </TableCell>
               <TableCell>

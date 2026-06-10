@@ -72,17 +72,18 @@ export function AccessBoundariesSection({
   modelPolicies: ModelAccessPolicy[];
 }) {
   return (
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <PolicyTable
-        title="数据资源访问策略"
-        items={dataPolicies}
-        nameColumn="resource"
-      />
-      <PolicyTable
-        title="模型访问范围"
-        items={modelPolicies}
-        nameColumn="model"
-      />
+    <section aria-label="Agent 数据访问范围" className="space-y-3">
+      <h2 className="text-muted-foreground px-0.5 text-xs font-medium tracking-wide uppercase">
+        Agent 数据访问范围
+      </h2>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <PolicyTable
+          title="数据资源"
+          items={dataPolicies}
+          nameColumn="resource"
+        />
+        <PolicyTable title="模型与推理" items={modelPolicies} nameColumn="model" />
+      </div>
     </section>
   );
 }

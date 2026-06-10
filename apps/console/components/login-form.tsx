@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
+import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const from = params.get("from") || "/";
+  const from = params.get("from") || OVERVIEW_HOME_PATH;
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +46,9 @@ export function LoginForm() {
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <h1 className="text-lg font-semibold">Agent Console</h1>
-          <p className="text-muted-foreground text-sm">登录后查看跟进建议</p>
+          <p className="text-muted-foreground text-sm">
+            登录后进入 AOL 运营驾驶舱
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="username">用户名</Label>

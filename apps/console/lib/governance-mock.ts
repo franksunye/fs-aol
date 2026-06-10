@@ -60,11 +60,37 @@ export type RiskAlert = {
   href?: string;
 };
 
+export type ActionExecutionMode = "auto" | "approve" | "blocked";
+
+export type ActionPermissionPolicy = {
+  id: string;
+  actionType: string;
+  scope: string;
+  allowedRoles: string;
+  executionMode: ActionExecutionMode;
+  href?: string;
+};
+
+export type MaskingStrategy = "full" | "partial" | "hash" | "role_gated";
+
+export type SensitiveFieldPolicy = {
+  id: string;
+  field: string;
+  resource: string;
+  strategy: MaskingStrategy;
+  visibleTo: string;
+  href?: string;
+};
+
 export type GovernanceSummary = {
   roles: number;
   rolesDelta: number;
   approvalMatrix: number;
   approvalMatrixDelta: number;
+  actionPermissions: number;
+  actionPermissionsDelta: number;
+  fieldMaskingRules: number;
+  fieldMaskingRulesDelta: number;
   auditEvents: number;
   auditEventsDelta: number;
   monthlyBudgetYuan: number;
@@ -96,11 +122,55 @@ export const GOVERNANCE_PERMISSION_LABELS: Record<
   },
 };
 
+export const GOVERNANCE_ACTION_MODE_LABELS: Record<
+  ActionExecutionMode,
+  { label: string; className: string }
+> = {
+  auto: {
+    label: "自动执行",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  approve: {
+    label: "需审批",
+    className: "border-amber-200 bg-amber-50 text-amber-700",
+  },
+  blocked: {
+    label: "禁止",
+    className: "border-red-200 bg-red-50 text-red-700",
+  },
+};
+
+export const GOVERNANCE_MASKING_STRATEGY_LABELS: Record<
+  MaskingStrategy,
+  { label: string; className: string }
+> = {
+  full: {
+    label: "完全隐藏",
+    className: "border-red-200 bg-red-50 text-red-700",
+  },
+  partial: {
+    label: "部分脱敏",
+    className: "border-amber-200 bg-amber-50 text-amber-700",
+  },
+  hash: {
+    label: "哈希替换",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  },
+  role_gated: {
+    label: "按角色可见",
+    className: "border-violet-200 bg-violet-50 text-violet-700",
+  },
+};
+
 export const GOVERNANCE_SUMMARY: GovernanceSummary = {
   roles: 6,
   rolesDelta: 1,
   approvalMatrix: 4,
   approvalMatrixDelta: 0,
+  actionPermissions: 5,
+  actionPermissionsDelta: 1,
+  fieldMaskingRules: 6,
+  fieldMaskingRulesDelta: 0,
   auditEvents: 238,
   auditEventsDelta: 32,
   monthlyBudgetYuan: 8000,
@@ -159,6 +229,100 @@ export const GOVERNANCE_ROLES: GovernanceRole[] = [
       analytics: ["view", "edit"],
       settings: ["view", "edit", "publish"],
     },
+  },
+];
+
+export const GOVERNANCE_ACTION_PERMISSIONS: ActionPermissionPolicy[] = [
+  {
+    id: "crm-writeback",
+    actionType: "CRM 写回",
+    scope: "客户资料、商机状态",
+    allowedRoles: "销售经理、系统管理员",
+    executionMode: "approve",
+    href: "/?tab=actions",
+  },
+  {
+    id: "follow-up-suggest",
+    actionType: "跟进建议生成",
+    scope: "Follow-up Agent",
+    allowedRoles: "运营管理员、销售经理",
+    executionMode: "auto",
+    href: "/agents/follow-up",
+  },
+  {
+    id: "contract-export",
+    actionType: "合同文档导出",
+    scope: "合同与报价",
+    allowedRoles: "财务主管、系统管理员",
+    executionMode: "approve",
+    href: INTEGRATIONS_HOME_PATH,
+  },
+  {
+    id: "bulk-sms",
+    actionType: "批量短信触达",
+    scope: "客户触达 Actions",
+    allowedRoles: "系统管理员",
+    executionMode: "blocked",
+    href: "/?tab=actions",
+  },
+  {
+    id: "run-retry",
+    actionType: "Run 失败重试",
+    scope: "Runs 运维",
+    allowedRoles: "运营管理员、系统管理员",
+    executionMode: "auto",
+    href: RUNS_HOME_PATH,
+  },
+];
+
+export const GOVERNANCE_SENSITIVE_FIELDS: SensitiveFieldPolicy[] = [
+  {
+    id: "phone",
+    field: "客户手机号",
+    resource: "CRM 客户资料",
+    strategy: "partial",
+    visibleTo: "销售经理、运营管理员",
+    href: `${INTEGRATIONS_HOME_PATH}?integration=crm-self`,
+  },
+  {
+    id: "id-card",
+    field: "身份证号",
+    resource: "实名认证",
+    strategy: "full",
+    visibleTo: "系统管理员",
+    href: INTEGRATIONS_HOME_PATH,
+  },
+  {
+    id: "bank-account",
+    field: "银行账号",
+    resource: "财务结算",
+    strategy: "hash",
+    visibleTo: "财务主管",
+    href: "/analytics",
+  },
+  {
+    id: "contract-amount",
+    field: "合同金额",
+    resource: "合同与报价",
+    strategy: "role_gated",
+    visibleTo: "销售经理、财务主管",
+    href: INTEGRATIONS_HOME_PATH,
+  },
+  {
+    id: "api-key",
+    field: "集成 API 密钥",
+    resource: "系统集成",
+    strategy: "full",
+    visibleTo: "系统管理员",
+    href: INTEGRATIONS_HOME_PATH,
+  },
+  {
+    id: "call-recording",
+    field: "通话录音 URL",
+    resource: "通话记录",
+    strategy: "partial",
+    visibleTo: "运营管理员",
+    href: INTEGRATIONS_HOME_PATH,
   },
 ];
 
@@ -254,7 +418,7 @@ export const GOVERNANCE_MODEL_POLICIES: ModelAccessPolicy[] = [
 export const GOVERNANCE_RELEASE_ENVIRONMENTS: ReleaseEnvironment[] = [
   {
     id: "test",
-    name: "测试",
+    name: "测试环境",
     requiresApproval: false,
     rollbackEnabled: true,
     checklist: [
@@ -265,13 +429,13 @@ export const GOVERNANCE_RELEASE_ENVIRONMENTS: ReleaseEnvironment[] = [
   },
   {
     id: "prod",
-    name: "生产",
+    name: "生产环境",
     requiresApproval: true,
     rollbackEnabled: true,
     checklist: [
       { id: "perm", label: "权限校验通过", passed: true },
       { id: "backup", label: "备份已创建", passed: true },
-      { id: "approval", label: "审批记录已归档", passed: true },
+      { id: "approval", label: "发布审批已通过", passed: true },
       { id: "monitor", label: "监控告警已启用", passed: true },
     ],
   },
@@ -344,9 +508,11 @@ export function getGovernanceMockData() {
   return {
     summary: GOVERNANCE_SUMMARY,
     roles: GOVERNANCE_ROLES,
+    actionPermissions: GOVERNANCE_ACTION_PERMISSIONS,
     approvalMatrix: GOVERNANCE_APPROVAL_MATRIX,
     dataPolicies: GOVERNANCE_DATA_POLICIES,
     modelPolicies: GOVERNANCE_MODEL_POLICIES,
+    sensitiveFields: GOVERNANCE_SENSITIVE_FIELDS,
     releaseEnvironments: GOVERNANCE_RELEASE_ENVIRONMENTS,
     auditLogs: GOVERNANCE_AUDIT_LOGS,
     riskAlerts: GOVERNANCE_RISK_ALERTS,

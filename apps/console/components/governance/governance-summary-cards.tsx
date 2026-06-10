@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import {
   CircleDollarSign,
+  EyeOff,
   GitBranch,
   ShieldCheck,
   Users,
+  Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -82,7 +84,7 @@ export function GovernanceSummaryCards({
 }) {
   return (
     <section
-      className="grid grid-cols-2 gap-2 xl:grid-cols-4"
+      className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"
       aria-label="治理概览"
     >
       <SummaryCard
@@ -98,6 +100,20 @@ export function GovernanceSummaryCards({
         delta={summary.approvalMatrixDelta}
         icon={<GitBranch className="size-3.5" aria-hidden />}
         iconClassName="bg-violet-100 text-violet-700"
+      />
+      <SummaryCard
+        label="动作权限"
+        value={summary.actionPermissions}
+        delta={summary.actionPermissionsDelta}
+        icon={<Zap className="size-3.5" aria-hidden />}
+        iconClassName="bg-amber-100 text-amber-700"
+      />
+      <SummaryCard
+        label="脱敏规则"
+        value={summary.fieldMaskingRules}
+        delta={summary.fieldMaskingRulesDelta}
+        icon={<EyeOff className="size-3.5" aria-hidden />}
+        iconClassName="bg-rose-100 text-rose-700"
       />
       <SummaryCard
         label="审计事件"

@@ -2,29 +2,163 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  ExternalLink,
+  MinusCircle,
+  RotateCcw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CaseSection } from "@/components/case/case-section";
 import { cn } from "@/lib/utils";
+import { agentDetailHref } from "@/lib/agents-nav";
 import {
   formatCost,
   formatDuration,
   modelLabel,
+  PIPELINE_STAGE_LABELS,
   type MockRun,
+  type PipelineStage,
+  type PipelineStageStatus,
 } from "@/lib/runs-mock";
 import { myActionHref } from "@/lib/my-actions-mock";
 import { workbenchPaneHref } from "@/lib/workbench-nav";
+import {
+  runDetailHref,
+  runsAgentFilterHref,
+  runsEvaluationHref,
+} from "@/lib/runs-nav";
 import { RunStatusBadge } from "./run-status-badge";
 
-const LOG_TABS = [
-  { id: "run", label: "运行日志" },
-  { id: "llm", label: "LLM 日志" },
-  { id: "tool", label: "工具调用" },
-  { id: "json", label: "输出 JSON" },
-] as const;
+const STAGE_STATUS_META: Record<
+  PipelineStageStatus,
+  { icon: typeof CheckCircle2; className: string; dotClass: string }
+> = {
+  ok: {
+    icon: CheckCircle2,
+    className: "text-emerald-600",
+    dotClass: "bg-emerald-500 ring-emerald-100",
+  },
+  warn: {
+    icon: RotateCcw,
+    className: "text-amber-700",
+    dotClass: "bg-amber-500 ring-amber-100",
+  },
+  fail: {
+    icon: AlertTriangle,
+    className: "text-red-600",
+    dotClass: "bg-red-500 ring-red-100",
+  },
+  skip: {
+    icon: MinusCircle,
+    className: "text-muted-foreground",
+    dotClass: "bg-muted-foreground/40 ring-muted/50",
+  },
+};
 
-type LogTab = (typeof LOG_TABS)[number]["id"];
+function PipelineStageRow({
+  stage,
+  isLast,
+  defaultOpen,
+}: {
+  stage: PipelineStage;
+  isLast: boolean;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const meta = STAGE_STATUS_META[stage.status];
+  const Icon = meta.icon;
+  const hasBody =
+    Boolean(stage.kv?.length) ||
+    Boolean(stage.bullets?.length) ||
+    Boolean(stage.code);
+
+  return (
+    <li className="relative pl-8">
+      {!isLast ? (
+        <span
+          className="bg-border absolute top-5 left-[0.6875rem] h-[calc(100%+0.25rem)] w-px"
+          aria-hidden
+        />
+      ) : null}
+      <span
+        className={cn(
+          "absolute top-1 left-0 flex size-[1.375rem] items-center justify-center rounded-full ring-4",
+          meta.dotClass
+        )}
+        aria-hidden
+      >
+        <Circle className="size-1.5 fill-white text-white" />
+      </span>
+
+      <div className="rounded-lg border border-border bg-card/60">
+        <button
+          type="button"
+          onClick={() => hasBody && setOpen((v) => !v)}
+          disabled={!hasBody}
+          className={cn(
+            "flex w-full items-start gap-2 px-3 py-2.5 text-left",
+            hasBody && "hover:bg-muted/30"
+          )}
+        >
+          <Icon className={cn("mt-0.5 size-3.5 shrink-0", meta.className)} aria-hidden />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold tracking-wide uppercase">
+                {PIPELINE_STAGE_LABELS[stage.id]}
+              </span>
+              <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
+                {stage.at}
+              </span>
+            </div>
+            <p className="mt-0.5 text-sm font-medium leading-snug">{stage.headline}</p>
+          </div>
+          {hasBody ? (
+            <ChevronDown
+              className={cn(
+                "text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform",
+                open && "rotate-180"
+              )}
+              aria-hidden
+            />
+          ) : null}
+        </button>
+
+        {open && hasBody ? (
+          <div className="space-y-2 border-t border-border px-3 py-2.5">
+            {stage.kv?.length ? (
+              <dl className="grid gap-1.5 sm:grid-cols-2">
+                {stage.kv.map((item) => (
+                  <div key={item.label} className="min-w-0">
+                    <dt className="text-muted-foreground text-[10px]">{item.label}</dt>
+                    <dd className="text-xs font-medium leading-snug">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {stage.bullets?.length ? (
+              <ul className="text-muted-foreground list-inside list-disc space-y-0.5 text-xs leading-relaxed">
+                {stage.bullets.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            ) : null}
+            {stage.code ? (
+              <pre className="bg-muted/50 overflow-x-auto rounded-md border border-border p-2.5 font-mono text-[10px] leading-relaxed">
+                {stage.code}
+              </pre>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </li>
+  );
+}
 
 export function RunsDetailPanel({
   run,
@@ -33,12 +167,12 @@ export function RunsDetailPanel({
   run: MockRun;
   hk?: string;
 }) {
-  const [logTab, setLogTab] = useState<LogTab>("run");
   const listContext = { hk, from: "active" as const };
+  const failedStageIndex = run.pipeline.findIndex((s) => s.status === "fail");
 
   return (
     <div className="space-y-4 p-4 lg:p-5">
-      <header className="space-y-2">
+      <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-mono text-base font-semibold">{run.id}</h1>
           <RunStatusBadge status={run.status} />
@@ -46,10 +180,34 @@ export function RunsDetailPanel({
             <Badge variant="secondary">{run.analysisRound} 次分析</Badge>
           ) : null}
         </div>
-        <p className="text-muted-foreground text-sm">
-          {run.agentName} · {run.triggerSource} · {modelLabel(run.model)}
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          <Link
+            href={agentDetailHref(run.agentId)}
+            className="text-foreground hover:text-primary font-medium hover:underline"
+          >
+            {run.agentName}
+          </Link>
+          {" · "}
+          {run.triggerSource}
+          {" · "}
+          {modelLabel(run.model)}
+          {" · "}
+          <span className="font-mono text-xs">{run.relatedObjectId}</span>
         </p>
+
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 text-xs"
+            render={
+              <Link href={agentDetailHref(run.agentId)} scroll={false} />
+            }
+          >
+            Agent 配置
+            <ExternalLink className="size-3" aria-hidden />
+          </Button>
           {run.actionId ? (
             <Button
               type="button"
@@ -60,7 +218,7 @@ export function RunsDetailPanel({
                 <Link href={myActionHref(run.actionId, hk)} scroll={false} />
               }
             >
-              查看 Action
+              Action 流转
               <ChevronRight className="size-3" aria-hidden />
             </Button>
           ) : null}
@@ -77,7 +235,7 @@ export function RunsDetailPanel({
                 />
               }
             >
-              查看 Agent 建议
+              工作台
               <ChevronRight className="size-3" aria-hidden />
             </Button>
           ) : null}
@@ -86,59 +244,35 @@ export function RunsDetailPanel({
             size="sm"
             variant="outline"
             className="h-7 gap-1 text-xs"
-            render={<Link href={`/agents`} scroll={false} />}
+            render={
+              <Link href={runsEvaluationHref(run.agentId, hk)} scroll={false} />
+            }
           >
-            查看 Agent
+            效果评估
             <ExternalLink className="size-3" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1 text-xs"
+            render={
+              <Link
+                href={runsAgentFilterHref(run.agentId, hk)}
+                scroll={false}
+              />
+            }
+          >
+            同 Agent Runs
           </Button>
         </div>
       </header>
-
-      <CaseSection title="运行步骤">
-        <ol className="relative space-y-3 border-l border-border pl-4">
-          {run.steps.map((step, index) => (
-            <li key={`${step.at}-${index}`} className="relative">
-              <span className="bg-primary absolute top-1.5 -left-[1.3rem] size-2 rounded-full" />
-              <p className="text-muted-foreground font-mono text-[11px] tabular-nums">
-                {step.at}
-              </p>
-              <p className="text-sm font-medium">{step.title}</p>
-              {step.detail ? (
-                <p className="text-muted-foreground mt-0.5 text-xs">{step.detail}</p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </CaseSection>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <CaseSection title="输入上下文" bodyClassName="p-3">
-          <dl className="space-y-2">
-            {run.inputContext.map((item) => (
-              <div key={item.label}>
-                <dt className="text-muted-foreground text-[11px]">{item.label}</dt>
-                <dd className="text-sm font-medium">{item.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </CaseSection>
-        <CaseSection title="输出结果" bodyClassName="p-3">
-          <dl className="space-y-2">
-            {run.outputResult.map((item) => (
-              <div key={item.label}>
-                <dt className="text-muted-foreground text-[11px]">{item.label}</dt>
-                <dd className="text-sm font-medium">{item.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </CaseSection>
-      </div>
 
       <CaseSection title="运行指标">
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "耗时", value: formatDuration(run.durationSec) },
-            { label: "成本", value: formatCost(run.costYuan) },
+            { label: "模型成本", value: formatCost(run.costYuan) },
             { label: "模型", value: modelLabel(run.model) },
             { label: "版本", value: run.version },
           ].map((item) => (
@@ -154,54 +288,49 @@ export function RunsDetailPanel({
       </CaseSection>
 
       <CaseSection
-        title="日志"
+        title="Pipeline 时间线"
         action={
-          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs">
-            查看完整日志
-            <ExternalLink className="ml-1 size-3" aria-hidden />
-          </Button>
+          <span className="text-muted-foreground text-[10px]">
+            调试 / 审计 / 信任
+          </span>
         }
       >
-        <div className="mb-3 flex flex-wrap gap-1 border-b border-border pb-2">
-          {LOG_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setLogTab(tab.id)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                logTab === tab.id
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
+        <ol className="space-y-2">
+          {run.pipeline.map((stage, index) => (
+            <PipelineStageRow
+              key={stage.id}
+              stage={stage}
+              isLast={index === run.pipeline.length - 1}
+              defaultOpen={
+                index === failedStageIndex ||
+                (failedStageIndex === -1 && index === run.pipeline.length - 1)
+              }
+            />
           ))}
-        </div>
+        </ol>
+      </CaseSection>
+
+      <CaseSection title="运行日志">
         <pre className="bg-muted/40 max-h-48 overflow-auto rounded-lg border border-border p-3 font-mono text-[11px] leading-relaxed">
-          {logTab === "run"
-            ? run.logs
-                .map(
-                  (line) =>
-                    `[${line.at}] ${line.level} ${line.message}`
-                )
-                .join("\n")
-            : logTab === "llm"
-              ? `// LLM 推理日志（演示）\nmodel=${modelLabel(run.model)}\ntokens_in=842 tokens_out=414\nlatency=${formatDuration(run.durationSec * 0.65)}`
-              : logTab === "tool"
-                ? `// 工具调用（演示）\ncrm.getOpportunity("${run.relatedObjectId}")\nfsm.getWorkOrder(...)\nstatus=ok`
-                : JSON.stringify(
-                    {
-                      runId: run.id,
-                      insight: run.outputResult[0]?.value,
-                      actionGenerated: run.actionGenerated,
-                      actionId: run.actionId,
-                    },
-                    null,
-                    2
-                  )}
+          {run.logs
+            .map((line) => `[${line.at}] ${line.level} ${line.message}`)
+            .join("\n")}
         </pre>
+        <p className="text-muted-foreground mt-2 text-xs">
+          <Link
+            href={runDetailHref(run.id, hk)}
+            className="hover:text-primary"
+          >
+            分享此 Run 链接
+          </Link>
+          {" · "}
+          <Link
+            href={runsEvaluationHref(run.agentId, hk)}
+            className="hover:text-primary"
+          >
+            在效果评估中查看同 Agent 样本
+          </Link>
+        </p>
       </CaseSection>
     </div>
   );
@@ -211,7 +340,9 @@ export function RunsDetailEmpty() {
   return (
     <div className="text-muted-foreground flex h-full min-h-[16rem] flex-col items-center justify-center px-6 text-center text-sm">
       <p>选择左侧 Run 查看执行详情</p>
-      <p className="mt-1 text-xs">含触发、推理、工具调用与 Action 产出链路</p>
+      <p className="mt-1 text-xs">
+        含 Trigger → 输入快照 → 规则 → LLM → 工具 → 输出 → Action 全链路
+      </p>
     </div>
   );
 }

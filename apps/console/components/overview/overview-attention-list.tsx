@@ -11,7 +11,7 @@ const ICONS = [TriangleAlert, Clock, MessageSquareWarning, AlertCircle] as const
 export function OverviewAttentionList({ items, hk }: { items: OverviewAttentionItem[]; hk?: string }) {
   return (
     <Card className="flex h-full flex-col rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">最近待关注事项</h2>
+      <h2 className="mb-4 text-sm font-semibold">异常与待关注</h2>
       <ul className="min-h-0 flex-1 space-y-3">
         {items.map((item, index) => {
           const Icon = ICONS[index % ICONS.length];

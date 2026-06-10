@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -47,7 +48,7 @@ export function SidebarBrand({
 
   const link = (
     <Link
-      href="/"
+      href={OVERVIEW_HOME_PATH}
       scroll={false}
       className={cn(
         "hover:opacity-90 flex min-w-0 items-center transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar rounded-lg",

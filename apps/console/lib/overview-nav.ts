@@ -33,3 +33,15 @@ export function overviewAgentsHref(): string {
 export function overviewIntegrationsHref(): string {
   return INTEGRATIONS_HOME_PATH;
 }
+
+export function overviewAnalyticsHref(hk?: string): string {
+  if (!hk) return "/analytics";
+  return `/analytics?hk=${encodeURIComponent(hk)}`;
+}
+
+export function overviewRunsHref(hk?: string): string {
+  const q = new URLSearchParams();
+  if (hk) q.set("hk", hk);
+  const s = q.toString();
+  return s ? `${RUNS_HOME_PATH}?${s}` : RUNS_HOME_PATH;
+}

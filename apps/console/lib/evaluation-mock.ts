@@ -1,12 +1,3 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Bot,
-  Calculator,
-  ClipboardList,
-  Coins,
-  FileSearch,
-  Sparkles,
-} from "lucide-react";
 import { RUNS_HOME_PATH, runDetailHref } from "./runs-nav";
 import { workbenchHref, workbenchPaneHref } from "./workbench-nav";
 import { myActionHref } from "./my-actions-mock";
@@ -22,15 +13,38 @@ export type EvaluationFilters = {
   actionType: string;
 };
 
-export type EvaluationKpi = {
-  key: string;
+export type EvaluationKpiKey =
+  | "accuracy"
+  | "adoption"
+  | "modified"
+  | "rejected"
+  | "completion"
+  | "feedback"
+  | "falsePositive";
+
+export type EvaluationOpsMetricKey =
+  | "conversionIncrement"
+  | "cost"
+  | "latency"
+  | "roi";
+
+export type EvaluationOpsMetric = {
+  key: EvaluationOpsMetricKey;
   label: string;
   value: string;
   deltaText: string;
   tone: "up" | "down" | "flat";
   positiveIsGood: boolean;
-  icon: LucideIcon;
-  iconClassName: string;
+  hint?: string;
+};
+
+export type EvaluationKpi = {
+  key: EvaluationKpiKey;
+  label: string;
+  value: string;
+  deltaText: string;
+  tone: "up" | "down" | "flat";
+  positiveIsGood: boolean;
 };
 
 export type EvaluationTrendPoint = {
@@ -48,13 +62,35 @@ export type EvaluationActionStatusSeries = {
 export type EvaluationAgentRow = {
   id: string;
   name: string;
-  icon: LucideIcon;
-  iconClassName: string;
   suggestions: number;
+  accuracyRate: number;
   adoptionRate: number;
+  modificationRate: number;
+  falsePositiveRate: number;
   feedbackRate: number;
   completionRate: number;
   businessValue: number;
+};
+
+export type EvaluationVersionRow = {
+  id: string;
+  agentName: string;
+  version: string;
+  suggestions: number;
+  accuracyRate: number;
+  adoptionRate: number;
+  falsePositiveRate: number;
+  deployedAt: string;
+};
+
+export type EvaluationRuleRow = {
+  id: string;
+  ruleName: string;
+  agentName: string;
+  triggerCount: number;
+  accuracyRate: number;
+  falsePositiveRate: number;
+  adoptionRate: number;
 };
 
 export type EvaluationProblemCase = {
@@ -70,35 +106,52 @@ export type EvaluationRoleInsight = {
   deltaText: string;
 };
 
+export type EvaluationModuleKey =
+  | "pending_sign"
+  | "quote_mgmt"
+  | "inspection_wo"
+  | "collection";
+
 export type EvaluationModuleInsight = {
+  key: EvaluationModuleKey;
   label: string;
   value: number;
   deltaText: string;
-  icon: LucideIcon;
-  iconClassName: string;
 };
+
+export type EvaluationQualitySampleTag =
+  | "false_positive"
+  | "needs_edit"
+  | "rejected"
+  | "low_confidence";
 
 export type EvaluationQualitySample = {
   time: string;
   agentName: string;
+  agentVersion?: string;
   actionLabel: string;
   issue: string;
   suggestion: string;
-  tag: "false_positive" | "needs_edit";
+  tag: EvaluationQualitySampleTag;
+  severity: "high" | "medium" | "low";
   actionId?: string;
   runId?: string;
   workOrderKey?: string;
+  ruleId?: string;
 };
 
 export type EvaluationSnapshot = {
   filters: EvaluationFilters;
   kpis: EvaluationKpi[];
+  opsMetrics: EvaluationOpsMetric[];
   suggestionTrend: EvaluationTrendPoint[];
   actionStatusTrend: {
     labels: string[];
     series: EvaluationActionStatusSeries[];
   };
   agents: EvaluationAgentRow[];
+  versions: EvaluationVersionRow[];
+  rules: EvaluationRuleRow[];
   problemCases: EvaluationProblemCase[];
   roles: EvaluationRoleInsight[];
   modules: EvaluationModuleInsight[];
@@ -156,9 +209,12 @@ export function getEvaluationSnapshot(
   return {
     filters: resolved,
     kpis: EVALUATION_KPIS,
+    opsMetrics: OPS_METRICS,
     suggestionTrend: SUGGESTION_TREND,
     actionStatusTrend: ACTION_STATUS_TREND,
     agents: AGENT_ROWS,
+    versions: VERSION_ROWS,
+    rules: RULE_ROWS,
     problemCases: PROBLEM_CASES,
     roles: ROLE_INSIGHTS,
     modules: MODULE_INSIGHTS,
@@ -168,14 +224,12 @@ export function getEvaluationSnapshot(
 
 const EVALUATION_KPIS: EvaluationKpi[] = [
   {
-    key: "suggestions",
-    label: "建议数",
-    value: "128",
-    deltaText: "较前 7 天 ↑12%",
+    key: "accuracy",
+    label: "建议准确率",
+    value: "84%",
+    deltaText: "较前 7 天 ↑3pp",
     tone: "up",
     positiveIsGood: true,
-    icon: Sparkles,
-    iconClassName: "bg-primary/10 text-primary",
   },
   {
     key: "adoption",
@@ -184,8 +238,6 @@ const EVALUATION_KPIS: EvaluationKpi[] = [
     deltaText: "较前 7 天 ↑6pp",
     tone: "up",
     positiveIsGood: true,
-    icon: Bot,
-    iconClassName: "bg-sky-100 text-sky-700",
   },
   {
     key: "modified",
@@ -194,8 +246,6 @@ const EVALUATION_KPIS: EvaluationKpi[] = [
     deltaText: "较前 7 天 ↓2pp",
     tone: "down",
     positiveIsGood: true,
-    icon: ClipboardList,
-    iconClassName: "bg-amber-100 text-amber-700",
   },
   {
     key: "rejected",
@@ -204,18 +254,6 @@ const EVALUATION_KPIS: EvaluationKpi[] = [
     deltaText: "较前 7 天 ↓3pp",
     tone: "down",
     positiveIsGood: true,
-    icon: FileSearch,
-    iconClassName: "bg-red-100 text-red-600",
-  },
-  {
-    key: "feedback",
-    label: "反馈率",
-    value: "72%",
-    deltaText: "较前 7 天 ↑5pp",
-    tone: "up",
-    positiveIsGood: true,
-    icon: Bot,
-    iconClassName: "bg-emerald-100 text-emerald-700",
   },
   {
     key: "completion",
@@ -224,18 +262,61 @@ const EVALUATION_KPIS: EvaluationKpi[] = [
     deltaText: "较前 7 天 ↑4pp",
     tone: "up",
     positiveIsGood: true,
-    icon: Calculator,
-    iconClassName: "bg-violet-100 text-violet-700",
   },
   {
-    key: "value",
-    label: "业务价值(估算)",
+    key: "feedback",
+    label: "反馈率",
+    value: "72%",
+    deltaText: "较前 7 天 ↑5pp",
+    tone: "up",
+    positiveIsGood: true,
+  },
+  {
+    key: "falsePositive",
+    label: "误报率",
+    value: "6%",
+    deltaText: "较前 7 天 ↓1pp",
+    tone: "down",
+    positiveIsGood: true,
+  },
+];
+
+const OPS_METRICS: EvaluationOpsMetric[] = [
+  {
+    key: "conversionIncrement",
+    label: "业务转化增量",
     value: "¥328,600",
     deltaText: "较前 7 天 ↑18%",
     tone: "up",
     positiveIsGood: true,
-    icon: Coins,
-    iconClassName: "bg-primary/10 text-primary",
+    hint: "归因于 Agent 建议的签约/回款增量（估算）",
+  },
+  {
+    key: "cost",
+    label: "单次建议成本",
+    value: "¥0.42",
+    deltaText: "较前 7 天 ↓8%",
+    tone: "down",
+    positiveIsGood: true,
+    hint: "模型推理 + 集成写回均摊",
+  },
+  {
+    key: "latency",
+    label: "P95 延迟",
+    value: "2.4s",
+    deltaText: "较前 7 天 ↓0.3s",
+    tone: "down",
+    positiveIsGood: true,
+    hint: "建议生成至可分发",
+  },
+  {
+    key: "roi",
+    label: "ROI（估算）",
+    value: "4.2×",
+    deltaText: "较前 7 天 ↑0.6×",
+    tone: "up",
+    positiveIsGood: true,
+    hint: "转化增量 / 运行成本",
   },
 ];
 
@@ -283,10 +364,11 @@ const AGENT_ROWS: EvaluationAgentRow[] = [
   {
     id: "follow-up",
     name: "Follow-up Agent",
-    icon: Sparkles,
-    iconClassName: "bg-primary/10 text-primary",
     suggestions: 92,
+    accuracyRate: 88,
     adoptionRate: 81,
+    modificationRate: 9,
+    falsePositiveRate: 4,
     feedbackRate: 62,
     completionRate: 51,
     businessValue: 98000,
@@ -294,10 +376,11 @@ const AGENT_ROWS: EvaluationAgentRow[] = [
   {
     id: "estimate",
     name: "Estimate Agent",
-    icon: Calculator,
-    iconClassName: "bg-sky-100 text-sky-700",
     suggestions: 69,
+    accuracyRate: 76,
     adoptionRate: 42,
+    modificationRate: 18,
+    falsePositiveRate: 8,
     feedbackRate: 67,
     completionRate: 38,
     businessValue: 86000,
@@ -305,10 +388,11 @@ const AGENT_ROWS: EvaluationAgentRow[] = [
   {
     id: "inspection",
     name: "Inspection Agent",
-    icon: FileSearch,
-    iconClassName: "bg-amber-100 text-amber-700",
     suggestions: 58,
+    accuracyRate: 72,
     adoptionRate: 39,
+    modificationRate: 14,
+    falsePositiveRate: 9,
     feedbackRate: 44,
     completionRate: 35,
     businessValue: 72000,
@@ -316,13 +400,96 @@ const AGENT_ROWS: EvaluationAgentRow[] = [
   {
     id: "collection",
     name: "Collection Agent",
-    icon: Coins,
-    iconClassName: "bg-emerald-100 text-emerald-700",
     suggestions: 48,
+    accuracyRate: 68,
     adoptionRate: 31,
+    modificationRate: 16,
+    falsePositiveRate: 11,
     feedbackRate: 36,
     completionRate: 28,
     businessValue: 59000,
+  },
+];
+
+const VERSION_ROWS: EvaluationVersionRow[] = [
+  {
+    id: "follow-up-v2.4",
+    agentName: "Follow-up Agent",
+    version: "v2.4",
+    suggestions: 52,
+    accuracyRate: 90,
+    adoptionRate: 84,
+    falsePositiveRate: 3,
+    deployedAt: "05/28",
+  },
+  {
+    id: "follow-up-v2.3",
+    agentName: "Follow-up Agent",
+    version: "v2.3",
+    suggestions: 40,
+    accuracyRate: 85,
+    adoptionRate: 78,
+    falsePositiveRate: 5,
+    deployedAt: "05/12",
+  },
+  {
+    id: "estimate-v1.8",
+    agentName: "Estimate Agent",
+    version: "v1.8",
+    suggestions: 38,
+    accuracyRate: 79,
+    adoptionRate: 45,
+    falsePositiveRate: 7,
+    deployedAt: "05/20",
+  },
+  {
+    id: "estimate-v1.7",
+    agentName: "Estimate Agent",
+    version: "v1.7",
+    suggestions: 31,
+    accuracyRate: 72,
+    adoptionRate: 38,
+    falsePositiveRate: 10,
+    deployedAt: "04/30",
+  },
+];
+
+const RULE_ROWS: EvaluationRuleRow[] = [
+  {
+    id: "rule-stale-7d",
+    ruleName: "停滞 7 天唤醒",
+    agentName: "Follow-up Agent",
+    triggerCount: 34,
+    accuracyRate: 91,
+    falsePositiveRate: 3,
+    adoptionRate: 86,
+  },
+  {
+    id: "rule-quote-band",
+    ruleName: "报价区间校验",
+    agentName: "Estimate Agent",
+    triggerCount: 28,
+    accuracyRate: 74,
+    falsePositiveRate: 9,
+    adoptionRate: 41,
+  },
+  {
+    id: "rule-inspection-dup",
+    ruleName: "巡检去重窗口",
+    agentName: "Inspection Agent",
+    triggerCount: 22,
+    accuracyRate: 70,
+    falsePositiveRate: 12,
+    adoptionRate: 36,
+  },
+  {
+    id: "rule-collection-partial",
+    ruleName: "部分回款识别",
+    agentName: "Collection Agent",
+    triggerCount: 19,
+    accuracyRate: 65,
+    falsePositiveRate: 14,
+    adoptionRate: 29,
   },
 ];
 
@@ -367,32 +534,28 @@ const ROLE_INSIGHTS: EvaluationRoleInsight[] = [
 
 const MODULE_INSIGHTS: EvaluationModuleInsight[] = [
   {
+    key: "pending_sign",
     label: "待签约",
     value: 128,
     deltaText: "↑12%",
-    icon: Sparkles,
-    iconClassName: "bg-primary/10 text-primary",
   },
   {
+    key: "quote_mgmt",
     label: "报价管理",
     value: 86,
     deltaText: "↑9%",
-    icon: Calculator,
-    iconClassName: "bg-sky-100 text-sky-700",
   },
   {
+    key: "inspection_wo",
     label: "巡检工单",
     value: 64,
     deltaText: "↑6%",
-    icon: FileSearch,
-    iconClassName: "bg-amber-100 text-amber-700",
   },
   {
+    key: "collection",
     label: "回款催收",
     value: 52,
     deltaText: "↑4%",
-    icon: Coins,
-    iconClassName: "bg-emerald-100 text-emerald-700",
   },
 ];
 
@@ -400,51 +563,91 @@ const QUALITY_SAMPLES: EvaluationQualitySample[] = [
   {
     time: "06/05 10:23",
     agentName: "Follow-up Agent",
+    agentVersion: "v2.4",
     actionLabel: "电话回访",
     issue: "客户已成交仍建议回访，触发条件未识别最新状态",
     suggestion: "优化客户状态识别规则",
     tag: "false_positive",
+    severity: "high",
     actionId: "ma-1",
     runId: "RUN-20250609-1287",
     workOrderKey: "demo:sz-zhizao-001",
+    ruleId: "rule-stale-7d",
   },
   {
     time: "06/05 09:48",
     agentName: "Estimate Agent",
+    agentVersion: "v1.8",
     actionLabel: "报价生成",
     issue: "报价金额与历史区间偏差过大，缺少折扣说明",
     suggestion: "复核价格区间与折扣规则",
     tag: "needs_edit",
+    severity: "high",
     actionId: "ma-2",
     runId: "RUN-20250609-1287",
+    ruleId: "rule-quote-band",
   },
   {
     time: "06/04 16:12",
     agentName: "Inspection Agent",
+    agentVersion: "v1.2",
     actionLabel: "巡检提醒",
     issue: "重复推送同一工单巡检提醒，未去重",
     suggestion: "增加巡检 Action 去重窗口",
     tag: "false_positive",
+    severity: "medium",
     actionId: "ma-4",
+    ruleId: "rule-inspection-dup",
   },
   {
     time: "06/04 11:05",
     agentName: "Collection Agent",
+    agentVersion: "v1.0",
     actionLabel: "催收跟进",
     issue: "客户已部分回款仍触发全额催收话术",
     suggestion: "同步回款进度后再生成 Action",
     tag: "needs_edit",
+    severity: "medium",
     workOrderKey: "demo:sz-zhizao-001",
+    ruleId: "rule-collection-partial",
   },
   {
     time: "06/03 15:40",
     agentName: "Follow-up Agent",
+    agentVersion: "v2.3",
     actionLabel: "停滞唤醒",
     issue: "建议话术与客户行业不匹配，采纳后被修改",
     suggestion: "补充行业模板与上下文摘要",
     tag: "needs_edit",
+    severity: "low",
     actionId: "ma-4",
     runId: "RUN-20250609-1287",
+    ruleId: "rule-stale-7d",
+  },
+  {
+    time: "06/03 09:15",
+    agentName: "Estimate Agent",
+    agentVersion: "v1.7",
+    actionLabel: "报价生成",
+    issue: "低置信度规则仍自动分发，运营直接拒绝",
+    suggestion: "提高置信度阈值或改为人工审核",
+    tag: "rejected",
+    severity: "high",
+    actionId: "ma-2",
+    runId: "RUN-20250609-1287",
+    ruleId: "rule-quote-band",
+  },
+  {
+    time: "06/02 14:22",
+    agentName: "Inspection Agent",
+    agentVersion: "v1.2",
+    actionLabel: "巡检提醒",
+    issue: "置信度 0.52，上下文不足仍生成建议",
+    suggestion: "补充工单状态快照后再触发",
+    tag: "low_confidence",
+    severity: "medium",
+    workOrderKey: "demo:sz-zhizao-001",
+    ruleId: "rule-inspection-dup",
   },
 ];
 
@@ -553,7 +756,37 @@ export function formatEvaluationYuan(value: number): string {
   return `¥${value.toLocaleString("zh-CN")}`;
 }
 
-export const QUALITY_SAMPLE_TAG_LABELS = {
+export const QUALITY_SAMPLE_TAG_LABELS: Record<
+  EvaluationQualitySampleTag,
+  string
+> = {
   false_positive: "误报",
   needs_edit: "需修改",
-} as const;
+  rejected: "已拒绝",
+  low_confidence: "低置信",
+};
+
+export function evaluationAgentVersionHref(
+  versionId: string,
+  hk?: string
+): string {
+  const q = new URLSearchParams();
+  q.set("agent", "follow-up");
+  q.set("version", versionId);
+  if (hk) q.set("hk", hk);
+  return `/agents/follow-up/settings?${q.toString()}`;
+}
+
+export function evaluationRuleHref(ruleId: string, hk?: string): string {
+  const q = new URLSearchParams();
+  q.set("rule", ruleId);
+  if (hk) q.set("hk", hk);
+  return `/agents?${q.toString()}`;
+}
+
+export function evaluationMyActionsHref(hk?: string): string {
+  const q = new URLSearchParams();
+  q.set("tab", "actions");
+  if (hk) q.set("hk", hk);
+  return `/?${q.toString()}`;
+}

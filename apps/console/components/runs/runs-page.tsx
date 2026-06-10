@@ -106,7 +106,8 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
               </h1>
             </div>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              查看 Agent 的触发、模型调用、工具执行与 Action 产出（演示数据）
+              观测 Agent 技术运行时状态：触发链路、模型成本、工具 I/O 与 Action
+              产出（非业务 Action 流转）
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

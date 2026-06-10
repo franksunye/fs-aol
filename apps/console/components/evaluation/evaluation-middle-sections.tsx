@@ -1,82 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import { Calculator, Coins, FileSearch, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { EvaluationComparison } from "./evaluation-comparison";
 import {
-  evaluationAgentsHref,
   evaluationProblemCaseHref,
-  formatEvaluationYuan,
   type EvaluationAgentRow,
   type EvaluationModuleInsight,
+  type EvaluationModuleKey,
   type EvaluationProblemCase,
   type EvaluationRoleInsight,
+  type EvaluationRuleRow,
+  type EvaluationVersionRow,
 } from "@/lib/evaluation-mock";
 
-export function EvaluationAgentTable({
-  agents,
-  hk,
-}: {
-  agents: EvaluationAgentRow[];
-  hk?: string;
-}) {
-  return (
-    <Card className="rounded-xl border-border bg-card p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Agent 效果对比</h2>
-        <Link href={evaluationAgentsHref(undefined, hk)} className="text-primary text-xs hover:underline">
-          查看全部 Agents →
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] text-left text-xs">
-          <thead>
-            <tr className="text-muted-foreground border-b border-border">
-              <th className="pb-2 font-medium">Agent</th>
-              <th className="pb-2 text-right font-medium">建议数</th>
-              <th className="pb-2 text-right font-medium">采纳率</th>
-              <th className="pb-2 text-right font-medium">反馈率</th>
-              <th className="pb-2 text-right font-medium">完成率</th>
-              <th className="pb-2 text-right font-medium">业务价值</th>
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((agent) => {
-              const Icon = agent.icon;
-              return (
-                <tr key={agent.id} className="border-b border-border/60 last:border-0">
-                  <td className="py-2.5">
-                    <Link
-                      href={evaluationAgentsHref(agent.id, hk)}
-                      className="hover:text-primary flex items-center gap-2 font-medium"
-                    >
-                      <span
-                        className={cn(
-                          "flex size-7 items-center justify-center rounded-lg",
-                          agent.iconClassName
-                        )}
-                      >
-                        <Icon className="size-3.5" aria-hidden />
-                      </span>
-                      {agent.name}
-                    </Link>
-                  </td>
-                  <td className="py-2.5 text-right tabular-nums">{agent.suggestions}</td>
-                  <td className="py-2.5 text-right tabular-nums">{agent.adoptionRate}%</td>
-                  <td className="py-2.5 text-right tabular-nums">{agent.feedbackRate}%</td>
-                  <td className="py-2.5 text-right tabular-nums">{agent.completionRate}%</td>
-                  <td className="py-2.5 text-right tabular-nums">
-                    {formatEvaluationYuan(agent.businessValue)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
+const MODULE_ICONS: Record<EvaluationModuleKey, LucideIcon> = {
+  pending_sign: Sparkles,
+  quote_mgmt: Calculator,
+  inspection_wo: FileSearch,
+  collection: Coins,
+};
+
+const MODULE_ICON_CLASS: Record<EvaluationModuleKey, string> = {
+  pending_sign: "bg-primary/10 text-primary",
+  quote_mgmt: "bg-sky-100 text-sky-700",
+  inspection_wo: "bg-amber-100 text-amber-700",
+  collection: "bg-emerald-100 text-emerald-700",
+};
 
 export function EvaluationProblemCases({
   cases,
@@ -87,7 +40,8 @@ export function EvaluationProblemCases({
 }) {
   return (
     <Card className="rounded-xl border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold">问题案例 Top 5</h2>
+      <h2 className="mb-1 text-sm font-semibold">失败案例 Top 5</h2>
+      <p className="text-muted-foreground mb-4 text-xs">高频失败模式，可跳转排查</p>
       <ol className="space-y-3">
         {cases.map((item) => (
           <li key={item.rank}>
@@ -113,13 +67,11 @@ export function EvaluationProblemCases({
 export function EvaluationDimensionInsights({
   roles,
   modules,
-  hk,
 }: {
   roles: EvaluationRoleInsight[];
   modules: EvaluationModuleInsight[];
   hk?: string;
 }) {
-  void hk;
   return (
     <Card className="rounded-xl border-border bg-card p-5 shadow-sm">
       <h2 className="mb-4 text-sm font-semibold">维度洞察 / 角色详情</h2>
@@ -144,7 +96,7 @@ export function EvaluationDimensionInsights({
           <h3 className="text-muted-foreground mb-2 text-[11px] font-medium">受影响最大的模块</h3>
           <div className="grid grid-cols-2 gap-2">
             {modules.map((mod) => {
-              const Icon = mod.icon;
+              const Icon = MODULE_ICONS[mod.key];
               return (
                 <div
                   key={mod.label}
@@ -154,7 +106,7 @@ export function EvaluationDimensionInsights({
                     <span
                       className={cn(
                         "flex size-8 items-center justify-center rounded-lg",
-                        mod.iconClassName
+                        MODULE_ICON_CLASS[mod.key]
                       )}
                     >
                       <Icon className="size-4" aria-hidden />
@@ -178,12 +130,16 @@ export function EvaluationDimensionInsights({
 
 export function EvaluationMiddleSections({
   agents,
+  versions,
+  rules,
   problemCases,
   roles,
   modules,
   hk,
 }: {
   agents: EvaluationAgentRow[];
+  versions: EvaluationVersionRow[];
+  rules: EvaluationRuleRow[];
   problemCases: EvaluationProblemCase[];
   roles: EvaluationRoleInsight[];
   modules: EvaluationModuleInsight[];
@@ -191,7 +147,12 @@ export function EvaluationMiddleSections({
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <EvaluationAgentTable agents={agents} hk={hk} />
+      <EvaluationComparison
+        agents={agents}
+        versions={versions}
+        rules={rules}
+        hk={hk}
+      />
       <EvaluationProblemCases cases={problemCases} hk={hk} />
       <EvaluationDimensionInsights roles={roles} modules={modules} hk={hk} />
     </div>
