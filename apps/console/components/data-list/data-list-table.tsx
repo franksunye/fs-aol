@@ -75,7 +75,7 @@ export function DataListTable<TData>({
         "w-full border-separate border-spacing-0 text-sm",
         tableClassName
       )}
-      style={{ minWidth }}
+      style={minWidth > 0 ? { minWidth } : undefined}
     >
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (

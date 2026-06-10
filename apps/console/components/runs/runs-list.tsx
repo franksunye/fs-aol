@@ -165,7 +165,7 @@ export function RunsList({
         columns={columns}
         layout={layout}
         density={density}
-        minWidth={layout === "narrow" ? 640 : 960}
+        minWidth={layout === "narrow" ? 0 : 960}
         stickyTitleColumn={false}
         userHiddenColumnIds={hiddenIds}
         getRowId={(row) => row.id}

@@ -79,7 +79,8 @@ export function ActionReviewTable({
                 href={href}
                 scroll={false}
                 className={cn(
-                  "line-clamp-2 text-sm font-medium leading-snug hover:underline",
+                  "text-sm font-medium leading-snug hover:underline",
+                  layout === "narrow" ? "line-clamp-1" : "line-clamp-2",
                   selected ? "text-primary" : "text-foreground"
                 )}
                 onFocus={() => router.prefetch(href)}
@@ -87,12 +88,10 @@ export function ActionReviewTable({
                 {display.title}
               </Link>
               {layout === "narrow" ? (
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-muted-foreground truncate text-[11px]">
-                    {display.sourceAgent.label}
-                  </p>
-                  <BadgeStack items={followUpListBadges(item)} max={3} size="xs" />
-                </div>
+                <p className="text-muted-foreground mt-0.5 truncate text-[10px] leading-tight">
+                  {display.relatedObject.id} · {display.statusLabel} ·{" "}
+                  {display.timestamp.replace(/^建议\s*/, "")}
+                </p>
               ) : (
                 <div className="mt-1 sm:hidden">
                   <BadgeStack items={followUpListBadges(item)} max={3} size="xs" />
@@ -225,7 +224,8 @@ export function ActionReviewTable({
         layout={layout}
         density={density}
         userHiddenColumnIds={userHiddenColumnIds}
-        minWidth={layout === "narrow" ? 520 : 880}
+        minWidth={layout === "narrow" ? 0 : 880}
+        stickyTitleColumn={layout !== "narrow"}
         getRowId={(row) => row.id}
         getRowProps={(row) => {
           const item = row.original;

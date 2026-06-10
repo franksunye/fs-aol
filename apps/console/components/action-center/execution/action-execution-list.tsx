@@ -16,6 +16,7 @@ import {
   executionActionHref,
   type ExecutionAction,
 } from "@/lib/action-execution-mock";
+import { EXECUTION_STATUS_LABELS } from "@/lib/execution-status";
 import {
   parseExecutionSortKey,
   sortExecutionActions,
@@ -71,6 +72,7 @@ export function ActionExecutionList({
 }) {
   const router = useRouter();
   const { density, setDensity } = useDataListDensity();
+  const effectiveDensity = layout === "narrow" ? "compact" : density;
   const {
     hiddenIds,
     isColumnHidden,
@@ -174,9 +176,10 @@ export function ActionExecutionList({
           data={pageItems}
           columns={columns}
           layout={layout}
-          density={density}
+          density={effectiveDensity}
           userHiddenColumnIds={hiddenIds}
-          minWidth={layout === "narrow" ? 600 : 1040}
+          minWidth={layout === "narrow" ? 0 : 1040}
+          stickyTitleColumn={layout !== "narrow"}
           getRowId={(row) => row.id}
           getRowProps={(row) => {
             const item = row.original;
@@ -243,6 +246,28 @@ function buildColumns({
         const active = item.id === selectedId;
         const href = executionActionHref(item.id, hk);
         const sourceAgent = executionSourceAgent(item);
+        if (layout === "narrow") {
+          return (
+            <>
+              <Link
+                href={href}
+                scroll={false}
+                className={cn(
+                  "line-clamp-1 min-w-0 text-sm font-medium leading-snug hover:underline",
+                  active ? "text-primary" : "text-foreground"
+                )}
+                onFocus={() => router.prefetch(href)}
+              >
+                {item.title}
+              </Link>
+              <p className="text-muted-foreground mt-0.5 truncate text-[10px] leading-tight">
+                {item.opportunityId} · {formatDueLabel(item.dueDate, item.dueTime)}{" "}
+                · {EXECUTION_STATUS_LABELS[item.status]}
+              </p>
+            </>
+          );
+        }
+
         return (
           <>
             <Link
@@ -261,15 +286,9 @@ function buildColumns({
                 {item.title}
               </span>
             </Link>
-            {layout === "narrow" ? (
-              <p className="text-muted-foreground mt-1 truncate text-[11px]">
-                {sourceAgent.label} · {item.assignee}
-              </p>
-            ) : (
-              <p className="text-muted-foreground mt-1 truncate text-[11px] sm:hidden">
-                {sourceAgent.label}
-              </p>
-            )}
+            <p className="text-muted-foreground mt-1 truncate text-[11px] sm:hidden">
+              {sourceAgent.label}
+            </p>
           </>
         );
       },

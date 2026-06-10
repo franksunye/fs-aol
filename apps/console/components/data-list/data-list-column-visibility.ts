@@ -5,6 +5,11 @@ export const NARROW_HIDDEN_COLUMN_IDS = new Set([
   "sourceAgent",
   "sourceSystem",
   "executor",
+  "related",
+  "status",
+  "time",
+  "due",
+  "terminalFeedback",
 ]);
 
 export function isColumnVisibleInLayout(

@@ -51,6 +51,7 @@ export function ActionReviewList({
 }) {
   const sp = useSearchParams();
   const { density, setDensity } = useDataListDensity();
+  const effectiveDensity = layout === "narrow" ? "compact" : density;
   const {
     hiddenIds,
     isColumnHidden,
@@ -178,7 +179,7 @@ export function ActionReviewList({
             onToggleSort={toggleSort}
             keyboardIndex={keyboardIndex}
             layout={layout}
-            density={density}
+            density={effectiveDensity}
             userHiddenColumnIds={hiddenIds}
           />
         </DataListFrame>

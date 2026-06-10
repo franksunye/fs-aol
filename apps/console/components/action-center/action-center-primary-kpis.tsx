@@ -22,30 +22,34 @@ const KPI_ICONS: Record<
   { icon: ReactNode; iconClassName: string }
 > = {
   pendingReview: {
-    icon: <ClipboardList className="size-4" aria-hidden />,
+    icon: <ClipboardList aria-hidden />,
     iconClassName: "bg-primary/10 text-primary",
   },
   actionsGenerated: {
-    icon: <Zap className="size-4" aria-hidden />,
+    icon: <Zap aria-hidden />,
     iconClassName: "bg-sky-500/10 text-sky-600",
   },
   dispatched: {
-    icon: <Send className="size-4" aria-hidden />,
+    icon: <Send aria-hidden />,
     iconClassName: "bg-emerald-500/10 text-emerald-600",
   },
   feedback: {
-    icon: <MessageSquare className="size-4" aria-hidden />,
+    icon: <MessageSquare aria-hidden />,
     iconClassName: "bg-amber-500/10 text-amber-700",
   },
   timeoutAnomaly: {
-    icon: <AlertTriangle className="size-4" aria-hidden />,
+    icon: <AlertTriangle aria-hidden />,
     iconClassName: "bg-red-500/10 text-red-600",
   },
 };
 
 function Delta({ kpi }: { kpi: ActionCenterPrimaryKpi }) {
   if (kpi.delta === 0) {
-    return <span className="text-muted-foreground text-[11px]">较昨日 持平</span>;
+    return (
+      <span className="text-muted-foreground shrink-0 text-[10px] leading-none">
+        较昨日 持平
+      </span>
+    );
   }
   const up = kpi.delta > 0;
   const good = kpi.upIsGood ? up : !up;
@@ -54,7 +58,7 @@ function Delta({ kpi }: { kpi: ActionCenterPrimaryKpi }) {
   return (
     <span
       className={cn(
-        "text-[11px] tabular-nums",
+        "shrink-0 text-[10px] leading-none tabular-nums",
         good ? "text-emerald-600" : "text-red-600"
       )}
     >
@@ -73,7 +77,7 @@ export function ActionCenterPrimaryKpis({
 }) {
   return (
     <section
-      className="mb-4 grid grid-cols-2 gap-2 xl:grid-cols-5"
+      className="mb-3 grid grid-cols-2 gap-1.5 xl:grid-cols-5"
       aria-label="Action 中心核心指标"
     >
       {kpis.map((kpi) => {
@@ -85,24 +89,26 @@ export function ActionCenterPrimaryKpis({
             scroll={false}
             className="block"
           >
-            <Card className="gap-1.5 rounded-xl border-border bg-card p-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-muted-foreground text-[11px] font-medium leading-snug">
-                  {kpi.label}
-                </div>
+            <Card className="gap-1 rounded-lg border-border bg-card px-2.5 py-2 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <span
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-5 shrink-0 items-center justify-center rounded-md [&_svg]:size-3",
                     iconClassName
                   )}
                 >
                   {icon}
                 </span>
+                <span className="text-muted-foreground min-w-0 truncate text-[11px] font-medium leading-none">
+                  {kpi.label}
+                </span>
               </div>
-              <div className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
-                {kpi.value}
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-foreground text-xl font-semibold leading-none tabular-nums tracking-tight">
+                  {kpi.value}
+                </span>
+                <Delta kpi={kpi} />
               </div>
-              <Delta kpi={kpi} />
             </Card>
           </Link>
         );
