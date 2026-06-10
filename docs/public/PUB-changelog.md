@@ -104,7 +104,9 @@
 | **v0.3.6**（可选） | `[arch]` operator-adapter | WorkItem adapter 骨架 + `lib/tracking/` 拆分（见 PUB-16 §6） | `v0.3.5` |
 | **v0.4.0** | followup-real-loop | 打穿真实 Follow-up 楔子：业务对象→Agent 判断→人审→Action→执行反馈→Run→Evaluation→Governance | `v0.3.5` |
 | **v0.5.0** | two-real-agents | 新增 2 个真实 Agent，验证 Action / Run / Eval / Governance 跨 Agent 复用 | `v0.4.0` |
-| **v0.6.0** | configurable-oss-core | 解耦、产品化、配置化，形成可开源的 AOL Core / Console alpha | `v0.5.0` |
+| **v0.6.0** | engineering-hardening | 前端 / 后端 / 数据契约 / 性能 / 测试 / CI 工程硬化，达到产品与开源质量门槛 | `v0.5.0` |
+| **v0.7.0** | bilingual-i18n | 支持中文和英文：Console 文案、枚举、日期数字格式、英文 Quickstart 与 sample 数据 | `v0.6.0` |
+| **v0.8.0** | configurable-oss-core | 解耦、产品化、配置化，形成可开源的 AOL Core / Console alpha | `v0.7.0` |
 | **v1.0.0** | console-mvp（产品轨） | 正式产品轨：试点 KPI 达标后（如 App 内处置率 ≥70%）；S1+S2 加厚 + SLO/Runbook | v0.3.5 + 试点 KPI |
 
 ---

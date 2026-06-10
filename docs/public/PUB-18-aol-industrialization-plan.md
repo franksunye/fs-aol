@@ -326,7 +326,9 @@ Suggestion -> 审核 / 修改 / 拒绝 -> Action -> 分发 -> 反馈 -> Outcome 
 |------|------|----------------|
 | `v0.4.0` | followup-real-loop | 打穿真实 Follow-up 楔子，形成第一条可信执行闭环 |
 | `v0.5.0` | two-real-agents | 新增 2 个真实 Agent，证明 AOL 不是 Follow-up 专用实现 |
-| `v0.6.0` | configurable-oss-core | 解耦、配置化、产品化，准备开源 AOL Core / Console |
+| `v0.6.0` | engineering-hardening | 前端、后端、数据契约、性能、测试、CI 工程硬化，达到产品和开源质量门槛 |
+| `v0.7.0` | bilingual-i18n | 支持中文和英文，完成 Console 文案、枚举、格式化和英文 Quickstart |
+| `v0.8.0` | configurable-oss-core | 解耦、配置化、产品化，发布开源 AOL Core / Console alpha |
 
 若沿 `v0.3.x` 后续补丁 / `v0.4` 前置执行：
 

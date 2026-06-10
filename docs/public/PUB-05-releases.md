@@ -524,10 +524,40 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
-## v0.6 · configurable-oss-core（建议 3–4 周）
+## v0.6 · engineering-hardening（建议 3–4 周）
 
-**目标**：解耦、产品化、配置化，并准备开源。
-v0.6 开始把 v0.4/v0.5 证明过的共性抽象成 AOL Core，而不是继续堆业务特例。
+**目标**：从代码 / 工程角度把 AOL 提升到可产品化、可维护、可开源的质量标准。
+v0.6 不追求新增业务能力，重点是让前端、后端、数据契约、性能、测试、CI、配置边界达到外部开发者和企业客户可接受的工程水位。
+
+### 前端工程标准
+
+| 维度 | 要求 |
+|------|------|
+| 架构 | 页面层、业务组件、通用组件、数据加载、URL state 边界清晰 |
+| 设计系统 | Badge / Table / Form / Split Layout / Empty / Error / Loading 组件稳定复用 |
+| 性能 | 关键列表分页 / 虚拟化或分块加载；首屏无不必要客户端 hydration |
+| 可访问性 | 键盘导航、焦点态、aria、对比度、移动端布局进入封版检查 |
+| 稳定性 | 主路由无阻断 console error；错误态和空态不依赖 mock 假成功 |
+
+### 后端 / 数据工程标准
+
+| 维度 | 要求 |
+|------|------|
+| 数据契约 | Agent / Run / Action / Outcome / Evaluation / Governance schema 版本化 |
+| Adapter | XLink / mock / sample adapter 解耦，真实业务字段不泄漏到 AOL Core |
+| 状态机 | Action 生命周期、Run 状态、Evaluation 样本状态有统一枚举和迁移策略 |
+| 可观测 | 关键 API / jobs / agent runs 有结构化日志、错误分类、trace id |
+| 安全 | secrets、PII 脱敏、只读账号、危险动作开关进入工程检查清单 |
+
+### 质量门槛
+
+| 门槛 | 要求 |
+|------|------|
+| TypeScript | `tsc --noEmit` 必须通过；关键类型不得用 `any` 绕过 |
+| Lint | 新增代码无 eslint error；逐步清理既有 React Compiler / hooks 规则问题 |
+| Test | 核心纯函数、状态机、数据 adapter、关键 UI smoke 有自动化覆盖 |
+| Build | 本地和 CI build 可复现；示例数据环境可一键启动 |
+| Docs | 架构、贡献、环境变量、数据状态、开发调试文档齐全 |
 
 ### 抽象对象
 
@@ -545,6 +575,51 @@ v0.6 开始把 v0.4/v0.5 证明过的共性抽象成 AOL Core，而不是继续�
 | Evaluation Dataset | 真实样本、人工反馈、版本对比、回归评估 |
 | Governance Policy | 权限、预算、模型路由、脱敏、审计、发布流程 |
 
+### 发布与验证
+
+- **发布**：tag `v0.6.0`；作为工程硬化 / OSS readiness 版本。
+- **验证**：
+  - `tsc --noEmit`、build、核心测试、关键 smoke 全部通过。
+  - 新增一个 sample Agent 不需要修改核心状态机和通用 UI。
+  - 删除或隔离 XLink 私有假设后，sample 数据仍能跑通 Console 主链路。
+
+---
+
+## v0.7 · bilingual-i18n（建议 2 周）
+
+**目标**：支持中文和英文，为开源、海外开发者、英文文档与未来 Cloud SaaS 做准备。
+
+### 交付范围
+
+| 能力 | 要求 |
+|------|------|
+| Locale | 支持 `zh-CN` / `en-US`，URL、cookie 或用户设置可切换 |
+| Copy | Console 所有用户可见文案抽取到 message catalog，不在组件里硬编码 |
+| Data labels | 状态、枚举、Agent 类型、Action 生命周期、错误码可国际化 |
+| Dates / Numbers | 日期、金额、百分比、时区、复数规则按 locale 格式化 |
+| Docs | README、Quickstart、核心概念、示例 Agent 至少提供英文版本 |
+| Samples | sample 数据避免中文业务强绑定，保留中文行业包作为可选示例 |
+
+### 明确不做
+
+- 不做多租户语言偏好管理。
+- 不要求私有业务 SOP 全量英文翻译。
+- 不为了翻译牺牲中文试点体验；中文仍是当前行业落地默认语言。
+
+### 发布与验证
+
+- **发布**：tag `v0.7.0`。
+- **验证**：
+  - 主要路由可在中文 / 英文之间切换，无布局溢出。
+  - 新增文案必须经过 message catalog。
+  - 英文 Quickstart 能让外部开发者用 sample 数据跑起产品。
+
+---
+
+## v0.8 · configurable-oss-core（建议 2–3 周）
+
+**目标**：在 v0.6 工程硬化和 v0.7 i18n 之后，发布可开源的 AOL Core / Console alpha。
+
 ### 开源边界
 
 | 开源 | 不开源 / 示例化 |
@@ -553,7 +628,7 @@ v0.6 开始把 v0.4/v0.5 证明过的共性抽象成 AOL Core，而不是继续�
 
 ### 发布与验证
 
-- **发布**：tag `v0.6.0`；可作为 OSS preview / alpha。
+- **发布**：tag `v0.8.0`；可作为 OSS preview / alpha。
 - **验证**：
   - 新增一个 mock/sample Agent 不需要改核心代码，只改配置和 adapter。
   - 第三方可用样例数据在本地跑通 Console、Run、Action、Evaluation。
