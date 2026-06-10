@@ -107,7 +107,6 @@ export default async function WorkbenchPage({
             hk={hkFilter}
             rows={beforePriority}
             currentPriority={priorityFilter}
-            sortKey={sortKey}
             compact
           />
         </Suspense>
@@ -144,6 +143,7 @@ export default async function WorkbenchPage({
             items={workItems}
             listContext={listContext}
             selectedKey={selectedKey}
+            sortKey={sortKey}
           />
         </div>
       )}

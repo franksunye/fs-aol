@@ -1,6 +1,7 @@
 "use client";
 
 import type { WorkItem } from "@/lib/operator-model";
+import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
 import type { WorkbenchListContext } from "@/lib/workbench-nav";
 import { suggestionDetailHref } from "@/lib/workbench-nav";
 import { WorkbenchListKeyboard } from "./workbench-list-keyboard";
@@ -10,10 +11,12 @@ export function OpportunityList({
   items,
   listContext,
   selectedKey,
+  sortKey,
 }: {
   items: WorkItem[];
   listContext?: WorkbenchListContext;
   selectedKey: string | null;
+  sortKey: SuggestionSortKey;
 }) {
   const itemHrefs = items.map((item) => ({
     id: item.id,
@@ -31,6 +34,7 @@ export function OpportunityList({
           items={items}
           listContext={listContext}
           selectedKey={selectedKey}
+          sortKey={sortKey}
           keyboardIndex={keyboardIndex}
         />
       )}

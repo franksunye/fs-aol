@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { WorkItem } from "@/lib/operator-model";
+import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
 import { followUpListBadges } from "@/lib/adapters/follow-up-list-badges";
 import { cn } from "@/lib/utils";
 import { BadgeStack } from "./badge-stack";
+import { SortableColumnHead } from "./sortable-column-head";
 import type { WorkbenchListContext } from "@/lib/workbench-nav";
 import { suggestionDetailHref } from "@/lib/workbench-nav";
 
@@ -25,16 +27,39 @@ function PriorityCell({ label }: { label: string }) {
   );
 }
 
+function StaticColumnHead({
+  label,
+  align = "left",
+  className,
+}: {
+  label: string;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  return (
+    <th
+      className={cn(
+        "text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase",
+        align === "right" && "text-right",
+        className
+      )}
+    >
+      {label}
+    </th>
+  );
+}
+
 export function OpportunityTable({
   items,
   listContext,
   selectedKey,
+  sortKey,
   keyboardIndex,
 }: {
   items: WorkItem[];
   listContext?: WorkbenchListContext;
   selectedKey: string | null;
-  /** j/k 键盘焦点行（可与 URL 选中不同步） */
+  sortKey: SuggestionSortKey;
   keyboardIndex?: number;
 }) {
   const router = useRouter();
@@ -44,30 +69,43 @@ export function OpportunityTable({
       <table className="w-full min-w-[720px] border-collapse text-sm">
         <thead>
           <tr className="bg-muted/40 border-b border-border text-left">
-            <th className="text-muted-foreground w-10 px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              级
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              工单
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase sm:table-cell">
-              阶段
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
-              金额
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
-              停滞
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
-              部位
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase lg:table-cell">
-              管家
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
-              时间
-            </th>
+            <SortableColumnHead
+              label="级"
+              columnSortKey="priority"
+              activeSortKey={sortKey}
+              className="w-10"
+            />
+            <StaticColumnHead label="工单" />
+            <StaticColumnHead
+              label="阶段"
+              className="hidden sm:table-cell"
+            />
+            <StaticColumnHead
+              label="金额"
+              className="hidden md:table-cell"
+            />
+            <SortableColumnHead
+              label="停滞"
+              columnSortKey="stale"
+              activeSortKey={sortKey}
+              align="right"
+            />
+            <StaticColumnHead
+              label="部位"
+              className="hidden md:table-cell"
+            />
+            <SortableColumnHead
+              label="管家"
+              columnSortKey="housekeeper"
+              activeSortKey={sortKey}
+              className="hidden lg:table-cell"
+            />
+            <SortableColumnHead
+              label="时间"
+              columnSortKey="latest"
+              activeSortKey={sortKey}
+              align="right"
+            />
           </tr>
         </thead>
         <tbody>
