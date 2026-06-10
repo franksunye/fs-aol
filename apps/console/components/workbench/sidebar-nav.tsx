@@ -12,8 +12,8 @@ import {
   PanelLeft,
   PanelLeftClose,
   Settings,
-  Sparkles,
 } from "lucide-react";
+import { SidebarBrand } from "./sidebar-brand";
 import { cn } from "@/lib/utils";
 import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
@@ -146,19 +146,11 @@ export function SidebarNav({
     <div className="text-sidebar-foreground flex h-full w-full flex-col">
       <div
         className={cn(
-          "flex shrink-0 items-center border-b border-sidebar-border transition-[padding] duration-200 motion-reduce:transition-none",
-          collapsed ? "justify-center px-2 py-4" : "gap-2 px-4 py-5"
+          "flex shrink-0 border-b border-sidebar-border transition-[padding] duration-200 motion-reduce:transition-none",
+          collapsed ? "justify-center px-2 py-4" : "px-4 py-4"
         )}
       >
-        <div className="bg-primary flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
-          <Sparkles className="size-5" aria-hidden />
-        </div>
-        {!collapsed ? (
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">Follow-up Agent</div>
-            <div className="text-muted-foreground truncate text-xs">Agent Console</div>
-          </div>
-        ) : null}
+        <SidebarBrand collapsed={collapsed} />
       </div>
 
       <nav
