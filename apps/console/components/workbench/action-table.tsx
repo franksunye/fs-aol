@@ -27,7 +27,7 @@ function PriorityCell({ label }: { label: string }) {
   );
 }
 
-export function OpportunityTable({
+export function ActionTable({
   items,
   listContext,
   selectedKey,
@@ -44,7 +44,7 @@ export function OpportunityTable({
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
+      <table className="w-full min-w-[880px] border-collapse text-sm">
         <thead>
           <tr className="bg-muted/40 border-b border-border text-left">
             <SortableColumnHead
@@ -54,37 +54,32 @@ export function OpportunityTable({
               className="w-10"
             />
             <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              工单
+              Action 标题
             </th>
             <SortableColumnHead
-              label="阶段"
-              columnSortKey="stage"
+              label="来源 Agent"
+              columnSortKey="agent"
               activeSortKey={sortKey}
               className="hidden sm:table-cell"
             />
             <SortableColumnHead
-              label="金额"
-              columnSortKey="quote"
+              label="关联对象"
+              columnSortKey="related"
               activeSortKey={sortKey}
-              className="hidden md:table-cell"
             />
+            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
+              来源系统
+            </th>
             <SortableColumnHead
-              label="停滞"
-              columnSortKey="stale"
-              activeSortKey={sortKey}
-              align="right"
-            />
-            <SortableColumnHead
-              label="部位"
-              columnSortKey="part"
-              activeSortKey={sortKey}
-              className="hidden md:table-cell"
-            />
-            <SortableColumnHead
-              label="管家"
+              label="执行人"
               columnSortKey="housekeeper"
               activeSortKey={sortKey}
               className="hidden lg:table-cell"
+            />
+            <SortableColumnHead
+              label="状态"
+              columnSortKey="disposition"
+              activeSortKey={sortKey}
             />
             <SortableColumnHead
               label="时间"
@@ -121,53 +116,46 @@ export function OpportunityTable({
                 <td className="px-2 py-2.5 align-middle">
                   <PriorityCell label={display.priorityLabel} />
                 </td>
-                <td className="max-w-[9rem] px-2 py-2.5 align-middle">
+                <td className="max-w-[14rem] px-2 py-2.5 align-middle">
                   <Link
                     href={href}
                     scroll={false}
                     className={cn(
-                      "block font-mono text-sm font-semibold hover:underline",
+                      "line-clamp-2 text-sm font-medium leading-snug hover:underline",
                       selected ? "text-primary" : "text-foreground"
                     )}
                     onFocus={() => router.prefetch(href)}
                   >
-                    {display.subjectLabel}
+                    {display.title}
                   </Link>
-                  {item.summary ? (
-                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                      {item.summary}
-                    </p>
-                  ) : null}
                   <div className="mt-1 sm:hidden">
-                    <BadgeStack items={followUpListBadges(item)} max={2} size="xs" />
+                    <BadgeStack items={followUpListBadges(item)} max={3} size="xs" />
                   </div>
                 </td>
-                <td className="text-muted-foreground hidden px-2 py-2.5 align-middle text-xs sm:table-cell">
-                  {display.stageLabel}
+                <td className="text-muted-foreground hidden max-w-[7rem] truncate px-2 py-2.5 align-middle text-xs sm:table-cell">
+                  {display.sourceAgent.label}
                 </td>
-                <td className="hidden px-2 py-2.5 align-middle text-xs md:table-cell">
-                  {display.quoteBadge ? (
-                    <span className="font-medium text-violet-700 tabular-nums">
-                      {display.quoteBadge}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                <td className="px-2 py-2.5 align-middle">
+                  <p className="font-mono text-xs font-medium tabular-nums">
+                    {display.relatedObject.id}
+                  </p>
+                  <p className="text-muted-foreground text-[11px]">
+                    {display.relatedObject.type}
+                  </p>
                 </td>
-                <td className="text-muted-foreground px-2 py-2.5 text-right align-middle text-xs tabular-nums">
-                  {display.staleDays != null ? `${display.staleDays}d` : "—"}
-                </td>
-                <td
-                  className="text-muted-foreground hidden max-w-[5.5rem] truncate px-2 py-2.5 align-middle text-xs md:table-cell"
-                  title={display.partLabel !== "—" ? display.partLabel : undefined}
-                >
-                  {display.partLabel}
+                <td className="text-muted-foreground hidden px-2 py-2.5 align-middle text-xs md:table-cell">
+                  {display.sourceSystem.label}
                 </td>
                 <td
                   className="hidden max-w-[5rem] truncate px-2 py-2.5 align-middle text-xs lg:table-cell"
-                  title={display.assigneeLabel !== "—" ? display.assigneeLabel : undefined}
+                  title={
+                    display.executorLabel !== "—" ? display.executorLabel : undefined
+                  }
                 >
-                  {display.assigneeLabel}
+                  {display.executorLabel}
+                </td>
+                <td className="text-muted-foreground px-2 py-2.5 align-middle text-xs">
+                  {display.statusLabel}
                 </td>
                 <td className="text-muted-foreground px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums">
                   {display.timestamp.replace(/^建议\s*/, "")}

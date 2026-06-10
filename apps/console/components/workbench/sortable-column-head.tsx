@@ -9,12 +9,11 @@ import { cn } from "@/lib/utils";
 
 const SORT_HINT: Partial<Record<SuggestionSortKey, string>> = {
   priority: "按优先级排序",
-  stage: "按商机阶段排序",
-  quote: "按报价金额排序",
-  stale: "按停滞天数排序",
-  part: "按维修部位排序",
-  housekeeper: "按管家排序",
-  latest: "按最近处理时间排序",
+  housekeeper: "按执行人排序",
+  latest: "按时间排序",
+  disposition: "按状态排序",
+  related: "按关联对象排序",
+  agent: "按来源 Agent 排序",
 };
 
 export function SortableColumnHead({

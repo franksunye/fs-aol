@@ -8,16 +8,13 @@ import type {
 } from "../operator-model";
 import { SKILL_FOLLOW_UP } from "../operator-model";
 import {
-  formatListTimestamp,
-  formatQuoteBadge,
-  opportunityContextChips,
-  opportunityStageLabel,
-  opportunitySummaryPreview,
-} from "../opportunity-display";
-import {
-  repairPartLine,
-  resolveStaleDays,
-} from "../suggestion-list-display";
+  actionInboxStatusLabel,
+  actionTitle,
+  FOLLOW_UP_SOURCE_AGENT,
+  WORK_ORDER_OBJECT_TYPE,
+  XLINK_SOURCE_SYSTEM,
+} from "../action-list-display";
+import { formatListTimestamp, opportunitySummaryPreview } from "../opportunity-display";
 import type { SuggestionDoc, SuggestionRow } from "../tracking";
 
 function mapPriority(raw?: string): WorkItemPriority | undefined {
@@ -57,15 +54,17 @@ function buildListDisplay(row: SuggestionRow): WorkItemListDisplay {
   const priority = mapPriority(s.优先级);
   const pilots = loadPilotHousekeepers();
   return {
-    subjectLabel: row.orderNum || row.workOrderId,
+    title: actionTitle(s),
     priorityLabel: priorityDisplayLabel(priority, s.优先级),
-    stageLabel: opportunityStageLabel(row),
-    quoteBadge: formatQuoteBadge(s),
-    contextChips: opportunityContextChips(row),
+    sourceAgent: FOLLOW_UP_SOURCE_AGENT,
+    relatedObject: {
+      id: row.orderNum || row.workOrderId,
+      type: WORK_ORDER_OBJECT_TYPE,
+    },
+    sourceSystem: XLINK_SOURCE_SYSTEM,
+    executorLabel: housekeeperName(pilots, row.housekeeperId),
+    statusLabel: actionInboxStatusLabel(row),
     timestamp: formatListTimestamp(row.processedAt),
-    partLabel: repairPartLine(s),
-    assigneeLabel: housekeeperName(pilots, row.housekeeperId),
-    staleDays: resolveStaleDays(row),
   };
 }
 

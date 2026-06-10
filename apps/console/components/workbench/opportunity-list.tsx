@@ -5,7 +5,7 @@ import type { SuggestionSortKey } from "@/lib/suggestion-sorting";
 import type { WorkbenchListContext } from "@/lib/workbench-nav";
 import { suggestionDetailHref } from "@/lib/workbench-nav";
 import { WorkbenchListKeyboard } from "./workbench-list-keyboard";
-import { OpportunityTable } from "./opportunity-table";
+import { ActionTable } from "./action-table";
 
 export function OpportunityList({
   items,
@@ -30,7 +30,7 @@ export function OpportunityList({
       enabled={items.length > 0}
     >
       {({ keyboardIndex }) => (
-        <OpportunityTable
+        <ActionTable
           items={items}
           listContext={listContext}
           selectedKey={selectedKey}

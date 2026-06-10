@@ -1,39 +1,33 @@
 import type { ListBadge } from "../list-display";
 import type { WorkItem } from "../operator-model";
 
-/** 窄屏列表补充 badge（桌面列已展示部位/管家，此处避免 Agent/处置重复） */
+/** 窄屏列表补充 badge（桌面列已展示 Agent / 关联对象 / 状态） */
 export function followUpListBadges(item: WorkItem): ListBadge[] {
   const d = item.listDisplay;
   if (!d) return [];
 
   const badges: ListBadge[] = [
     {
-      key: "stage",
-      label: d.stageLabel,
+      key: "agent",
+      label: d.sourceAgent.label,
       variant: "outline",
+    },
+    {
+      key: "related",
+      label: `${d.relatedObject.type} ${d.relatedObject.id}`,
+      variant: "outline",
+    },
+    {
+      key: "status",
+      label: d.statusLabel,
+      variant: "secondary",
     },
   ];
 
-  if (d.staleDays != null) {
+  if (d.executorLabel && d.executorLabel !== "—") {
     badges.push({
-      key: "stale",
-      label: `停滞 ${d.staleDays}d`,
-      variant: "outline",
-    });
-  }
-
-  if (d.partLabel && d.partLabel !== "—") {
-    badges.push({
-      key: "part",
-      label: d.partLabel,
-      variant: "outline",
-    });
-  }
-
-  if (d.assigneeLabel && d.assigneeLabel !== "—") {
-    badges.push({
-      key: "assignee",
-      label: d.assigneeLabel,
+      key: "executor",
+      label: d.executorLabel,
       variant: "secondary",
     });
   }

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   listSuggestions,
   countInboxBuckets,
@@ -35,9 +36,7 @@ import {
   inboxBucketForWorkbenchView,
   workbenchViewFromSearchParams,
 } from "@/lib/workbench-tabs";
-import { shellScrollClass } from "@/lib/shell-preferences";
-import { cn } from "@/lib/utils";
-import { CalendarView } from "@/components/workbench/calendar/calendar-view";
+import { calendarHref } from "@/lib/calendar-nav";
 import { MyActionsView } from "@/components/workbench/my-actions/my-actions-view";
 import {
   countMyActionsPending,
@@ -46,20 +45,12 @@ import {
 import { loadActionCenterPrimaryKpis } from "@/lib/action-center-metrics";
 import { loadActionFlowSummary } from "@/lib/action-flow-metrics";
 import {
-  buildCalendarSecondaryMetrics,
   buildFlowSecondaryMetrics,
   buildReviewSecondaryMetrics,
 } from "@/lib/action-center-secondary";
 import { ActionCenterShell } from "@/components/workbench/action-center/action-center-shell";
 import { ActionCenterSecondaryStrip } from "@/components/workbench/action-center/action-center-secondary-strip";
 import { ActionFlowTabToolbar } from "@/components/workbench/action-center/action-flow-tab-toolbar";
-import {
-  computeCalendarSummary,
-  filterCalendarActions,
-  getCalendarMockActions,
-  resolveCalendarAssigneeFromHk,
-} from "@/lib/calendar-mock";
-
 export const dynamic = "force-dynamic";
 
 export default async function WorkbenchPage({
@@ -84,11 +75,18 @@ export default async function WorkbenchPage({
   }>;
 }) {
   const sp = await searchParams;
+  const cookieStore = await cookies();
+  const hkFromCookie = cookieStore.get(HOUSEKEEPER_FILTER_COOKIE)?.value?.trim();
+  const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
+
+  if (sp.tab?.trim() === "calendar") {
+    redirect(calendarHref(hkFilter));
+  }
+
   const workbenchView = workbenchViewFromSearchParams({
     tab: sp.tab,
     cfilter: sp.cfilter,
   });
-  const isCalendar = workbenchView === "calendar";
   const isActions = workbenchView === "actions";
   const closedLoopFilter = parseClosedLoopFilter(sp.cfilter);
   const inboxBucket = inboxBucketForWorkbenchView(workbenchView, sp.cfilter);
@@ -98,9 +96,6 @@ export default async function WorkbenchPage({
   const isClosedLoop = workbenchView === "closed";
   const priorityFilter = parsePriorityFilter(sp.priority);
   const selectedKey = parseWorkbenchPaneKey(sp.key);
-  const cookieStore = await cookies();
-  const hkFromCookie = cookieStore.get(HOUSEKEEPER_FILTER_COOKIE)?.value?.trim();
-  const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const actionsCount = countMyActionsPending(getMyActionsMockData());
@@ -135,16 +130,6 @@ export default async function WorkbenchPage({
   });
   const hasRows = rows.length > 0;
 
-  const calendarAssignee = resolveCalendarAssigneeFromHk(hkFilter, pilots);
-  const calendarSummary = computeCalendarSummary(
-    filterCalendarActions(getCalendarMockActions(), {
-      agentId: "all",
-      priority: "all",
-      status: "all",
-      assigneeId: calendarAssignee ?? "all",
-    })
-  );
-
   const secondaryStrip = isActions ? (
     <ActionCenterSecondaryStrip
       title="流转状态"
@@ -153,11 +138,6 @@ export default async function WorkbenchPage({
         quick: sp.aquick,
       })}
       trailing={<ActionFlowTabToolbar hk={hkFilter} />}
-    />
-  ) : isCalendar ? (
-    <ActionCenterSecondaryStrip
-      title="日历"
-      items={buildCalendarSecondaryMetrics(calendarSummary)}
     />
   ) : isActiveInbox && metrics ? (
     <ActionCenterSecondaryStrip
@@ -180,14 +160,14 @@ export default async function WorkbenchPage({
     <EmptyState
       title={
         sp.q?.trim()
-          ? `未找到「${sp.q.trim()}」相关工单`
+          ? `未找到「${sp.q.trim()}」相关 Action`
           : hkFilter
             ? `${displayName} · ${INBOX_TAB_LABELS[inboxTab]} 暂无记录`
             : `暂无${INBOX_TAB_LABELS[inboxTab]}`
       }
       description={
         sp.q?.trim()
-          ? "尝试工单号或摘要关键词，或清除搜索。"
+          ? "尝试 Action 标题、关联对象 ID 或摘要关键词，或清除搜索。"
           : hkFilter
             ? undefined
             : inboxTab === "active" &&
@@ -197,7 +177,7 @@ export default async function WorkbenchPage({
       }
     />
   ) : (
-    <div role="listbox" aria-label="机会列表">
+    <div role="listbox" aria-label="Action 列表">
       <OpportunityList
         items={workItems}
         listContext={listContext}
@@ -258,18 +238,6 @@ export default async function WorkbenchPage({
         <Suspense fallback={null}>
           <MyActionsView hkFilter={hkFilter} pilots={pilots} />
         </Suspense>
-      </ActionCenterShell>
-    );
-  }
-
-  if (isCalendar) {
-    return (
-      <ActionCenterShell {...shellProps}>
-        <div className={cn(shellScrollClass, "h-full px-3 pb-4 lg:px-4")}>
-          <Suspense fallback={null}>
-            <CalendarView hkFilter={hkFilter} pilots={pilots} />
-          </Suspense>
-        </div>
       </ActionCenterShell>
     );
   }

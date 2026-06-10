@@ -13,10 +13,8 @@ export function filterSuggestionsByQuery(
       row.workOrderId,
       row.dedupeKey,
       row.city,
+      s.跟进方案?.主行动,
       s.原因摘要,
-      s.情况判断?.商机阶段,
-      s.情况判断?.报价状态,
-      s.情况判断?.金额与方案,
     ]
       .filter(Boolean)
       .join(" ")

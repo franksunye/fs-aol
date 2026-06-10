@@ -10,7 +10,6 @@ import {
   upcomingActions,
   type CalendarFilters,
 } from "@/lib/calendar-mock";
-import { CALENDAR_SUBTITLE } from "@/lib/workbench-tabs";
 import { CalendarSummaryCards } from "./calendar-summary-cards";
 import { CalendarToolbar, type CalendarViewMode } from "./calendar-toolbar";
 import { CalendarMonthGrid } from "./calendar-month-grid";
@@ -82,9 +81,6 @@ export function CalendarView({
 
   return (
     <div className="pb-6">
-      <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
-        {CALENDAR_SUBTITLE}
-      </p>
       <CalendarSummaryCards summary={summary} />
 
       <CalendarToolbar

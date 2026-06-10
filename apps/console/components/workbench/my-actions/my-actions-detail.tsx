@@ -25,6 +25,7 @@ import {
   ActionFlowPriorityBadge,
   ActionFlowStatusBadge,
 } from "./action-flow-badges";
+import { calendarHref } from "@/lib/calendar-nav";
 import { workbenchPaneHref } from "@/lib/workbench-nav";
 
 export function MyActionsDetail({
@@ -196,7 +197,7 @@ export function MyActionsDetail({
               className="h-7 gap-1 text-xs"
               render={
                 <Link
-                  href={hk ? `/?tab=calendar&hk=${hk}` : "/?tab=calendar"}
+                  href={calendarHref(hk)}
                   scroll={false}
                 />
               }

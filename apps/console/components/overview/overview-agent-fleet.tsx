@@ -38,8 +38,8 @@ function AgentFleetCard({ agent }: { agent: OverviewAgentFleetItem }) {
       : agentDetailHref(agent.agentHrefId);
 
   return (
-    <Link href={href} scroll={false} className="block min-w-[11rem] shrink-0">
-      <Card className="gap-2 rounded-xl border-border bg-card p-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
+    <Link href={href} scroll={false} className="block min-w-0">
+      <Card className="h-full gap-2 rounded-xl border-border bg-card p-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium leading-snug">{agent.name}</p>
@@ -76,12 +76,13 @@ export function OverviewAgentFleet({
   agents: OverviewAgentFleetItem[];
 }) {
   return (
-    <section aria-label="Agent 运行状态">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {agents.map((agent) => (
-          <AgentFleetCard key={agent.id} agent={agent} />
-        ))}
-      </div>
+    <section
+      className="grid grid-cols-2 gap-2 xl:grid-cols-4"
+      aria-label="Agent 运行状态"
+    >
+      {agents.map((agent) => (
+        <AgentFleetCard key={agent.id} agent={agent} />
+      ))}
     </section>
   );
 }

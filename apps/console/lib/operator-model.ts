@@ -3,6 +3,8 @@
  * 楔子字段沉入 metadata / recommendation.raw，见 lib/adapters/*。
  */
 
+import type { ActionListDisplay } from "./action-list-display";
+
 export const SKILL_FOLLOW_UP = "follow-up" as const;
 
 export type SkillId = typeof SKILL_FOLLOW_UP | (string & {});
@@ -40,17 +42,7 @@ export type Disposition = {
 };
 
 /** 列表行预计算展示字段（由 skill adapter 填充，通用组件只读） */
-export type WorkItemListDisplay = {
-  subjectLabel: string;
-  priorityLabel: string;
-  stageLabel: string;
-  quoteBadge: string | null;
-  contextChips: string[];
-  timestamp: string;
-  partLabel: string;
-  assigneeLabel: string;
-  staleDays: number | null;
-};
+export type WorkItemListDisplay = ActionListDisplay;
 
 export type WorkItem = {
   id: string;

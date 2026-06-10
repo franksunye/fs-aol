@@ -2,8 +2,6 @@ import { formatYuanCompact } from "./workbench-metrics";
 import type { WorkbenchMetricCards } from "./workbench-metrics";
 import type { ActionFlowSummaryResult } from "./action-flow-metrics";
 import { actionFlowStatusHref } from "./my-actions-mock";
-import type { CalendarSummary } from "./calendar-mock";
-
 export type SecondaryMetricItem = {
   key: string;
   label: string;
@@ -102,20 +100,4 @@ export function buildReviewSecondaryMetrics(
   }
 
   return items;
-}
-
-export function buildCalendarSecondaryMetrics(
-  summary: CalendarSummary
-): SecondaryMetricItem[] {
-  return [
-    { key: "today", label: "今日 Action", value: summary.todayActions },
-    { key: "due_today", label: "今日到期", value: summary.dueToday, tone: "warn" },
-    { key: "week", label: "本周排期", value: summary.weeklySchedule },
-    {
-      key: "overdue",
-      label: "逾期",
-      value: summary.overdue,
-      tone: summary.overdue > 0 ? "danger" : "default",
-    },
-  ];
 }

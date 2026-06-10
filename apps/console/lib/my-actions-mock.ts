@@ -6,6 +6,8 @@ import {
   Phone,
   RefreshCw,
 } from "lucide-react";
+import type { ActionEntityRef } from "./action-list-display";
+import { XLINK_SOURCE_SYSTEM } from "./action-list-display";
 import type { ActionFlowStatus } from "./action-flow-status";
 import {
   addDays,
@@ -33,6 +35,7 @@ export type MyAction = {
   opportunityId: string;
   sourceAgent: string;
   agentId: string;
+  sourceSystem: ActionEntityRef;
   target: { name: string; type: string };
   dueDate: string;
   dueTime: string;
@@ -74,11 +77,15 @@ export const MY_ACTIONS_AGENT_OPTIONS = [
 ] as const;
 
 function action(
-  partial: Omit<MyAction, "icon" | "dispatchTarget" | "createdAt" | "lastSyncedAt"> & {
+  partial: Omit<
+    MyAction,
+    "icon" | "dispatchTarget" | "createdAt" | "lastSyncedAt" | "sourceSystem"
+  > & {
     icon?: LucideIcon;
     dispatchTarget?: string;
     createdAt?: string;
     lastSyncedAt?: string;
+    sourceSystem?: ActionEntityRef;
   }
 ): MyAction {
   return {
@@ -86,6 +93,7 @@ function action(
     dispatchTarget: "CRM 待办",
     createdAt: "今天 08:40",
     lastSyncedAt: "5 分钟前",
+    sourceSystem: XLINK_SOURCE_SYSTEM,
     ...partial,
   };
 }

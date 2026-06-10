@@ -1,30 +1,34 @@
 import type { Decision, SuggestionRow } from "./suggestions";
 import type { PilotHousekeeper } from "./pilot-housekeepers";
 import { housekeeperName } from "./pilot-housekeepers";
-import { opportunityStageLabel } from "./opportunity-display";
-import { parseQuoteAmountYuan } from "./workbench-metrics";
-import { repairPartLine, resolveStaleDays } from "./suggestion-list-display";
+import {
+  actionInboxStatusLabel,
+  FOLLOW_UP_SOURCE_AGENT,
+} from "./action-list-display";
 
 export type SuggestionSortKey =
   | "latest"
-  | "stage"
-  | "quote"
-  | "stale"
-  | "part"
-  | "housekeeper"
   | "priority"
-  | "disposition";
+  | "housekeeper"
+  | "disposition"
+  | "related"
+  | "agent";
 
 const ALL_SORT_KEYS: SuggestionSortKey[] = [
   "latest",
-  "stage",
-  "quote",
-  "stale",
-  "part",
-  "housekeeper",
   "priority",
+  "housekeeper",
   "disposition",
+  "related",
+  "agent",
 ];
+
+const LEGACY_SORT_ALIASES: Record<string, SuggestionSortKey> = {
+  stage: "latest",
+  quote: "latest",
+  stale: "latest",
+  part: "latest",
+};
 
 const PRIORITY_RANK: Record<string, number> = { 高: 0, 中: 1, 低: 2 };
 const DECISION_RANK: Record<Decision, number> = {
@@ -51,14 +55,16 @@ function cmpText(a: string, b: string): number {
   return a.localeCompare(b, "zh-CN");
 }
 
-function quoteAmount(row: SuggestionRow): number {
-  return parseQuoteAmountYuan(row.suggestion) ?? -1;
+function relatedObjectId(row: SuggestionRow): string {
+  return row.orderNum || row.workOrderId;
 }
 
 export function parseSuggestionSortKey(raw?: string | null): SuggestionSortKey {
+  const legacy = LEGACY_SORT_ALIASES[raw ?? ""];
+  if (legacy) return legacy;
   return (ALL_SORT_KEYS as string[]).includes(raw ?? "")
     ? (raw as SuggestionSortKey)
-    : "stale";
+    : "latest";
 }
 
 export function sortSuggestions(
@@ -68,34 +74,20 @@ export function sortSuggestions(
 ): SuggestionRow[] {
   const next = [...rows];
   next.sort((a, b) => {
-    if (sortKey === "stage") {
-      const c = cmpText(opportunityStageLabel(a), opportunityStageLabel(b));
+    if (sortKey === "related") {
+      const c = cmpText(relatedObjectId(a), relatedObjectId(b));
       return c !== 0 ? c : cmpLatest(a, b);
     }
-    if (sortKey === "quote") {
-      const qa = quoteAmount(a);
-      const qb = quoteAmount(b);
-      if (qb !== qa) return qb - qa;
+    if (sortKey === "agent") {
+      const c = cmpText(FOLLOW_UP_SOURCE_AGENT.label, FOLLOW_UP_SOURCE_AGENT.label);
+      if (c !== 0) return c;
       return cmpLatest(a, b);
-    }
-    if (sortKey === "part") {
-      const c = cmpText(
-        repairPartLine(a.suggestion),
-        repairPartLine(b.suggestion)
-      );
-      return c !== 0 ? c : cmpLatest(a, b);
     }
     if (sortKey === "housekeeper") {
       const na = housekeeperName(pilots, a.housekeeperId);
       const nb = housekeeperName(pilots, b.housekeeperId);
       const c = cmpText(na, nb);
       return c !== 0 ? c : cmpLatest(a, b);
-    }
-    if (sortKey === "stale") {
-      const sa = resolveStaleDays(a) ?? -1;
-      const sb = resolveStaleDays(b) ?? -1;
-      if (sb !== sa) return sb - sa;
-      return cmpLatest(a, b);
     }
     if (sortKey === "priority") {
       const pa = PRIORITY_RANK[a.suggestion.优先级 ?? ""] ?? 9;
@@ -107,6 +99,8 @@ export function sortSuggestions(
       const da = rankDecision(a.outcome?.decision ?? null);
       const db = rankDecision(b.outcome?.decision ?? null);
       if (da !== db) return da - db;
+      const sa = cmpText(actionInboxStatusLabel(a), actionInboxStatusLabel(b));
+      if (sa !== 0) return sa;
       return cmpLatest(a, b);
     }
     return cmpLatest(a, b);

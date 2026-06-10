@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bot,
+  CalendarDays,
   CircleHelp,
   LayoutDashboard,
   Link2,
@@ -22,6 +23,7 @@ import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
 import { RUNS_TODAY_MOCK_COUNT } from "@/lib/runs-mock";
 import { GOVERNANCE_HOME_PATH } from "@/lib/governance-nav";
+import { calendarHref } from "@/lib/calendar-nav";
 import { actionCenterHref } from "@/lib/workbench-nav";
 import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
 import { OVERVIEW_SIDEBAR_BADGE } from "@/lib/overview-mock";
@@ -104,6 +106,7 @@ export function SidebarNav({
   const sp = useSearchParams();
   const onOverview = pathname === "/overview";
   const onWorkbench = pathname === "/";
+  const onCalendar = pathname.startsWith("/calendar");
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
   const onRuns = pathname.startsWith("/runs");
@@ -128,6 +131,12 @@ export function SidebarNav({
       icon: ListTodo,
       href: actionCenterHref(hk),
       active: onWorkbench,
+    },
+    {
+      label: "日历",
+      icon: CalendarDays,
+      href: calendarHref(hk),
+      active: onCalendar,
     },
     {
       label: "Runs",
