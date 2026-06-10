@@ -1,4 +1,4 @@
-# 18 · Console 企业级列表控件（DataList）
+# 19 · Console 企业级列表控件（DataList）
 
 > **状态**：生效中 · **性质**：Agent Console 列表 UI 与数据契约 SSOT  
 > **依赖**：[PUB-17](PUB-17-console-information-architecture.md)（三层 IA、Action 列语义）· [PUB-15](PUB-15-agentic-ui-design.md)（视觉）  
