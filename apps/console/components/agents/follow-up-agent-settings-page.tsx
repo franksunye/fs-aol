@@ -22,8 +22,10 @@ import {
 } from "lucide-react";
 import {
   AGENTS_HOME_PATH,
+  FOLLOW_UP_MODEL_STRATEGY_PATH,
   agentDetailHref,
 } from "@/lib/agents-nav";
+import { AgentSettingsSubNav } from "./agent-settings-sub-nav";
 import {
   FOLLOW_UP_SETTINGS_MOCK,
   TRIGGER_PRIORITY_LABEL,
@@ -147,7 +149,7 @@ export function FollowUpAgentSettingsPage() {
   return (
     <main className="shell-scroll min-h-0 h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable]">
       <div className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-8">
-        <header className="mb-6 space-y-4">
+        <header className="mb-4 space-y-4">
           <nav
             className="text-muted-foreground flex flex-wrap items-center gap-1 text-xs"
             aria-label="面包屑"
@@ -220,6 +222,8 @@ export function FollowUpAgentSettingsPage() {
               </DemoActionButton>
             </div>
           </div>
+
+          <AgentSettingsSubNav />
         </header>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
@@ -468,17 +472,12 @@ export function FollowUpAgentSettingsPage() {
                   <p className="text-muted-foreground mt-1 text-xs">
                     策略 {mock.prompt.strategyVersion} · {mock.prompt.strategyHint}
                   </p>
-                  <button
-                    type="button"
-                    className="text-primary mt-3 text-xs font-medium hover:underline"
-                    onClick={() =>
-                      toast.message("演示数据，暂未接入", {
-                        description: "查看 Prompt 策略详情",
-                      })
-                    }
+                  <Link
+                    href={FOLLOW_UP_MODEL_STRATEGY_PATH}
+                    className="text-primary mt-3 inline-block text-xs font-medium hover:underline"
                   >
-                    查看策略 →
-                  </button>
+                    查看模型策略 →
+                  </Link>
                 </div>
                 <div className="rounded-lg border border-border p-4">
                   <p className="text-foreground mb-2 text-sm font-medium">

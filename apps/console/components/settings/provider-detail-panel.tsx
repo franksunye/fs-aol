@@ -9,6 +9,8 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import Link from "next/link";
+import { FOLLOW_UP_MODEL_STRATEGY_PATH } from "@/lib/agents-nav";
 import type { MockLlmProvider } from "@/lib/ai-infrastructure-mock";
 import { PROVIDER_STATUS_LABEL } from "@/lib/ai-infrastructure-mock";
 import { Badge } from "@/components/ui/badge";
@@ -249,6 +251,15 @@ export function ProviderDetailPanel({
             </dd>
           </div>
         </div>
+        <p className="text-muted-foreground mt-4 text-xs">
+          平台级默认路由；Agent 级任务策略见{" "}
+          <Link
+            href={FOLLOW_UP_MODEL_STRATEGY_PATH}
+            className="text-primary font-medium hover:underline"
+          >
+            Follow-up Agent 模型策略
+          </Link>
+        </p>
       </SettingsSectionCard>
     </div>
   );

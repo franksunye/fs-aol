@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import type { MockAgent } from "@/lib/agents-mock";
 import { AGENT_STATUS_LABEL, formatAgentYuan } from "@/lib/agents-mock";
-import { agentSettingsHref } from "@/lib/agents-nav";
+import {
+  agentModelStrategyHref,
+  agentSettingsHref,
+} from "@/lib/agents-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,6 +119,15 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
               ) : (
                 <DemoButton variant="default">进入工作台</DemoButton>
               )}
+              {agentModelStrategyHref(agent.id) ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  render={<Link href={agentModelStrategyHref(agent.id)!} />}
+                >
+                  模型策略
+                </Button>
+              ) : null}
               {agentSettingsHref(agent.id) ? (
                 <Button
                   type="button"
