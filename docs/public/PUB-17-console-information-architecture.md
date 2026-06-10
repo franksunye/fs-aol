@@ -130,7 +130,7 @@ Agent 产出
 
 **禁止在 Work 列表主列出现**（沉入详情 / `metadata`）：商机阶段、金额、停滞天数、维修部位等**单一业务对象**字段。
 
-**列表控件实现**（Frame 布局、分页、列设置、URL scope）见 [PUB-18](PUB-18-console-data-list.md)。
+**列表控件实现**（Frame 布局、分页、列设置、URL scope）见 [PUB-19](PUB-19-console-data-list.md)。
 
 ---
 

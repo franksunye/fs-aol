@@ -13,7 +13,8 @@
 | [15-agentic-ui-design.md](./PUB-15-agentic-ui-design.md) | **v0.3 UX 设计稿 SSOT**（色彩、框架、组件） |
 | [16-architecture-evolution.md](./PUB-16-architecture-evolution.md) | **架构演进纪律**（每版自检、Operator 读模型、渐进微调） |
 | [17-console-information-architecture.md](./PUB-17-console-information-architecture.md) | **Console 三层 IA**（Work / Agents / Systems、Action 生命周期、模块路由 SSOT） |
-| [18-console-data-list.md](./PUB-18-console-data-list.md) | **Console DataList**（Frame 布局、URL scope、分页、列设置 SSOT） |
+| [18-aol-industrialization-plan.md](./PUB-18-aol-industrialization-plan.md) | **AOL 工业化计划**（楔子 + 场景样例混合态执行路线） |
+| [19-console-data-list.md](./PUB-19-console-data-list.md) | **Console DataList**（Frame 布局、URL scope、分页、列设置 SSOT） |
 | 私有文档 `docs/private/PRIV-09-business-decisions.md` | 业务口径 ADR（为何 206 only、14 天等） |
 | Git tag | 已封版快照（`v0.1.0` …） |
 
@@ -116,7 +117,7 @@
 | 2026-05-29 | ADR-006/007 | 知识分层；Agent 展示轨与主轨并行 |
 | 2026-06-09 | **PUB-16** | Operator Platform 架构演进纪律：L0/L1/L2 分层、WorkItem 读模型、每版 A1–A7 自检、v0.3～v1.0 渐进微调路线图 |
 | 2026-06-10 | **PUB-17** | Console 三层信息架构 SSOT：Work / Agents / Systems、Action 生命周期（建议→待执行→闭环）、列表字段与 KPI 下钻纪律、模块路由映射 |
-| 2026-06-10 | **PUB-18** | Console DataList 企业级列表 SSOT：Frame 内滚动、URL 命名空间、Turso 分页、列设置与 Runs/评估接入纪律 |
+| 2026-06-10 | **PUB-19** | Console DataList 企业级列表 SSOT：Frame 内滚动、URL 命名空间、Turso 分页、列设置与 Runs/评估接入纪律 |
 
 ---
 
