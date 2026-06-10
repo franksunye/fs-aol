@@ -15,7 +15,7 @@ export function ActionFlowTabToolbar({ hk }: { hk?: string }) {
         type="button"
         variant="outline"
         size="icon-sm"
-        aria-label="刷新 Action 流转"
+        aria-label="刷新待执行列表"
         onClick={() => router.refresh()}
       >
         <RefreshCw className="size-3.5" aria-hidden />

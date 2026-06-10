@@ -9,7 +9,7 @@ export const ACTION_CENTER_TITLE = "Action中心";
 
 export const WORKBENCH_VIEW_LABELS: Record<WorkbenchView, string> = {
   active: "待审核",
-  actions: "Action 流转",
+  actions: "待执行",
   closed: "已闭环",
   archived: "存档",
 };

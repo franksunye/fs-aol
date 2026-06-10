@@ -72,7 +72,7 @@ export function MyActionsSplitLayout({
             ? "w-full max-w-full basis-full lg:w-[min(42%,440px)] lg:max-w-[440px] lg:basis-[min(42%,440px)] lg:border-r lg:border-border"
             : "min-w-0 flex-1"
         )}
-        aria-label="Action 流转列表"
+        aria-label="待执行 Action 列表"
       >
         {list}
       </section>

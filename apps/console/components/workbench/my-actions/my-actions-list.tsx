@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   calendarPriorityLabel,
@@ -15,6 +16,22 @@ import {
 } from "@/lib/my-actions-mock";
 import { ActionFlowStatusBadge } from "./action-flow-badges";
 
+function PriorityCell({ label }: { label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex min-w-[2rem] justify-center rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums",
+        label === "高" && "bg-red-50 text-red-600",
+        label === "中" && "bg-amber-50 text-amber-700",
+        label === "低" && "bg-emerald-50 text-emerald-700",
+        label !== "高" && label !== "中" && label !== "低" && "bg-muted text-muted-foreground"
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 function myActionSourceAgent(item: MyAction): ActionEntityRef {
   return { id: item.agentId, label: item.sourceAgent };
 }
@@ -22,9 +39,6 @@ function myActionSourceAgent(item: MyAction): ActionEntityRef {
 function myActionSourceSystem(item: MyAction): ActionEntityRef {
   return item.sourceSystem ?? XLINK_SOURCE_SYSTEM;
 }
-
-const ROW_GRID =
-  "lg:grid lg:grid-cols-[2.5rem_minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,0.75fr)_4.5rem_minmax(0,3.5rem)_4.5rem_4rem] lg:items-center lg:gap-2";
 
 export function MyActionsList({
   items,
@@ -35,6 +49,8 @@ export function MyActionsList({
   selectedId: string | null;
   hk?: string;
 }) {
+  const router = useRouter();
+
   if (items.length === 0) {
     return (
       <div className="text-muted-foreground rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm">
@@ -47,93 +63,112 @@ export function MyActionsList({
     <div
       className="overflow-x-auto rounded-xl border border-border bg-card"
       role="listbox"
-      aria-label="Action 流转列表"
+      aria-label="待执行 Action 列表"
     >
-      <div
-        className={cn(
-          "text-muted-foreground hidden border-b border-border px-3 py-2 text-[11px] font-medium",
-          ROW_GRID
-        )}
-      >
-        <span>级</span>
-        <span>Action 标题</span>
-        <span>来源 Agent</span>
-        <span>关联对象</span>
-        <span>来源系统</span>
-        <span>执行人</span>
-        <span>状态</span>
-        <span className="text-right">时间</span>
-      </div>
-      <ul>
-        {items.map((item) => {
-          const Icon = item.icon;
-          const active = item.id === selectedId;
-          const sourceAgent = myActionSourceAgent(item);
-          const sourceSystem = myActionSourceSystem(item);
+      <table className="w-full min-w-[920px] border-collapse text-sm">
+        <thead>
+          <tr className="bg-muted/40 border-b border-border text-left">
+            <th className="text-muted-foreground w-10 px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
+              级
+            </th>
+            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
+              Action 标题
+            </th>
+            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase sm:table-cell">
+              来源 Agent
+            </th>
+            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
+              关联对象
+            </th>
+            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
+              来源系统
+            </th>
+            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase lg:table-cell">
+              执行人
+            </th>
+            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
+              状态
+            </th>
+            <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
+              时间
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => {
+            const Icon = item.icon;
+            const active = item.id === selectedId;
+            const href = myActionHref(item.id, hk);
+            const sourceAgent = myActionSourceAgent(item);
+            const sourceSystem = myActionSourceSystem(item);
 
-          return (
-            <li key={item.id}>
-              <Link
-                href={myActionHref(item.id, hk)}
-                scroll={false}
+            return (
+              <tr
+                key={item.id}
                 role="option"
                 aria-selected={active}
                 className={cn(
-                  "grid gap-2 border-b border-border px-3 py-3 transition-colors last:border-b-0",
-                  ROW_GRID,
+                  "border-b border-border/60 transition-colors last:border-0",
                   active
-                    ? "bg-primary/5 ring-1 ring-inset ring-primary/20"
-                    : "hover:bg-muted/40"
+                    ? "bg-primary/5"
+                    : "hover:bg-muted/35"
                 )}
               >
-                <span className="pl-10 lg:pl-0">
-                  <span
+                <td className="px-2 py-2.5 align-middle">
+                  <PriorityCell label={calendarPriorityLabel(item.priority)} />
+                </td>
+                <td className="max-w-[14rem] px-2 py-2.5 align-middle">
+                  <Link
+                    href={href}
+                    scroll={false}
                     className={cn(
-                      "inline-flex min-w-[2rem] justify-center rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums",
-                      item.priority === "high" && "bg-red-50 text-red-600",
-                      item.priority === "medium" && "bg-amber-50 text-amber-700",
-                      item.priority === "low" && "bg-emerald-50 text-emerald-700"
+                      "flex min-w-0 items-start gap-2 hover:underline",
+                      active ? "text-primary" : "text-foreground"
                     )}
+                    onFocus={() => router.prefetch(href)}
                   >
-                    {calendarPriorityLabel(item.priority)}
-                  </span>
-                </span>
-                <div className="flex min-w-0 items-start gap-2.5 pl-10 lg:pl-0">
-                  <span className="bg-primary/10 text-primary mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
-                    <Icon className="size-4" aria-hidden />
-                  </span>
-                  <p className="line-clamp-2 min-w-0 text-sm font-medium leading-snug">
-                    {item.title}
+                    <span className="bg-primary/10 text-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg">
+                      <Icon className="size-3.5" aria-hidden />
+                    </span>
+                    <span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug">
+                      {item.title}
+                    </span>
+                  </Link>
+                  <p className="text-muted-foreground mt-1 truncate text-[11px] sm:hidden">
+                    {sourceAgent.label}
                   </p>
-                </div>
-                <span className="text-muted-foreground truncate pl-10 text-xs lg:pl-0">
+                </td>
+                <td className="text-muted-foreground hidden max-w-[7rem] truncate px-2 py-2.5 align-middle text-xs sm:table-cell">
                   {sourceAgent.label}
-                </span>
-                <div className="min-w-0 pl-10 lg:pl-0">
-                  <p className="truncate font-mono text-xs font-medium tabular-nums">
+                </td>
+                <td className="px-2 py-2.5 align-middle">
+                  <p className="font-mono text-xs font-medium tabular-nums">
                     {item.opportunityId}
                   </p>
-                  <p className="text-muted-foreground truncate text-[11px]">
+                  <p className="text-muted-foreground text-[11px]">
                     {WORK_ORDER_OBJECT_TYPE}
                   </p>
-                </div>
-                <span className="text-muted-foreground truncate pl-10 text-xs lg:pl-0">
+                </td>
+                <td className="text-muted-foreground hidden px-2 py-2.5 align-middle text-xs md:table-cell">
                   {sourceSystem.label}
-                </span>
-                <span className="text-muted-foreground truncate pl-10 text-xs lg:pl-0">
+                </td>
+                <td
+                  className="hidden max-w-[5rem] truncate px-2 py-2.5 align-middle text-xs lg:table-cell"
+                  title={item.assignee}
+                >
                   {item.assignee}
-                </span>
-                <span className="pl-10 lg:pl-0">
+                </td>
+                <td className="px-2 py-2.5 align-middle">
                   <ActionFlowStatusBadge status={item.status} />
-                </span>
-                <span className="text-muted-foreground pl-10 text-right text-xs tabular-nums lg:pl-0">
+                </td>
+                <td className="text-muted-foreground px-2 py-2.5 text-right align-middle text-xs tabular-nums">
                   {formatDueLabel(item.dueDate, item.dueTime)}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

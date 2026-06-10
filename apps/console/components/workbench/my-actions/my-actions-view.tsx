@@ -14,10 +14,7 @@ import {
 } from "@/lib/my-actions-mock";
 import { MyActionsFilters } from "./my-actions-filters";
 import { MyActionsList } from "./my-actions-list";
-import {
-  MyActionsDetail,
-  MyActionsDetailEmpty,
-} from "./my-actions-detail";
+import { MyActionsDetail } from "./my-actions-detail";
 import { MyActionsSplitLayout } from "./my-actions-split-layout";
 
 function parseQuickFilter(value?: string | null): MyActionQuickFilter {
@@ -106,20 +103,11 @@ export function MyActionsView({
     [filtered, selectedId]
   );
 
-  const displayAction = selectedAction;
-
-  useEffect(() => {
-    if (!selectedId && filtered.length > 0) {
-      const q = new URLSearchParams(sp.toString());
-      q.set("action", filtered[0].id);
-      router.replace(`/?${q.toString()}`, { scroll: false });
-    }
-  }, [selectedId, filtered, sp, router]);
-
+  // 筛选变化导致当前 action 不在列表中时，清除无效选中（不自动展开详情）
   useEffect(() => {
     if (selectedId && filtered.length > 0 && !selectedAction) {
       const q = new URLSearchParams(sp.toString());
-      q.set("action", filtered[0].id);
+      q.delete("action");
       router.replace(`/?${q.toString()}`, { scroll: false });
     }
   }, [selectedId, filtered, selectedAction, sp, router]);
@@ -135,17 +123,15 @@ export function MyActionsView({
     </div>
   );
 
-  const detailPane = displayAction ? (
-    <MyActionsDetail key={displayAction.id} action={displayAction} hk={hkFilter} />
-  ) : (
-    <MyActionsDetailEmpty />
-  );
+  const detailPane = selectedAction ? (
+    <MyActionsDetail key={selectedAction.id} action={selectedAction} hk={hkFilter} />
+  ) : null;
 
   return (
     <MyActionsSplitLayout
       list={listPane}
       detail={detailPane}
-      selectedActionId={displayAction ? displayAction.id : null}
+      selectedActionId={selectedAction ? selectedAction.id : null}
       hk={hkFilter}
     />
   );
