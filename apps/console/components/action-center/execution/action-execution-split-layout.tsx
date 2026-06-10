@@ -61,12 +61,12 @@ export function ActionExecutionSplitLayout({
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 overflow-hidden"
+      className="relative flex h-full min-h-0 flex-1 overflow-hidden"
       data-sidebar-open={sidebarOpen ? "true" : "false"}
     >
       <section
         className={cn(
-          shellScrollClass,
+          "flex h-full min-h-0 flex-col overflow-hidden",
           "shrink-0 transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
           sidebarOpen
             ? "w-full max-w-full basis-full lg:w-[min(42%,440px)] lg:max-w-[440px] lg:basis-[min(42%,440px)] lg:border-r lg:border-border"

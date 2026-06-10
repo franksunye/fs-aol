@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 import {
   calendarPriorityLabel,
@@ -14,6 +16,23 @@ import {
   executionActionHref,
   type ExecutionAction,
 } from "@/lib/action-execution-mock";
+import {
+  parseExecutionSortKey,
+  sortExecutionActions,
+  type ExecutionSortKey,
+} from "@/lib/action-execution-sorting";
+import {
+  DataListFrame,
+  DataListPagination,
+  DataListSortableHead,
+  DataListStaticHead,
+  DataListTable,
+  paginateItems,
+  useDataListDensity,
+  useDataListUrlState,
+  type DataListLayout,
+  type DataListSortOrder,
+} from "@/components/data-list";
 import { ExecutionStatusBadge } from "./execution-status-badge";
 
 function PriorityCell({ label }: { label: string }) {
@@ -44,12 +63,61 @@ export function ActionExecutionList({
   items,
   selectedId,
   hk,
+  layout = "wide",
+  resetDeps = [],
+  className,
 }: {
   items: ExecutionAction[];
   selectedId: string | null;
   hk?: string;
+  layout?: DataListLayout;
+  resetDeps?: readonly unknown[];
+  className?: string;
 }) {
   const router = useRouter();
+  const { density } = useDataListDensity();
+
+  const parseSort = useCallback(
+    (raw: string | null) => parseExecutionSortKey(raw),
+    []
+  );
+
+  const {
+    page,
+    pageSize,
+    sort,
+    order,
+    setPage,
+    setPageSize,
+    toggleSort,
+  } = useDataListUrlState<ExecutionSortKey>({
+    defaultSort: "due",
+    parseSort,
+    resetDeps,
+  });
+
+  const sortedItems = useMemo(
+    () => sortExecutionActions(items, sort, order),
+    [items, sort, order]
+  );
+
+  const { pageItems, total, pageCount } = useMemo(
+    () => paginateItems(sortedItems, page, pageSize),
+    [sortedItems, page, pageSize]
+  );
+
+  const columns = useMemo<ColumnDef<ExecutionAction, unknown>[]>(
+    () => buildColumns({
+      sort,
+      order,
+      toggleSort,
+      selectedId,
+      hk,
+      layout,
+      router,
+    }),
+    [sort, order, toggleSort, selectedId, hk, layout, router]
+  );
 
   if (items.length === 0) {
     return (
@@ -60,115 +128,208 @@ export function ActionExecutionList({
   }
 
   return (
-    <div
-      className="overflow-x-auto rounded-xl border border-border bg-card"
-      role="listbox"
-      aria-label="待执行 Action 列表"
+    <DataListFrame
+      className={cn("min-h-[12rem] flex-1", className)}
+      footer={
+        <DataListPagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          pageCount={pageCount}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      }
     >
-      <table className="w-full min-w-[920px] border-collapse text-sm">
-        <thead>
-          <tr className="bg-muted/40 border-b border-border text-left">
-            <th className="text-muted-foreground w-10 px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              级
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              Action 标题
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase sm:table-cell">
-              来源 Agent
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              关联对象
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase md:table-cell">
-              来源系统
-            </th>
-            <th className="text-muted-foreground hidden px-2 py-2 text-[11px] font-semibold tracking-wide uppercase lg:table-cell">
-              执行人
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-[11px] font-semibold tracking-wide uppercase">
-              状态
-            </th>
-            <th className="text-muted-foreground px-2 py-2 text-right text-[11px] font-semibold tracking-wide uppercase">
-              时间
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => {
-            const Icon = item.icon;
+      <div
+        className="rounded-xl border border-border bg-card"
+        role="listbox"
+        aria-label="待执行 Action 列表"
+      >
+        <DataListTable
+          data={pageItems}
+          columns={columns}
+          layout={layout}
+          density={density}
+          minWidth={layout === "narrow" ? 560 : 920}
+          getRowId={(row) => row.id}
+          getRowProps={(row) => {
+            const item = row.original;
             const active = item.id === selectedId;
-            const href = executionActionHref(item.id, hk);
-            const sourceAgent = executionSourceAgent(item);
-            const sourceSystem = executionSourceSystem(item);
-
-            return (
-              <tr
-                key={item.id}
-                role="option"
-                aria-selected={active}
-                className={cn(
-                  "border-b border-border/60 transition-colors last:border-0",
-                  active
-                    ? "bg-primary/5"
-                    : "hover:bg-muted/35"
-                )}
-              >
-                <td className="px-2 py-2.5 align-middle">
-                  <PriorityCell label={calendarPriorityLabel(item.priority)} />
-                </td>
-                <td className="max-w-[14rem] px-2 py-2.5 align-middle">
-                  <Link
-                    href={href}
-                    scroll={false}
-                    className={cn(
-                      "flex min-w-0 items-start gap-2 hover:underline",
-                      active ? "text-primary" : "text-foreground"
-                    )}
-                    onFocus={() => router.prefetch(href)}
-                  >
-                    <span className="bg-primary/10 text-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg">
-                      <Icon className="size-3.5" aria-hidden />
-                    </span>
-                    <span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug">
-                      {item.title}
-                    </span>
-                  </Link>
-                  <p className="text-muted-foreground mt-1 truncate text-[11px] sm:hidden">
-                    {sourceAgent.label}
-                  </p>
-                </td>
-                <td className="text-muted-foreground hidden max-w-[7rem] truncate px-2 py-2.5 align-middle text-xs sm:table-cell">
-                  {sourceAgent.label}
-                </td>
-                <td className="px-2 py-2.5 align-middle">
-                  <p className="font-mono text-xs font-medium tabular-nums">
-                    {item.opportunityId}
-                  </p>
-                  <p className="text-muted-foreground text-[11px]">
-                    {WORK_ORDER_OBJECT_TYPE}
-                  </p>
-                </td>
-                <td className="text-muted-foreground hidden px-2 py-2.5 align-middle text-xs md:table-cell">
-                  {sourceSystem.label}
-                </td>
-                <td
-                  className="hidden max-w-[5rem] truncate px-2 py-2.5 align-middle text-xs lg:table-cell"
-                  title={item.assignee}
-                >
-                  {item.assignee}
-                </td>
-                <td className="px-2 py-2.5 align-middle">
-                  <ExecutionStatusBadge status={item.status} />
-                </td>
-                <td className="text-muted-foreground px-2 py-2.5 text-right align-middle text-xs tabular-nums">
-                  {formatDueLabel(item.dueDate, item.dueTime)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+            return {
+              role: "option",
+              "aria-selected": active,
+              className: cn(
+                active ? "bg-primary/5" : "hover:bg-muted/35"
+              ),
+            };
+          }}
+        />
+      </div>
+    </DataListFrame>
   );
+}
+
+function buildColumns({
+  sort,
+  order,
+  toggleSort,
+  selectedId,
+  hk,
+  layout,
+  router,
+}: {
+  sort: ExecutionSortKey;
+  order: DataListSortOrder;
+  toggleSort: (key: ExecutionSortKey) => void;
+  selectedId: string | null;
+  hk?: string;
+  layout: DataListLayout;
+  router: ReturnType<typeof useRouter>;
+}): ColumnDef<ExecutionAction, unknown>[] {
+  return [
+    {
+      id: "priority",
+      header: () => (
+        <DataListSortableHead
+          label="级"
+          active={sort === "priority"}
+          order={order}
+          onSort={() => toggleSort("priority")}
+        />
+      ),
+      cell: ({ row }) => (
+        <PriorityCell label={calendarPriorityLabel(row.original.priority)} />
+      ),
+    },
+    {
+      id: "title",
+      header: () => (
+        <DataListSortableHead
+          label="Action 标题"
+          active={sort === "title"}
+          order={order}
+          onSort={() => toggleSort("title")}
+        />
+      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const Icon = item.icon;
+        const active = item.id === selectedId;
+        const href = executionActionHref(item.id, hk);
+        const sourceAgent = executionSourceAgent(item);
+        return (
+          <>
+            <Link
+              href={href}
+              scroll={false}
+              className={cn(
+                "flex min-w-0 items-start gap-2 hover:underline",
+                active ? "text-primary" : "text-foreground"
+              )}
+              onFocus={() => router.prefetch(href)}
+            >
+              <span className="bg-primary/10 text-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg">
+                <Icon className="size-3.5" aria-hidden />
+              </span>
+              <span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug">
+                {item.title}
+              </span>
+            </Link>
+            {layout === "narrow" ? (
+              <p className="text-muted-foreground mt-1 truncate text-[11px]">
+                {sourceAgent.label} · {item.assignee}
+              </p>
+            ) : (
+              <p className="text-muted-foreground mt-1 truncate text-[11px] sm:hidden">
+                {sourceAgent.label}
+              </p>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      id: "sourceAgent",
+      header: () => (
+        <DataListSortableHead
+          label="来源 Agent"
+          active={sort === "agent"}
+          order={order}
+          onSort={() => toggleSort("agent")}
+        />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground max-w-[7rem] truncate text-xs">
+          {executionSourceAgent(row.original).label}
+        </span>
+      ),
+    },
+    {
+      id: "related",
+      header: () => <DataListStaticHead label="关联对象" />,
+      cell: ({ row }) => (
+        <>
+          <p className="font-mono text-xs font-medium tabular-nums">
+            {row.original.opportunityId}
+          </p>
+          <p className="text-muted-foreground text-[11px]">
+            {WORK_ORDER_OBJECT_TYPE}
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "sourceSystem",
+      header: () => <DataListStaticHead label="来源系统" />,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">
+          {executionSourceSystem(row.original).label}
+        </span>
+      ),
+    },
+    {
+      id: "executor",
+      header: () => <DataListStaticHead label="执行人" />,
+      cell: ({ row }) => (
+        <span
+          className="max-w-[5rem] truncate text-xs"
+          title={row.original.assignee}
+        >
+          {row.original.assignee}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: () => (
+        <DataListSortableHead
+          label="状态"
+          active={sort === "status"}
+          order={order}
+          onSort={() => toggleSort("status")}
+        />
+      ),
+      cell: ({ row }) => (
+        <ExecutionStatusBadge status={row.original.status} />
+      ),
+    },
+    {
+      id: "due",
+      header: () => (
+        <DataListSortableHead
+          label="截止时间"
+          active={sort === "due"}
+          order={order}
+          align="right"
+          onSort={() => toggleSort("due")}
+        />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-right text-xs tabular-nums">
+          {formatDueLabel(row.original.dueDate, row.original.dueTime)}
+        </span>
+      ),
+    },
+  ];
 }

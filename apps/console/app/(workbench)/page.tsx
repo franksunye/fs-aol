@@ -50,6 +50,7 @@ import {
 } from "@/lib/action-center-secondary";
 import { ActionCenterShell } from "@/components/action-center/action-center-shell";
 import { ActionCenterSecondaryStrip } from "@/components/action-center/action-center-secondary-strip";
+import { ActionReviewListSkeleton } from "@/components/action-center/action-center-skeleton";
 import { ExecutionToolbar } from "@/components/action-center/execution-toolbar";
 export const dynamic = "force-dynamic";
 
@@ -177,51 +178,60 @@ export default async function ActionCenterPage({
       }
     />
   ) : (
-    <div role="listbox" aria-label="Action 列表">
-      <ActionReviewList
-        items={workItems}
-        listContext={listContext}
-        selectedKey={selectedKey}
-        sortKey={sortKey}
-      />
+    <div
+      role="listbox"
+      aria-label="Action 列表"
+      className="flex h-full min-h-0 flex-col"
+    >
+      <Suspense fallback={<ActionReviewListSkeleton />}>
+        <ActionReviewList
+          items={workItems}
+          listContext={listContext}
+          selectedKey={selectedKey}
+          sortKey={sortKey}
+          layout={selectedKey ? "narrow" : "wide"}
+        />
+      </Suspense>
     </div>
   );
 
   const listPane = (
-    <div className="px-3 py-3 lg:px-4 lg:py-4">
-      <div className="mb-3 md:hidden">
+    <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
+      <div className="mb-3 shrink-0 md:hidden">
         <Suspense fallback={null}>
           <ActionReviewSearchBar className="max-w-none" />
         </Suspense>
       </div>
 
-      {isActiveInbox ? (
-        <Suspense fallback={null}>
-          <ActionReviewFilters
-            hk={hkFilter}
-            rows={beforePriority}
-            currentPriority={priorityFilter}
-            compact
-          />
-        </Suspense>
-      ) : isClosedLoop ? (
-        <>
+      <div className="shrink-0">
+        {isActiveInbox ? (
           <Suspense fallback={null}>
-            <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
+            <ActionReviewFilters
+              hk={hkFilter}
+              rows={beforePriority}
+              currentPriority={priorityFilter}
+              compact
+            />
           </Suspense>
+        ) : isClosedLoop ? (
+          <>
+            <Suspense fallback={null}>
+              <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
+            </Suspense>
+            <p className="text-muted-foreground mb-4 text-sm">
+              {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
+              {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
+            </p>
+          </>
+        ) : isInboxData ? (
           <p className="text-muted-foreground mb-4 text-sm">
             {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
             {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
           </p>
-        </>
-      ) : isInboxData ? (
-        <p className="text-muted-foreground mb-4 text-sm">
-          {INBOX_TAB_LABELS[inboxTab]} · {rows.length} 条
-          {sp.q?.trim() ? ` · 搜索「${sp.q.trim()}」` : ""}
-        </p>
-      ) : null}
+        ) : null}
+      </div>
 
-      {listBody}
+      <div className="min-h-0 flex-1">{listBody}</div>
     </div>
   );
 

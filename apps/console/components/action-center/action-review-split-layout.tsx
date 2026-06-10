@@ -70,7 +70,7 @@ export function ActionReviewSplitLayout({
     >
       <section
         className={cn(
-          shellScrollClass,
+          "flex h-full min-h-0 flex-col overflow-hidden",
           "shrink-0 transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
           sidebarOpen
             ? "w-full max-w-full basis-full lg:w-[min(38%,400px)] lg:max-w-[400px] lg:basis-[min(38%,400px)] lg:border-r lg:border-border"

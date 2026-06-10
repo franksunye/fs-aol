@@ -1,0 +1,140 @@
+"use client";
+
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+  type Row,
+} from "@tanstack/react-table";
+import { cn } from "@/lib/utils";
+import type { DataListDensity, DataListLayout } from "./data-list-types";
+import { isColumnVisibleInLayout } from "./data-list-column-visibility";
+
+const DENSITY_CELL: Record<DataListDensity, string> = {
+  compact: "px-2 py-1.5",
+  comfortable: "px-2 py-2.5",
+};
+
+export function DataListTable<TData>({
+  data,
+  columns,
+  layout = "wide",
+  density = "comfortable",
+  minWidth = 880,
+  stickyTitleColumn = true,
+  getRowId,
+  getRowProps,
+  tableClassName,
+}: {
+  data: TData[];
+  columns: ColumnDef<TData, unknown>[];
+  layout?: DataListLayout;
+  density?: DataListDensity;
+  minWidth?: number;
+  stickyTitleColumn?: boolean;
+  getRowId?: (row: TData) => string;
+  getRowProps?: (row: Row<TData>) => {
+    className?: string;
+    role?: string;
+    "aria-selected"?: boolean;
+    "data-work-item-id"?: string;
+    "data-work-item-href"?: string;
+  };
+  tableClassName?: string;
+}) {
+  const visibleColumns = columns.filter((col) => {
+    const id = col.id ?? (col as { accessorKey?: string }).accessorKey;
+    if (!id) return true;
+    return isColumnVisibleInLayout(String(id), layout);
+  });
+
+  const table = useReactTable({
+    data,
+    columns: visibleColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: getRowId ? (row) => getRowId(row) : undefined,
+  });
+
+  const cellPad = DENSITY_CELL[density];
+  const titleColumnId = "title";
+
+  return (
+    <table
+      className={cn(
+        "w-full border-collapse text-sm",
+        tableClassName
+      )}
+      style={{ minWidth }}
+    >
+      <thead>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id} className="border-b border-border text-left">
+            {headerGroup.headers.map((header) => {
+              const colId = header.column.id;
+              const isTitle = stickyTitleColumn && colId === titleColumnId;
+              const sortMeta = header.column.columnDef.meta as
+                | { sortActive?: boolean; sortOrder?: "asc" | "desc" }
+                | undefined;
+
+              return (
+                <th
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  aria-sort={
+                    sortMeta?.sortActive
+                      ? sortMeta.sortOrder === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                  className={cn(
+                    "bg-muted/40 text-muted-foreground sticky top-0 z-10 px-2 py-2 text-[11px] font-semibold tracking-wide uppercase",
+                    isTitle && "left-0 z-20 shadow-[1px_0_0_0_var(--border)]"
+                  )}
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              );
+            })}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => {
+          const rowProps = getRowProps?.(row) ?? {};
+          return (
+            <tr
+              key={row.id}
+              {...rowProps}
+              className={cn(
+                "border-b border-border/60 transition-colors last:border-0",
+                rowProps.className
+              )}
+            >
+              {row.getVisibleCells().map((cell) => {
+                const colId = cell.column.id;
+                const isTitle = stickyTitleColumn && colId === titleColumnId;
+                return (
+                  <td
+                    key={cell.id}
+                    className={cn(
+                      "align-middle",
+                      cellPad,
+                      isTitle &&
+                        "bg-background sticky left-0 z-[1] shadow-[1px_0_0_0_var(--border)]"
+                    )}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}

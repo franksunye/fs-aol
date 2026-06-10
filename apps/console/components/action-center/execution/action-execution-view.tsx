@@ -113,12 +113,23 @@ export function ActionExecutionView({
   }, [selectedId, filtered, selectedAction, sp, router]);
 
   const listPane = (
-    <div className="px-3 py-3 lg:px-4 lg:py-4">
-      <ActionExecutionFilters hk={hkFilter} counts={quickCounts} filters={filters} />
+    <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
+      <div className="shrink-0">
+        <ActionExecutionFilters hk={hkFilter} counts={quickCounts} filters={filters} />
+      </div>
       <ActionExecutionList
+        className="min-h-0 flex-1"
         items={filtered}
         selectedId={selectedId}
         hk={hkFilter}
+        layout={selectedId ? "narrow" : "wide"}
+        resetDeps={[
+          filters.quick,
+          filters.agentId,
+          filters.query,
+          filters.status,
+          hkFilter,
+        ]}
       />
     </div>
   );
@@ -128,11 +139,13 @@ export function ActionExecutionView({
   ) : null;
 
   return (
-    <ActionExecutionSplitLayout
-      list={listPane}
-      detail={detailPane}
-      selectedActionId={selectedAction ? selectedAction.id : null}
-      hk={hkFilter}
-    />
+    <div className="flex h-full min-h-0 flex-col">
+      <ActionExecutionSplitLayout
+        list={listPane}
+        detail={detailPane}
+        selectedActionId={selectedAction ? selectedAction.id : null}
+        hk={hkFilter}
+      />
+    </div>
   );
 }
