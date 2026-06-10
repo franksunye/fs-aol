@@ -15,7 +15,7 @@ import {
 import { RunsSummaryCards } from "./runs-summary-cards";
 import { RunsFilters } from "./runs-filters";
 import { RunsList } from "./runs-list";
-import { RunsDetailEmpty, RunsDetailPanel } from "./runs-detail-panel";
+import { RunsDetailPanel } from "./runs-detail-panel";
 import { RunsSplitLayout } from "./runs-split-layout";
 
 function parseQuickFilter(value?: string | null): RunQuickFilter {
@@ -64,18 +64,11 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
     [filtered, selectedId]
   );
 
-  useEffect(() => {
-    if (!selectedId && filtered.length > 0) {
-      const q = new URLSearchParams(sp.toString());
-      q.set("run", filtered[0].id);
-      router.replace(`/runs?${q.toString()}`, { scroll: false });
-    }
-  }, [selectedId, filtered, sp, router]);
-
+  // 筛选变化导致当前 run 不在列表中时，清除无效选中（不自动展开详情）
   useEffect(() => {
     if (selectedId && filtered.length > 0 && !selectedRun) {
       const q = new URLSearchParams(sp.toString());
-      q.set("run", filtered[0].id);
+      q.delete("run");
       router.replace(`/runs?${q.toString()}`, { scroll: false });
     }
   }, [selectedId, filtered, selectedRun, sp, router]);
@@ -101,9 +94,7 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
 
   const detailPane = selectedRun ? (
     <RunsDetailPanel key={selectedRun.id} run={selectedRun} hk={hkFilter} />
-  ) : (
-    <RunsDetailEmpty />
-  );
+  ) : null;
 
   return (
     <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">

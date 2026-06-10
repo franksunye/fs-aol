@@ -61,14 +61,15 @@ export function RunsSplitLayout({
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 overflow-hidden"
+      className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden"
       data-sidebar-open={sidebarOpen ? "true" : "false"}
     >
       <section
         className={cn(
-          "flex h-full min-h-0 shrink-0 flex-col overflow-hidden transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
+          "flex h-full min-h-0 flex-col overflow-hidden",
+          "shrink-0 transition-[width,max-width] duration-300 ease-out motion-reduce:transition-none",
           sidebarOpen
-            ? "w-full max-w-full basis-full lg:w-[min(58%,720px)] lg:max-w-[720px] lg:basis-[min(58%,720px)] lg:border-r lg:border-border"
+            ? "w-full max-w-full basis-full lg:w-[min(38%,400px)] lg:max-w-[400px] lg:basis-[min(38%,400px)] lg:border-r lg:border-border"
             : "min-w-0 flex-1"
         )}
         aria-label="Runs 列表"

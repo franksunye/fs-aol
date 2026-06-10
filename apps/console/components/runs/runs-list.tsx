@@ -155,24 +155,22 @@ export function RunsList({
         />
       }
     >
-      <div className="rounded-xl border border-border bg-card shadow-sm">
-        <DataListTable
-          data={pageItems}
-          columns={columns}
-          layout={layout}
-          density={density}
-          minWidth={layout === "narrow" ? 640 : 960}
-          stickyTitleColumn={false}
-          userHiddenColumnIds={hiddenIds}
-          getRowId={(row) => row.id}
-          getRowProps={(row) => {
-            const active = row.original.id === selectedId;
-            return {
-              className: cn(active ? "bg-primary/5" : "hover:bg-muted/40"),
-            };
-          }}
-        />
-      </div>
+      <DataListTable
+        data={pageItems}
+        columns={columns}
+        layout={layout}
+        density={density}
+        minWidth={layout === "narrow" ? 640 : 960}
+        stickyTitleColumn={false}
+        userHiddenColumnIds={hiddenIds}
+        getRowId={(row) => row.id}
+        getRowProps={(row) => {
+          const active = row.original.id === selectedId;
+          return {
+            className: cn(active ? "bg-primary/5" : "hover:bg-muted/40"),
+          };
+        }}
+      />
     </DataListFrame>
   );
 }
