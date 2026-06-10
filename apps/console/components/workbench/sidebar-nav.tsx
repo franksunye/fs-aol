@@ -9,16 +9,24 @@ import {
   CircleHelp,
   LayoutDashboard,
   Link2,
+  ListTodo,
   Play,
   PanelLeft,
   PanelLeftClose,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { SidebarBrand } from "./sidebar-brand";
 import { cn } from "@/lib/utils";
 import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
 import { RUNS_TODAY_MOCK_COUNT } from "@/lib/runs-mock";
+import {
+  GOVERNANCE_HOME_PATH,
+  governanceActionsHref,
+} from "@/lib/governance-nav";
+import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
+import { OVERVIEW_SIDEBAR_BADGE } from "@/lib/overview-mock";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
 import { stripPaneSelectionParams } from "@/lib/workbench-nav";
 import { Button } from "@/components/ui/button";
@@ -96,26 +104,38 @@ export function SidebarNav({
 }) {
   const pathname = usePathname();
   const sp = useSearchParams();
+  const onOverview = pathname === "/overview";
   const onWorkbench = pathname === "/";
   const onAnalytics = pathname === "/analytics";
   const onAgents = pathname === "/agents";
   const onRuns = pathname.startsWith("/runs");
   const onIntegrations = pathname.startsWith("/integrations");
+  const onGovernance = pathname.startsWith("/governance");
   const onSettings = pathname.startsWith("/settings");
+
+  const overviewNavHref = hk
+    ? `${OVERVIEW_HOME_PATH}?hk=${encodeURIComponent(hk)}`
+    : OVERVIEW_HOME_PATH;
 
   const items: NavItem[] = [
     {
-      label: "工作台",
+      label: "总览",
       icon: LayoutDashboard,
-      href: navHref("/", sp, hk),
-      active: onWorkbench,
-      badge: activeCount > 0 ? activeCount : undefined,
+      href: overviewNavHref,
+      active: onOverview,
+      badge: OVERVIEW_SIDEBAR_BADGE,
     },
     {
       label: "Agents",
       icon: Bot,
       href: "/agents",
       active: onAgents,
+    },
+    {
+      label: "Action 中心",
+      icon: ListTodo,
+      href: governanceActionsHref(hk),
+      active: onWorkbench && sp.get("tab") === "actions",
     },
     {
       label: "Runs",
@@ -125,16 +145,22 @@ export function SidebarNav({
       badge: RUNS_TODAY_MOCK_COUNT,
     },
     {
+      label: "评估",
+      icon: BarChart3,
+      href: analyticsHref(sp, hk),
+      active: onAnalytics,
+    },
+    {
       label: "集成",
       icon: Link2,
       href: INTEGRATIONS_HOME_PATH,
       active: onIntegrations,
     },
     {
-      label: "分析",
-      icon: BarChart3,
-      href: analyticsHref(sp, hk),
-      active: onAnalytics,
+      label: "治理",
+      icon: ShieldCheck,
+      href: GOVERNANCE_HOME_PATH,
+      active: onGovernance,
     },
   ];
 
