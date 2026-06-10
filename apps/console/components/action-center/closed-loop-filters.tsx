@@ -34,15 +34,23 @@ function buildHref(
 export function ClosedLoopFilters({
   hk,
   current,
+  embedded = false,
 }: {
   hk?: string;
   current: ClosedLoopFilter;
+  /** Inline inside DataListToolbar — no outer margin */
+  embedded?: boolean;
 }) {
   const sp = useSearchParams();
 
   return (
     <nav
-      className="mb-3 flex flex-wrap gap-1.5"
+      className={cn(
+        "flex gap-1.5",
+        embedded
+          ? "scrollbar-none min-w-0 flex-nowrap overflow-x-auto"
+          : "mb-3 flex-wrap"
+      )}
       aria-label="已闭环筛选"
     >
       {FILTERS.map((filter) => (
@@ -51,7 +59,7 @@ export function ClosedLoopFilters({
           href={buildHref(filter, sp, hk)}
           scroll={false}
           className={cn(
-            "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+            "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
             current === filter
               ? "border-primary bg-agent-surface text-primary"
               : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"

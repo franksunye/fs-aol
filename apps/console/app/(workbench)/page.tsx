@@ -171,10 +171,6 @@ export default async function ActionCenterPage({
     cfilter: sp.cfilter,
   });
   const hasRows = listTotal > 0;
-  const listToolbarSummary =
-    isInboxData && !isActiveInbox
-      ? `${INBOX_TAB_LABELS[inboxTab]} · ${listTotal} 条`
-      : undefined;
 
   const secondaryStrip = isExecution ? (
     <ActionCenterSecondaryStrip
@@ -236,7 +232,6 @@ export default async function ActionCenterPage({
           selectedKey={selectedKey}
           sortKey={sortKey}
           layout={selectedKey ? "narrow" : "wide"}
-          toolbarSummary={listToolbarSummary}
           toolbarStart={
             isActiveInbox ? (
               <Suspense fallback={null}>
@@ -248,6 +243,14 @@ export default async function ActionCenterPage({
                   embedded
                 />
               </Suspense>
+            ) : isClosedLoop ? (
+              <Suspense fallback={null}>
+                <ClosedLoopFilters
+                  hk={hkFilter}
+                  current={closedLoopFilter}
+                  embedded
+                />
+              </Suspense>
             ) : undefined
           }
         />
@@ -255,8 +258,17 @@ export default async function ActionCenterPage({
     </div>
   );
 
+  const listPaneTightTop =
+    hasRows && isInboxData && !isActiveInbox && !isClosedLoop;
+
   const listPane = (
-    <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
+    <div
+      className={
+        listPaneTightTop
+          ? "flex h-full min-h-0 flex-col px-3 pb-3 pt-1 lg:px-4 lg:pb-4 lg:pt-2"
+          : "flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4"
+      }
+    >
       <div className="shrink-0">
         {!hasRows && isActiveInbox ? (
           <Suspense fallback={null}>
@@ -267,7 +279,7 @@ export default async function ActionCenterPage({
               compact
             />
           </Suspense>
-        ) : isClosedLoop ? (
+        ) : !hasRows && isClosedLoop ? (
           <Suspense fallback={null}>
             <ClosedLoopFilters hk={hkFilter} current={closedLoopFilter} />
           </Suspense>

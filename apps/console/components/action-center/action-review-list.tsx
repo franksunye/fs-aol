@@ -34,7 +34,6 @@ export function ActionReviewList({
   selectedKey,
   sortKey: serverSortKey,
   layout = "wide",
-  toolbarSummary,
   toolbarStart,
 }: {
   items: WorkItem[];
@@ -44,9 +43,7 @@ export function ActionReviewList({
   selectedKey: string | null;
   sortKey: ActionReviewSortKey;
   layout?: DataListLayout;
-  /** Merged into toolbar left side, e.g. 「已归档 · 24 条」 */
-  toolbarSummary?: string;
-  /** Merged into toolbar left side, e.g. priority filter chips */
+  /** Merged into toolbar left side, e.g. priority / closed-loop filter chips */
   toolbarStart?: ReactNode;
 }) {
   const sp = useSearchParams();
@@ -118,6 +115,23 @@ export function ActionReviewList({
     [pageItems, listContext]
   );
 
+  const viewControls = (
+    <>
+      <DataListColumnSettings
+        columns={ACTION_REVIEW_COLUMN_PREFS}
+        isColumnHidden={isColumnHidden}
+        setColumnHidden={setColumnHidden}
+        onReset={resetColumns}
+      />
+      <DataListDensityToggle
+        density={density}
+        onDensityChange={setDensity}
+      />
+    </>
+  );
+
+  const showToolbar = Boolean(toolbarStart);
+
   return (
     <ActionReviewListKeyboard
       itemHrefs={itemHrefs}
@@ -128,45 +142,37 @@ export function ActionReviewList({
         <DataListFrame
           className="h-full"
           toolbar={
-            <DataListToolbar
-              start={
-                toolbarStart || toolbarSummary ? (
-                  <>
-                    {toolbarStart}
-                    {toolbarSummary ? (
-                      <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                        {toolbarSummary}
-                      </span>
-                    ) : null}
-                  </>
-                ) : undefined
-              }
-              end={
-                <>
-                  <DataListColumnSettings
-                    columns={ACTION_REVIEW_COLUMN_PREFS}
-                    isColumnHidden={isColumnHidden}
-                    setColumnHidden={setColumnHidden}
-                    onReset={resetColumns}
-                  />
-                  <DataListDensityToggle
-                    density={density}
-                    onDensityChange={setDensity}
-                  />
-                </>
-              }
-            />
+            showToolbar ? (
+              <DataListToolbar start={toolbarStart} end={viewControls} />
+            ) : null
           }
           footer={
             total > 0 ? (
-              <DataListPagination
-                page={page}
-                pageSize={pageSize}
-                total={total}
-                pageCount={pageCount}
-                onPageChange={setPage}
-                onPageSizeChange={setPageSize}
-              />
+              showToolbar ? (
+                <DataListPagination
+                  page={page}
+                  pageSize={pageSize}
+                  total={total}
+                  pageCount={pageCount}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <DataListPagination
+                    className="min-w-0 flex-1 py-1.5"
+                    page={page}
+                    pageSize={pageSize}
+                    total={total}
+                    pageCount={pageCount}
+                    onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
+                  />
+                  <div className="flex shrink-0 items-center gap-2 pr-2">
+                    {viewControls}
+                  </div>
+                </div>
+              )
             ) : null
           }
         >
