@@ -74,8 +74,6 @@ export function WorkbenchTabs({
       {WORKBENCH_TAB_ORDER.map((view) => {
         const active = view === current;
         const badge = tabBadge(view, counts);
-        const isPlaceholder = view === "actions" || view === "calendar";
-
         return (
           <Link
             key={view}

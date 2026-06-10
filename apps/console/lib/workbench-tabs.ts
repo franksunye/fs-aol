@@ -41,5 +41,5 @@ export function isInboxDataView(
 }
 
 export function isWorkbenchPlaceholderView(view: WorkbenchView): boolean {
-  return view === "actions" || view === "calendar";
+  return view === "actions";
 }

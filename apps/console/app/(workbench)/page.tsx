@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { Calendar, ListTodo } from "lucide-react";
+import { ListTodo } from "lucide-react";
 import {
   listSuggestions,
   countInboxBuckets,
@@ -39,6 +39,8 @@ import {
   WORKBENCH_VIEW_LABELS,
   workbenchViewFromSearchParams,
 } from "@/lib/workbench-tabs";
+import { shellScrollClass } from "@/lib/shell-preferences";
+import { CalendarView } from "@/components/workbench/calendar/calendar-view";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,7 @@ export default async function WorkbenchPage({
 }) {
   const sp = await searchParams;
   const workbenchView = workbenchViewFromSearchParams(sp);
+  const isCalendar = workbenchView === "calendar";
   const isPlaceholder = isWorkbenchPlaceholderView(workbenchView);
   const isInboxData = isInboxDataView(workbenchView);
   const inboxTab = isInboxData ? workbenchView : "active";
@@ -71,9 +74,9 @@ export default async function WorkbenchPage({
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const [rawRows, tabCounts] = await Promise.all([
-    isPlaceholder
-      ? Promise.resolve([])
-      : listSuggestions({ inboxBucket: inboxTab, ...hkOpts }),
+    isInboxData
+      ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
+      : Promise.resolve([]),
     countInboxBuckets(hkOpts),
   ]);
   const sortKey = parseSuggestionSortKey(sp.sort);
@@ -99,12 +102,8 @@ export default async function WorkbenchPage({
   const listBody = isPlaceholder ? (
     <EmptyState
       title={WORKBENCH_VIEW_LABELS[workbenchView]}
-      description={
-        workbenchView === "actions"
-          ? "跟进中、已认领的工单将集中展示于此（演示占位，即将开放）。"
-          : "按日查看待办与预约安排（演示占位，即将开放）。"
-      }
-      icon={workbenchView === "actions" ? ListTodo : Calendar}
+      description="跟进中、已认领的工单将集中展示于此（演示占位，即将开放）。"
+      icon={ListTodo}
     />
   ) : !hasRows ? (
     <EmptyState
@@ -183,6 +182,28 @@ export default async function WorkbenchPage({
         <CaseDetailPane dedupeKey={selectedKey} searchParams={sp} />
       </Suspense>
     ) : null;
+
+  if (isCalendar) {
+    return (
+      <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+        <div className={`${shellScrollClass} flex-1`}>
+          <div className="px-3 py-4 lg:px-4 lg:py-5">
+            <WorkbenchHeader pilots={pilots} hkFilter={hkFilter} compact />
+            <Suspense fallback={null}>
+              <WorkbenchTabs
+                current={workbenchView}
+                hk={hkFilter}
+                counts={tabCounts}
+              />
+            </Suspense>
+            <Suspense fallback={null}>
+              <CalendarView hkFilter={hkFilter} pilots={pilots} />
+            </Suspense>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
