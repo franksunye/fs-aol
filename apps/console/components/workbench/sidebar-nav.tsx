@@ -21,10 +21,8 @@ import { cn } from "@/lib/utils";
 import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
 import { RUNS_TODAY_MOCK_COUNT } from "@/lib/runs-mock";
-import {
-  GOVERNANCE_HOME_PATH,
-  governanceActionsHref,
-} from "@/lib/governance-nav";
+import { GOVERNANCE_HOME_PATH } from "@/lib/governance-nav";
+import { actionCenterHref } from "@/lib/workbench-nav";
 import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
 import { OVERVIEW_SIDEBAR_BADGE } from "@/lib/overview-mock";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
@@ -126,16 +124,10 @@ export function SidebarNav({
       badge: OVERVIEW_SIDEBAR_BADGE,
     },
     {
-      label: "Agents",
-      icon: Bot,
-      href: "/agents",
-      active: onAgents,
-    },
-    {
       label: "Action 中心",
       icon: ListTodo,
-      href: governanceActionsHref(hk),
-      active: onWorkbench && sp.get("tab") === "actions",
+      href: actionCenterHref(hk),
+      active: onWorkbench,
     },
     {
       label: "Runs",
@@ -149,6 +141,12 @@ export function SidebarNav({
       icon: BarChart3,
       href: analyticsHref(sp, hk),
       active: onAnalytics,
+    },
+    {
+      label: "Agents",
+      icon: Bot,
+      href: "/agents",
+      active: onAgents,
     },
     {
       label: "集成",

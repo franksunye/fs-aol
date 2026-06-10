@@ -32,7 +32,7 @@ export default function GlobalError({
           重试
         </Button>
         <Button type="button" variant="outline" onClick={() => window.location.assign("/")}>
-          返回工作台
+          返回 Action中心
         </Button>
       </div>
     </main>

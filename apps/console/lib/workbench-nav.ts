@@ -9,6 +9,14 @@ import {
   workbenchViewFromSearchParams,
 } from "./workbench-tabs";
 
+/** Action 中心首页，默认待审核 */
+export function actionCenterHref(hk?: string): string {
+  const q = new URLSearchParams();
+  if (hk) q.set("hk", hk);
+  const s = q.toString();
+  return s ? `/?${s}` : "/";
+}
+
 /** 切换列表筛选/排序/收件箱时清除分栏选中态 */
 export type DetailPanel = "activity" | "agent";
 
@@ -73,8 +81,7 @@ export function workbenchHref(ctx: WorkbenchListContext = {}): string {
   const q = new URLSearchParams();
   const from = ctx.from ?? "active";
   if (from === "archived") {
-    q.set("tab", "closed");
-    q.set("cfilter", "archived");
+    q.set("tab", "archived");
   } else if (from === "closed") {
     q.set("tab", "closed");
   } else if (from !== "active") {
@@ -92,8 +99,7 @@ export function workbenchHref(ctx: WorkbenchListContext = {}): string {
 function appendWorkbenchListQuery(q: URLSearchParams, ctx: WorkbenchListContext) {
   const from = ctx.from ?? "active";
   if (from === "archived") {
-    q.set("tab", "closed");
-    q.set("cfilter", "archived");
+    q.set("tab", "archived");
   } else if (from === "closed") {
     q.set("tab", "closed");
   } else if (from !== "active") {
@@ -169,7 +175,7 @@ export function resolveWorkbenchBack(
   const from = ctx.from ?? fallbackBucket;
   const href = workbenchHref({ ...ctx, from });
   const label =
-    from === "active" ? "返回工作台" : `返回${INBOX_TAB_LABELS[from]}`;
+    from === "active" ? "返回Action中心" : `返回${INBOX_TAB_LABELS[from]}`;
   return { href, label };
 }
 

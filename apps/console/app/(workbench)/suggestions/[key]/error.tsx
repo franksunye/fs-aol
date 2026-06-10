@@ -34,7 +34,7 @@ export default function SuggestionDetailError({
       <AlertTriangle className="text-destructive mb-4 size-10" aria-hidden />
       <h1 className="text-lg font-semibold">案件详情加载失败</h1>
       <p className="text-muted-foreground mt-2 max-w-md text-sm">
-        无法读取工单、trace 或时间轴。请重试或返回工作台。
+        无法读取工单、trace 或时间轴。请重试或返回 Action中心。
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         <Button type="button" onClick={() => reset()}>

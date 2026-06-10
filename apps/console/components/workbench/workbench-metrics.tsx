@@ -59,7 +59,7 @@ export function WorkbenchMetrics({
         "grid grid-cols-2 gap-2",
         compact ? "mb-3" : "mb-6 gap-3 sm:grid-cols-2 xl:grid-cols-4"
       )}
-      aria-label="工作台指标"
+      aria-label="Action中心指标"
     >
       <MetricCard
         compact={compact}

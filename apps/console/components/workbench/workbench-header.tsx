@@ -8,14 +8,15 @@ import { HousekeeperFilter } from "@/components/housekeeper-filter";
 import { LogoutButton } from "@/components/logout-button";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
 import { isAuthEnabled } from "@/lib/auth";
+import { ACTION_CENTER_TITLE, WORKBENCH_SUBTITLE } from "@/lib/workbench-tabs";
 import { cn } from "@/lib/utils";
 
 export function WorkbenchHeader({
   pilots,
   hkFilter,
   compact = false,
-  title = "工作台",
-  subtitle = "统一查看 Agent 生成的建议、Action 分发状态与业务反馈。",
+  title = ACTION_CENTER_TITLE,
+  subtitle = WORKBENCH_SUBTITLE,
 }: {
   pilots: PilotHousekeeper[];
   hkFilter?: string;
@@ -58,7 +59,7 @@ export function WorkbenchHeader({
           size={compact ? "icon-sm" : "sm"}
           onClick={() => router.refresh()}
           className={compact ? undefined : "gap-1.5"}
-          aria-label="刷新工作台数据"
+          aria-label="刷新 Action 中心数据"
         >
           <RefreshCw className="size-3.5" />
           {compact ? null : "刷新"}

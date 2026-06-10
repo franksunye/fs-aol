@@ -114,10 +114,10 @@ export function AgentDetailPanel({ agent }: { agent: MockAgent }) {
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               {agent.id === "follow-up" ? (
                 <Button type="button" render={<Link href="/" />}>
-                  进入工作台
+                  进入 Action中心
                 </Button>
               ) : (
-                <DemoButton variant="default">进入工作台</DemoButton>
+                <DemoButton variant="default">进入 Action中心</DemoButton>
               )}
               {agentModelStrategyHref(agent.id) ? (
                 <Button

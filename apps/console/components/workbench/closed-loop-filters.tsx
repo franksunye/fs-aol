@@ -14,7 +14,6 @@ const FILTERS: ClosedLoopFilter[] = [
   "completed",
   "rejected",
   "expired",
-  "archived",
 ];
 
 function buildHref(

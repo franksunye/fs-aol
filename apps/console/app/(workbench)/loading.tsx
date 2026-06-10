@@ -9,7 +9,7 @@ export default function WorkbenchLoading() {
     <main
       className="h-full w-full overflow-y-auto px-6 py-8 lg:px-8"
       aria-busy="true"
-      aria-label="加载工作台"
+      aria-label="加载 Action 中心"
     >
       <div className="mb-6 space-y-2">
         <Skeleton className="h-8 w-64" />

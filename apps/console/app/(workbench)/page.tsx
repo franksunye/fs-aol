@@ -69,7 +69,10 @@ export default async function WorkbenchPage({
   }>;
 }) {
   const sp = await searchParams;
-  const workbenchView = workbenchViewFromSearchParams(sp);
+  const workbenchView = workbenchViewFromSearchParams({
+    tab: sp.tab,
+    cfilter: sp.cfilter,
+  });
   const isCalendar = workbenchView === "calendar";
   const isActions = workbenchView === "actions";
   const closedLoopFilter = parseClosedLoopFilter(sp.cfilter);

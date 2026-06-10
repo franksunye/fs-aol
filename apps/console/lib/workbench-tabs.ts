@@ -2,18 +2,20 @@ import { parseClosedLoopFilter } from "./action-flow-status";
 import type { InboxBucket } from "./labels";
 import { parseInboxBucket } from "./labels";
 
-/** 工作台顶栏视图（含占位 Tab） */
+/** Action 中心顶栏视图 */
 export type WorkbenchView =
   | InboxBucket
   | "actions"
   | "calendar";
+
+export const ACTION_CENTER_TITLE = "Action中心";
 
 export const WORKBENCH_VIEW_LABELS: Record<WorkbenchView, string> = {
   active: "待审核",
   actions: "Action 流转",
   calendar: "日历",
   closed: "已闭环",
-  archived: "已归档",
+  archived: "存档",
 };
 
 export const WORKBENCH_TAB_ORDER: WorkbenchView[] = [
@@ -21,6 +23,7 @@ export const WORKBENCH_TAB_ORDER: WorkbenchView[] = [
   "actions",
   "calendar",
   "closed",
+  "archived",
 ];
 
 export const WORKBENCH_SUBTITLE =
@@ -31,10 +34,12 @@ export const CALENDAR_SUBTITLE =
 
 export function workbenchViewFromSearchParams(sp: {
   tab?: string;
+  cfilter?: string;
 }): WorkbenchView {
   const t = sp.tab?.trim();
   if (t === "actions" || t === "calendar") return t;
-  if (t === "archived") return "closed";
+  if (t === "archived") return "archived";
+  if (t === "closed" && sp.cfilter?.trim() === "archived") return "archived";
   return parseInboxBucket(t) ?? "active";
 }
 
@@ -44,10 +49,8 @@ export function inboxBucketForWorkbenchView(
   cfilter?: string | null
 ): InboxBucket | null {
   if (view === "active") return "active";
-  if (view === "closed") {
-    const filter = parseClosedLoopFilter(cfilter);
-    return filter === "archived" ? "archived" : "closed";
-  }
+  if (view === "archived") return "archived";
+  if (view === "closed") return "closed";
   return null;
 }
 

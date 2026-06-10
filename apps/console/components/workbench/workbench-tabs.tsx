@@ -27,6 +27,9 @@ function buildHref(
     q.delete("sort");
     q.delete("priority");
   }
+  if (view !== "closed") {
+    q.delete("cfilter");
+  }
   if (hk) q.set("hk", hk);
   else q.delete("hk");
   const s = q.toString();
@@ -49,6 +52,10 @@ function tabBadge(
     const n = counts.closed;
     return n > 0 ? n : undefined;
   }
+  if (view === "archived") {
+    const n = counts.archived;
+    return n > 0 ? n : undefined;
+  }
   return undefined;
 }
 
@@ -68,7 +75,7 @@ export function WorkbenchTabs({
   return (
     <nav
       className="mb-4 flex gap-1 overflow-x-auto border-b border-border"
-      aria-label="工作台视图"
+      aria-label="Action中心视图"
     >
       {WORKBENCH_TAB_ORDER.map((view) => {
         const active = view === current;
