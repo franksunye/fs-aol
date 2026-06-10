@@ -20,8 +20,8 @@ const DATA_SOURCE_HINT: Record<
   OverviewPageSnapshot["dataSource"],
   string
 > = {
-  live: "部分指标来自库内真实统计",
-  mixed: "核心指标已接入库内数据，其余为演示补充",
+  live: "核心数量与效率指标均来自库内统计",
+  mixed: "待审核/流转数量为库内统计；今日产出、效率与 Agent 状态为演示参考",
   mock: "当前展示演示数据，库内统计暂不可用",
 };
 

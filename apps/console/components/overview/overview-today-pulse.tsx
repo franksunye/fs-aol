@@ -25,31 +25,32 @@ export function OverviewTodayPulseBar({
   hk?: string;
 }) {
   return (
-    <Card className="mb-4 flex flex-wrap items-center gap-4 rounded-xl border-border bg-card px-4 py-3 shadow-sm">
-      <span className="text-muted-foreground text-[11px] font-medium">今日产出</span>
-      <Link
-        href={overviewPendingReviewHref(hk)}
-        scroll={false}
-        className="hover:bg-accent/40 -mx-1 flex items-baseline gap-2 rounded-md px-1 py-0.5 transition-colors"
-      >
-        <span className="text-muted-foreground text-xs">建议</span>
-        <span className="text-foreground text-lg font-semibold tabular-nums">
-          {today.suggestionsToday}
-        </span>
-        <Delta delta={today.suggestionsDelta} />
+    <section
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      aria-label="今日产出"
+    >
+      <Link href={overviewPendingReviewHref(hk)} scroll={false} className="block">
+        <Card className="flex h-full flex-col justify-center gap-1 rounded-xl border-border bg-card px-4 py-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
+          <span className="text-muted-foreground text-[11px] font-medium">今日建议</span>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
+              {today.suggestionsToday}
+            </span>
+            <Delta delta={today.suggestionsDelta} />
+          </div>
+        </Card>
       </Link>
-      <span className="text-border hidden h-4 w-px bg-border sm:block" aria-hidden />
-      <Link
-        href={overviewActionsHref(hk)}
-        scroll={false}
-        className="hover:bg-accent/40 -mx-1 flex items-baseline gap-2 rounded-md px-1 py-0.5 transition-colors"
-      >
-        <span className="text-muted-foreground text-xs">Actions</span>
-        <span className="text-foreground text-lg font-semibold tabular-nums">
-          {today.actionsToday}
-        </span>
-        <Delta delta={today.actionsDelta} />
+      <Link href={overviewActionsHref(hk)} scroll={false} className="block">
+        <Card className="flex h-full flex-col justify-center gap-1 rounded-xl border-border bg-card px-4 py-3.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-accent/20">
+          <span className="text-muted-foreground text-[11px] font-medium">今日 Actions</span>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
+              {today.actionsToday}
+            </span>
+            <Delta delta={today.actionsDelta} />
+          </div>
+        </Card>
       </Link>
-    </Card>
+    </section>
   );
 }

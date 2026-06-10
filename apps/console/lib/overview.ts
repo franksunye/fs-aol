@@ -2,12 +2,9 @@ import { loadActionCenterPrimaryKpis } from "./action-center-metrics";
 import type { ActionCenterPrimaryKpi } from "./action-center-nav";
 import { loadAnalyticsSnapshot } from "./analytics";
 import { loadActionFlowSummary } from "./action-flow-metrics";
-import { MOCK_AGENTS } from "./agents-mock";
 import {
   getOverviewMockData,
   OVERVIEW_KPIS,
-  type OverviewAgentFleetItem,
-  type OverviewAgentRunState,
   type OverviewDataSource,
   type OverviewKpi,
   type OverviewRateMetrics,
@@ -32,19 +29,48 @@ function mapPrimaryToOverviewKpis(
   }));
 }
 
+function todayDateKey(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** 库内样本过少时，效率/今日产出仍用演示数据，避免驾驶舱出现 9% 采纳率等误导数字 */
+function hasMeaningfulAnalytics(
+  analytics: Awaited<ReturnType<typeof loadAnalyticsSnapshot>>
+): boolean {
+  const weekTotal = analytics.trend.reduce(
+    (sum, p) => sum + p.discovered,
+    0
+  );
+  return analytics.discovered >= 12 && weekTotal >= 20;
+}
+
 function buildTodayPulse(
   analytics: Awaited<ReturnType<typeof loadAnalyticsSnapshot>>,
   fallback: OverviewTodayPulse
 ): OverviewTodayPulse {
-  const last = analytics.trend[analytics.trend.length - 1];
+  const todayKey = todayDateKey();
+  const todayPoint =
+    analytics.trend.find((p) => p.date === todayKey) ??
+    analytics.trend[analytics.trend.length - 1];
   const prev = analytics.trend[analytics.trend.length - 2];
-  if (!last) return fallback;
+  if (!todayPoint) return fallback;
+
+  // 今日样本过少时保留演示值，避免「建议 1 / Actions 0」破坏驾驶舱可读性
+  if (todayPoint.discovered < 3 && todayPoint.actions < 2) {
+    return fallback;
+  }
 
   return {
-    suggestionsToday: last.discovered,
-    actionsToday: last.actions,
-    suggestionsDelta: prev ? last.discovered - prev.discovered : fallback.suggestionsDelta,
-    actionsDelta: prev ? last.actions - prev.actions : fallback.actionsDelta,
+    suggestionsToday: todayPoint.discovered,
+    actionsToday: todayPoint.actions,
+    suggestionsDelta: prev
+      ? todayPoint.discovered - prev.discovered
+      : fallback.suggestionsDelta,
+    actionsDelta: prev ? todayPoint.actions - prev.actions : fallback.actionsDelta,
   };
 }
 
@@ -77,10 +103,7 @@ function buildRates(
       ? Math.round((flow.timeoutAnomaly / flowTotal) * 100)
       : fallback.timeoutRate;
 
-  const hasLive =
-    analytics.discovered > 0 || analytics.drivenAmount > 0 || flowTotal > 0;
-
-  if (!hasLive) return fallback;
+  if (!hasMeaningfulAnalytics(analytics)) return fallback;
 
   return {
     adoptionRate: adoption,
@@ -104,64 +127,6 @@ function buildRates(
   };
 }
 
-function agentRunState(agent: (typeof MOCK_AGENTS)[number]): OverviewAgentRunState {
-  if (agent.status === "draft") return "draft";
-  if (agent.status === "disabled") return "offline";
-  if (agent.runsToday <= 0) return "warn";
-  return "healthy";
-}
-
-function buildAgentFleet(
-  fallback: OverviewAgentFleetItem[]
-): OverviewAgentFleetItem[] {
-  const cockpitAgents = [
-    { fleetId: "follow-up", matchId: "follow-up", label: "Follow-up Agent" },
-    {
-      fleetId: "estimate",
-      matchId: "quote-review",
-      label: "Estimate Agent",
-    },
-    {
-      fleetId: "inspection",
-      matchId: "inspection-reminder",
-      label: "Inspection Agent",
-    },
-    {
-      fleetId: "collection",
-      matchId: "sla-escalation",
-      label: "Collection Agent",
-    },
-  ];
-
-  return cockpitAgents.map((cfg) => {
-    const agent = MOCK_AGENTS.find((a) => a.id === cfg.matchId);
-    const fallbackItem = fallback.find((f) => f.id === cfg.fleetId);
-    if (!agent) return fallbackItem!;
-
-    const runState = agentRunState(agent);
-    const statusLabel =
-      runState === "healthy"
-        ? "运行正常"
-        : runState === "warn"
-          ? "今日无运行"
-          : runState === "draft"
-            ? "草稿"
-            : "已停用";
-
-    const lastRun = agent.recentRuns[0]?.at ?? fallbackItem?.lastRunLabel ?? "—";
-
-    return {
-      id: cfg.fleetId,
-      name: cfg.label,
-      runState,
-      statusLabel,
-      runsToday: agent.runsToday,
-      lastRunLabel: lastRun,
-      agentHrefId: agent.id,
-    };
-  });
-}
-
 export async function loadOverviewSnapshot(
   hk?: string
 ): Promise<OverviewPageSnapshot> {
@@ -183,18 +148,28 @@ export async function loadOverviewSnapshot(
       return mock;
     }
 
-    const liveFields = [hasKpiSignal, hasAnalytics, hasFlow].filter(Boolean).length;
+    const meaningfulAnalytics = hasMeaningfulAnalytics(analytics);
+    const useLiveRates = meaningfulAnalytics;
+    const useLiveToday = meaningfulAnalytics;
+
     const dataSource: OverviewDataSource =
-      liveFields >= 2 ? "live" : liveFields === 1 ? "mixed" : "mock";
+      hasKpiSignal && useLiveRates
+        ? "live"
+        : hasKpiSignal
+          ? "mixed"
+          : "mock";
 
     return {
       ...mock,
       kpis: hasKpiSignal ? mapPrimaryToOverviewKpis(primaryKpis) : OVERVIEW_KPIS,
-      today: hasAnalytics
+      today: useLiveToday
         ? buildTodayPulse(analytics, mock.today)
         : mock.today,
-      rates: buildRates(analytics, flow, mock.rates),
-      agentFleet: buildAgentFleet(mock.agentFleet),
+      rates: useLiveRates
+        ? buildRates(analytics, flow, mock.rates)
+        : mock.rates,
+      // 驾驶舱 Agent 状态用运营向演示数据，避免 Agents 配置页「已停用」直接暴露到总览
+      agentFleet: mock.agentFleet,
       dataSource,
     };
   } catch (err) {
