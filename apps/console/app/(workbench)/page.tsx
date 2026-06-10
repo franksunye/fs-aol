@@ -6,54 +6,54 @@ import {
   countInboxBuckets,
 } from "@/lib/suggestions";
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
-import { WorkbenchFilters } from "@/components/workbench/workbench-filters";
+import { ActionReviewFilters } from "@/components/action-center/action-review-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
-import { OpportunityList } from "@/components/workbench/opportunity-list";
-import { WorkbenchSearchBar } from "@/components/workbench/workbench-search-bar";
-import { filterSuggestionsByQuery } from "@/lib/workbench-search";
-import { EmptyState } from "@/components/workbench/empty-state";
+import { ActionReviewList } from "@/components/action-center/action-review-list";
+import { ActionReviewSearchBar } from "@/components/action-center/action-review-search-bar";
+import { filterActionReviewsByQuery } from "@/lib/action-review-search";
+import { EmptyState } from "@/components/action-center/empty-state";
 import { INBOX_TAB_LABELS } from "@/lib/labels";
 import {
-  parseSuggestionSortKey,
-  sortSuggestions,
-} from "@/lib/suggestion-sorting";
+  parseActionReviewSortKey,
+  sortActionReviews,
+} from "@/lib/action-review-sorting";
 import {
   filterByPriority,
   parsePriorityFilter,
 } from "@/lib/priority-filter";
-import { computeWorkbenchMetricCards } from "@/lib/workbench-metrics";
+import { computeActionReviewMetricCards } from "@/lib/action-review-metric-cards";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
-import { workbenchListContextFromWorkbench } from "@/lib/workbench-nav";
-import { WorkbenchSplitLayout } from "@/components/workbench/workbench-split-layout";
+import { actionReviewListContext } from "@/lib/action-center-nav";
+import { ActionReviewSplitLayout } from "@/components/action-center/action-review-split-layout";
 import {
   CaseDetailPane,
-  parseWorkbenchPaneKey,
-} from "@/components/workbench/case-detail-pane";
-import { CaseDetailSkeleton } from "@/components/workbench/case-detail-skeleton";
-import { parseClosedLoopFilter } from "@/lib/action-flow-status";
-import { ClosedLoopFilters } from "@/components/workbench/closed-loop-filters";
+  parseActionReviewPaneKey,
+} from "@/components/action-center/case-detail-pane";
+import { CaseDetailSkeleton } from "@/components/action-center/case-detail-skeleton";
+import { parseClosedLoopFilter } from "@/lib/execution-status";
+import { ClosedLoopFilters } from "@/components/action-center/closed-loop-filters";
 import {
-  inboxBucketForWorkbenchView,
-  workbenchViewFromSearchParams,
-} from "@/lib/workbench-tabs";
+  inboxBucketForActionCenterView,
+  actionCenterViewFromSearchParams,
+} from "@/lib/action-center-tabs";
 import { calendarHref } from "@/lib/calendar-nav";
-import { MyActionsView } from "@/components/workbench/my-actions/my-actions-view";
+import { ActionExecutionView } from "@/components/action-center/execution/action-execution-view";
 import {
-  countMyActionsPending,
-  getMyActionsMockData,
-} from "@/lib/my-actions-mock";
+  countExecutionActionsPending,
+  getExecutionActionsMockData,
+} from "@/lib/action-execution-mock";
 import { loadActionCenterPrimaryKpis } from "@/lib/action-center-metrics";
-import { loadActionFlowSummary } from "@/lib/action-flow-metrics";
+import { loadExecutionMetrics } from "@/lib/execution-metrics";
 import {
   buildFlowSecondaryMetrics,
   buildReviewSecondaryMetrics,
 } from "@/lib/action-center-secondary";
-import { ActionCenterShell } from "@/components/workbench/action-center/action-center-shell";
-import { ActionCenterSecondaryStrip } from "@/components/workbench/action-center/action-center-secondary-strip";
-import { ActionFlowTabToolbar } from "@/components/workbench/action-center/action-flow-tab-toolbar";
+import { ActionCenterShell } from "@/components/action-center/action-center-shell";
+import { ActionCenterSecondaryStrip } from "@/components/action-center/action-center-secondary-strip";
+import { ExecutionToolbar } from "@/components/action-center/execution-toolbar";
 export const dynamic = "force-dynamic";
 
-export default async function WorkbenchPage({
+export default async function ActionCenterPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -83,45 +83,45 @@ export default async function WorkbenchPage({
     redirect(calendarHref(hkFilter));
   }
 
-  const workbenchView = workbenchViewFromSearchParams({
+  const actionCenterView = actionCenterViewFromSearchParams({
     tab: sp.tab,
     cfilter: sp.cfilter,
   });
-  const isActions = workbenchView === "actions";
+  const isExecution = actionCenterView === "execution";
   const closedLoopFilter = parseClosedLoopFilter(sp.cfilter);
-  const inboxBucket = inboxBucketForWorkbenchView(workbenchView, sp.cfilter);
+  const inboxBucket = inboxBucketForActionCenterView(actionCenterView, sp.cfilter);
   const isInboxData = inboxBucket !== null;
   const inboxTab = inboxBucket ?? "active";
   const isActiveInbox = inboxTab === "active";
-  const isClosedLoop = workbenchView === "closed";
+  const isClosedLoop = actionCenterView === "closed";
   const priorityFilter = parsePriorityFilter(sp.priority);
-  const selectedKey = parseWorkbenchPaneKey(sp.key);
+  const selectedKey = parseActionReviewPaneKey(sp.key);
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
-  const actionsCount = countMyActionsPending(getMyActionsMockData());
+  const executionCount = countExecutionActionsPending(getExecutionActionsMockData());
 
   const [primaryKpis, flowSummary, rawRows, tabCounts] = await Promise.all([
     loadActionCenterPrimaryKpis(hkFilter),
-    loadActionFlowSummary(hkFilter),
+    loadExecutionMetrics(hkFilter),
     isInboxData
       ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts })
       : Promise.resolve([]),
     countInboxBuckets(hkOpts),
   ]);
 
-  const sortKey = parseSuggestionSortKey(sp.sort);
-  const sorted = sortSuggestions(rawRows, sortKey, pilots);
+  const sortKey = parseActionReviewSortKey(sp.sort);
+  const sorted = sortActionReviews(rawRows, sortKey, pilots);
   const beforePriority = sorted;
   const priorityRows = filterByPriority(sorted, priorityFilter);
-  const rows = filterSuggestionsByQuery(priorityRows, sp.q);
+  const rows = filterActionReviewsByQuery(priorityRows, sp.q);
   const workItems = rows.map(mapFollowUpRow);
   const metrics = isActiveInbox
-    ? computeWorkbenchMetricCards(beforePriority)
+    ? computeActionReviewMetricCards(beforePriority)
     : null;
   const displayName = hkFilter
     ? housekeeperName(pilots, hkFilter)
     : "管家";
-  const listContext = workbenchListContextFromWorkbench({
+  const listContext = actionReviewListContext({
     tab: sp.tab,
     hk: hkFilter,
     sort: sp.sort,
@@ -130,14 +130,14 @@ export default async function WorkbenchPage({
   });
   const hasRows = rows.length > 0;
 
-  const secondaryStrip = isActions ? (
+  const secondaryStrip = isExecution ? (
     <ActionCenterSecondaryStrip
       title="流转状态"
       items={buildFlowSecondaryMetrics(flowSummary, hkFilter, {
         status: sp.astatus,
         quick: sp.aquick,
       })}
-      trailing={<ActionFlowTabToolbar hk={hkFilter} />}
+      trailing={<ExecutionToolbar hk={hkFilter} />}
     />
   ) : isActiveInbox && metrics ? (
     <ActionCenterSecondaryStrip
@@ -149,9 +149,9 @@ export default async function WorkbenchPage({
   const shellProps = {
     pilots,
     hkFilter,
-    workbenchView,
+    actionCenterView,
     tabCounts,
-    actionsCount,
+    executionCount,
     primaryKpis,
     secondary: secondaryStrip,
   };
@@ -178,7 +178,7 @@ export default async function WorkbenchPage({
     />
   ) : (
     <div role="listbox" aria-label="Action 列表">
-      <OpportunityList
+      <ActionReviewList
         items={workItems}
         listContext={listContext}
         selectedKey={selectedKey}
@@ -191,13 +191,13 @@ export default async function WorkbenchPage({
     <div className="px-3 py-3 lg:px-4 lg:py-4">
       <div className="mb-3 md:hidden">
         <Suspense fallback={null}>
-          <WorkbenchSearchBar className="max-w-none" />
+          <ActionReviewSearchBar className="max-w-none" />
         </Suspense>
       </div>
 
       {isActiveInbox ? (
         <Suspense fallback={null}>
-          <WorkbenchFilters
+          <ActionReviewFilters
             hk={hkFilter}
             rows={beforePriority}
             currentPriority={priorityFilter}
@@ -232,11 +232,11 @@ export default async function WorkbenchPage({
       </Suspense>
     ) : null;
 
-  if (isActions) {
+  if (isExecution) {
     return (
       <ActionCenterShell {...shellProps}>
         <Suspense fallback={null}>
-          <MyActionsView hkFilter={hkFilter} pilots={pilots} />
+          <ActionExecutionView hkFilter={hkFilter} pilots={pilots} />
         </Suspense>
       </ActionCenterShell>
     );
@@ -244,7 +244,7 @@ export default async function WorkbenchPage({
 
   return (
     <ActionCenterShell {...shellProps}>
-      <WorkbenchSplitLayout
+      <ActionReviewSplitLayout
         list={listPane}
         detail={detailPane}
         selectedKey={selectedKey}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { DetailPanel } from "@/lib/workbench-nav";
+import type { DetailPanel } from "@/lib/action-center-nav";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: DetailPanel; label: string }[] = [

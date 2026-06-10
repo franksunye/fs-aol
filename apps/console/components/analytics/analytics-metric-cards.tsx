@@ -7,7 +7,7 @@ import {
   formatStaleDelta,
   type AnalyticsSnapshot,
 } from "@/lib/analytics";
-import { formatYuanCompact } from "@/lib/workbench-metrics";
+import { formatYuanCompact } from "@/lib/action-review-metric-cards";
 
 function Delta({
   text,

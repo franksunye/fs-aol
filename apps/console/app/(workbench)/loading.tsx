@@ -1,10 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  WorkbenchMetricsSkeleton,
-  OpportunityListSkeleton,
-} from "@/components/workbench/workbench-skeleton";
+  ActionReviewMetricsSkeleton,
+  ActionReviewListSkeleton,
+} from "@/components/action-center/action-center-skeleton";
 
-export default function WorkbenchLoading() {
+export default function ActionCenterLoading() {
   return (
     <main
       className="h-full w-full overflow-y-auto px-6 py-8 lg:px-8"
@@ -16,8 +16,8 @@ export default function WorkbenchLoading() {
         <Skeleton className="h-4 w-48" />
       </div>
       <Skeleton className="mb-4 h-10 w-full max-w-xl rounded-lg" />
-      <WorkbenchMetricsSkeleton />
-      <OpportunityListSkeleton />
+      <ActionReviewMetricsSkeleton />
+      <ActionReviewListSkeleton />
     </main>
   );
 }

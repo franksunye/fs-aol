@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { CalendarView } from "@/components/workbench/calendar/calendar-view";
-import { WorkbenchHeader } from "@/components/workbench/workbench-header";
+import { CalendarView } from "@/components/action-center/calendar/calendar-view";
+import { ActionCenterHeader } from "@/components/action-center/action-center-header";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
 import { loadPilotHousekeepers } from "@/lib/pilot-housekeepers";
 import { CALENDAR_SUBTITLE, CALENDAR_TITLE } from "@/lib/calendar-nav";
@@ -24,7 +24,7 @@ export default async function CalendarRoutePage({
   return (
     <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <div className="shrink-0 px-3 pt-4 lg:px-4 lg:pt-5">
-        <WorkbenchHeader
+        <ActionCenterHeader
           pilots={pilots}
           hkFilter={hkFilter}
           compact

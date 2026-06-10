@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import {
   evaluationActionsHref,
-  evaluationWorkbenchActiveHref,
+  evaluationActionReviewHref,
 } from "@/lib/evaluation-mock";
 import type {
   EvaluationActionStatusSeries,
@@ -106,7 +106,7 @@ function SuggestionTrendChart({
         ))}
       </svg>
       <p className="text-muted-foreground mt-2 text-xs">
-        <Link href={evaluationWorkbenchActiveHref(hk)} className="hover:text-primary">
+        <Link href={evaluationActionReviewHref(hk)} className="hover:text-primary">
           查看待审核建议 →
         </Link>
       </p>

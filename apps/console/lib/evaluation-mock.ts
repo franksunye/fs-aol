@@ -1,6 +1,6 @@
 import { RUNS_HOME_PATH, runDetailHref } from "./runs-nav";
-import { workbenchHref, workbenchPaneHref } from "./workbench-nav";
-import { myActionHref } from "./my-actions-mock";
+import { actionCenterTabHref, actionReviewPaneHref } from "./action-center-nav";
+import { executionActionHref } from "./action-execution-mock";
 
 export const EVALUATION_HOME_PATH = "/analytics";
 
@@ -504,7 +504,7 @@ const PROBLEM_CASES: EvaluationProblemCase[] = [
     rank: 2,
     topic: "Action 超时过多",
     count: 14,
-    hrefQuery: { tab: "actions", aquick: "overdue" },
+    hrefQuery: { tab: "execution", aquick: "overdue" },
   },
   {
     rank: 3,
@@ -698,8 +698,8 @@ export function evaluationAgentsHref(agentId?: string, hk?: string): string {
   return s ? `/agents?${s}` : "/agents";
 }
 
-export function evaluationWorkbenchActiveHref(hk?: string): string {
-  return workbenchHref({ hk, from: "active" });
+export function evaluationActionReviewHref(hk?: string): string {
+  return actionCenterTabHref({ hk, from: "active" });
 }
 
 export function evaluationActionsHref(
@@ -707,7 +707,7 @@ export function evaluationActionsHref(
   extra?: Record<string, string>
 ): string {
   const q = new URLSearchParams();
-  q.set("tab", "actions");
+  q.set("tab", "execution");
   if (hk) q.set("hk", hk);
   if (extra) {
     for (const [k, v] of Object.entries(extra)) {
@@ -741,12 +741,12 @@ export function evaluationSampleHref(
   sample: EvaluationQualitySample,
   hk?: string
 ): string {
-  if (sample.actionId) return myActionHref(sample.actionId, hk);
+  if (sample.actionId) return executionActionHref(sample.actionId, hk);
   if (sample.runId) return runDetailHref(sample.runId, hk);
   if (sample.workOrderKey) {
-    return workbenchPaneHref(sample.workOrderKey, { hk, from: "active" });
+    return actionReviewPaneHref(sample.workOrderKey, { hk, from: "active" });
   }
-  return evaluationWorkbenchActiveHref(hk);
+  return evaluationActionReviewHref(hk);
 }
 
 export function formatEvaluationYuan(value: number): string {
@@ -784,9 +784,9 @@ export function evaluationRuleHref(ruleId: string, hk?: string): string {
   return `/agents?${q.toString()}`;
 }
 
-export function evaluationMyActionsHref(hk?: string): string {
+export function evaluationExecutionActionsHref(hk?: string): string {
   const q = new URLSearchParams();
-  q.set("tab", "actions");
+  q.set("tab", "execution");
   if (hk) q.set("hk", hk);
   return `/?${q.toString()}`;
 }

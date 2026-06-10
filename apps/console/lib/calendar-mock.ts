@@ -30,7 +30,7 @@ export type CalendarAction = {
   icon: LucideIcon;
   workOrderKey?: string;
   /** 对应 Action 流转条目，用于跨 Tab 跳转 */
-  myActionId?: string;
+  executionActionId?: string;
 };
 
 export type CalendarSummary = {
@@ -154,7 +154,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       status: "in_progress",
       icon: Phone,
       workOrderKey: "demo:sz-zhizao-001",
-      myActionId: "ma-1",
+      executionActionId: "ma-1",
     }),
     action({
       id: "cal-2",
@@ -170,7 +170,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       assigneeId: "liwei",
       status: "pending",
       icon: ClipboardCheck,
-      myActionId: "ma-2",
+      executionActionId: "ma-2",
     }),
     action({
       id: "cal-3",
@@ -186,7 +186,7 @@ export function getCalendarMockActions(): CalendarAction[] {
       assigneeId: "wangfang",
       status: "pending",
       icon: Truck,
-      myActionId: "ma-10",
+      executionActionId: "ma-10",
     }),
     action({
       id: "cal-4",

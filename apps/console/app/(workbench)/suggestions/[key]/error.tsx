@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { resolveWorkbenchBack } from "@/lib/workbench-nav";
+import { resolveActionCenterBack } from "@/lib/action-center-nav";
 
 export default function SuggestionDetailError({
   error,
@@ -15,7 +15,7 @@ export default function SuggestionDetailError({
   reset: () => void;
 }) {
   const sp = useSearchParams();
-  const back = resolveWorkbenchBack(
+  const back = resolveActionCenterBack(
     {
       from: sp.get("from") ?? undefined,
       hk: sp.get("hk") ?? undefined,

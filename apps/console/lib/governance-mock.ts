@@ -186,7 +186,7 @@ export const GOVERNANCE_ROLES: GovernanceRole[] = [
     name: "运营管理员",
     permissions: {
       overview: ["view", "edit"],
-      actions: ["view", "edit", "approve"],
+      execution: ["view", "edit", "approve"],
       runs: ["view"],
       agents: ["view", "edit"],
       integrations: ["view"],
@@ -199,7 +199,7 @@ export const GOVERNANCE_ROLES: GovernanceRole[] = [
     name: "销售经理",
     permissions: {
       overview: ["view"],
-      actions: ["view", "edit", "approve"],
+      execution: ["view", "edit", "approve"],
       runs: ["view"],
       agents: ["view"],
       integrations: ["view"],
@@ -211,7 +211,7 @@ export const GOVERNANCE_ROLES: GovernanceRole[] = [
     name: "财务主管",
     permissions: {
       overview: ["view"],
-      actions: ["view", "approve"],
+      execution: ["view", "approve"],
       runs: ["view"],
       analytics: ["view", "edit"],
       settings: ["view"],
@@ -222,7 +222,7 @@ export const GOVERNANCE_ROLES: GovernanceRole[] = [
     name: "系统管理员",
     permissions: {
       overview: ["view", "edit", "publish"],
-      actions: ["view", "edit", "approve", "publish"],
+      execution: ["view", "edit", "approve", "publish"],
       runs: ["view", "edit", "publish"],
       agents: ["view", "edit", "publish"],
       integrations: ["view", "edit", "publish"],
@@ -239,7 +239,7 @@ export const GOVERNANCE_ACTION_PERMISSIONS: ActionPermissionPolicy[] = [
     scope: "客户资料、商机状态",
     allowedRoles: "销售经理、系统管理员",
     executionMode: "approve",
-    href: "/?tab=actions",
+    href: "/?tab=execution",
   },
   {
     id: "follow-up-suggest",
@@ -263,7 +263,7 @@ export const GOVERNANCE_ACTION_PERMISSIONS: ActionPermissionPolicy[] = [
     scope: "客户触达 Actions",
     allowedRoles: "系统管理员",
     executionMode: "blocked",
-    href: "/?tab=actions",
+    href: "/?tab=execution",
   },
   {
     id: "run-retry",
@@ -333,7 +333,7 @@ export const GOVERNANCE_APPROVAL_MATRIX: ApprovalMatrixRule[] = [
     scope: "CRM 写回类 Actions",
     approvers: "销售经理 + 系统管理员",
     condition: "涉及客户信息或商机状态变更",
-    href: "/?tab=actions",
+    href: "/?tab=execution",
   },
   {
     id: "high-priority-review",
@@ -485,7 +485,7 @@ export const GOVERNANCE_AUDIT_LOGS: AuditLogEntry[] = [
     avatarClassName: "bg-amber-100 text-amber-800",
     action: "审批 Action ma-1 写回 CRM",
     timestamp: "昨天 11:26",
-    href: "/?tab=actions&action=ma-1",
+    href: "/?tab=execution&action=ma-1",
   },
 ];
 
@@ -494,7 +494,7 @@ export const GOVERNANCE_RISK_ALERTS: RiskAlert[] = [
     id: "risk-1",
     level: "high",
     message: "2 个高风险动作仍允许自动写回",
-    href: "/?tab=actions",
+    href: "/?tab=execution",
   },
   {
     id: "risk-2",

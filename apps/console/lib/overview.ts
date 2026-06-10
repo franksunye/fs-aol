@@ -1,7 +1,7 @@
 import { loadActionCenterPrimaryKpis } from "./action-center-metrics";
-import type { ActionCenterPrimaryKpi } from "./action-center-nav";
+import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 import { loadAnalyticsSnapshot } from "./analytics";
-import { loadActionFlowSummary } from "./action-flow-metrics";
+import { loadExecutionMetrics } from "./execution-metrics";
 import {
   getOverviewMockData,
   OVERVIEW_KPIS,
@@ -11,7 +11,7 @@ import {
   type OverviewSnapshot,
   type OverviewTodayPulse,
 } from "./overview-mock";
-import { formatYuanCompact } from "./workbench-metrics";
+import { formatYuanCompact } from "./action-review-metric-cards";
 
 export type OverviewPageSnapshot = OverviewSnapshot;
 
@@ -76,7 +76,7 @@ function buildTodayPulse(
 
 function buildRates(
   analytics: Awaited<ReturnType<typeof loadAnalyticsSnapshot>>,
-  flow: Awaited<ReturnType<typeof loadActionFlowSummary>>,
+  flow: Awaited<ReturnType<typeof loadExecutionMetrics>>,
   fallback: OverviewRateMetrics
 ): OverviewRateMetrics {
   const adoption =
@@ -136,7 +136,7 @@ export async function loadOverviewSnapshot(
     const [primaryKpis, analytics, flow] = await Promise.all([
       loadActionCenterPrimaryKpis(hk),
       loadAnalyticsSnapshot({ rangeKey: "last_7", housekeeperId: hk }),
-      loadActionFlowSummary(hk),
+      loadExecutionMetrics(hk),
     ]);
 
     const hasKpiSignal = primaryKpis.some((k) => k.value > 0);

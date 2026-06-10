@@ -14,7 +14,7 @@ import {
   WORK_ORDER_OBJECT_TYPE,
   XLINK_SOURCE_SYSTEM,
 } from "../action-list-display";
-import { formatListTimestamp, opportunitySummaryPreview } from "../opportunity-display";
+import { formatListTimestamp, actionReviewSummaryPreview } from "../action-review-display";
 import type { SuggestionDoc, SuggestionRow } from "../tracking";
 
 function mapPriority(raw?: string): WorkItemPriority | undefined {
@@ -80,7 +80,7 @@ export function mapFollowUpRow(row: SuggestionRow): WorkItem {
     assigneeId: row.housekeeperId.trim() || undefined,
     inbox: row.inboxBucket,
     priority,
-    summary: opportunitySummaryPreview(s),
+    summary: actionReviewSummaryPreview(s),
     statusBadges: [],
     recommendation: buildRecommendation(s),
     disposition: row.outcome

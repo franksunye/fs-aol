@@ -3,13 +3,13 @@ import { INTEGRATIONS_HOME_PATH } from "./integrations-nav";
 import { RUNS_HOME_PATH } from "./runs-nav";
 import { AI_INFRASTRUCTURE_PATH } from "./settings-nav";
 import { OVERVIEW_HOME_PATH } from "./overview-nav";
-import { workbenchHref } from "./workbench-nav";
+import { actionCenterTabHref } from "./action-center-nav";
 
 export const GOVERNANCE_HOME_PATH = "/governance";
 
 export type GovernanceModuleKey =
   | "overview"
-  | "actions"
+  | "execution"
   | "runs"
   | "agents"
   | "integrations"
@@ -18,7 +18,7 @@ export type GovernanceModuleKey =
 
 export const GOVERNANCE_MODULE_LABELS: Record<GovernanceModuleKey, string> = {
   overview: "总览",
-  actions: "Actions",
+  execution: "Actions",
   runs: "Runs",
   agents: "Agents",
   integrations: "集成",
@@ -28,7 +28,7 @@ export const GOVERNANCE_MODULE_LABELS: Record<GovernanceModuleKey, string> = {
 
 export const GOVERNANCE_MODULE_ORDER: GovernanceModuleKey[] = [
   "overview",
-  "actions",
+  "execution",
   "runs",
   "agents",
   "integrations",
@@ -38,7 +38,7 @@ export const GOVERNANCE_MODULE_ORDER: GovernanceModuleKey[] = [
 
 export function governanceActionsHref(hk?: string): string {
   const q = new URLSearchParams();
-  q.set("tab", "actions");
+  q.set("tab", "execution");
   if (hk) q.set("hk", hk);
   return `/?${q.toString()}`;
 }
@@ -52,7 +52,7 @@ export function governanceModuleHref(
       return hk
         ? `${OVERVIEW_HOME_PATH}?hk=${encodeURIComponent(hk)}`
         : OVERVIEW_HOME_PATH;
-    case "actions":
+    case "execution":
       return governanceActionsHref(hk);
     case "runs":
       return hk

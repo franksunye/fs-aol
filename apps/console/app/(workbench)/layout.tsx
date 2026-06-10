@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { countInboxBuckets } from "@/lib/suggestions";
-import { AppShell } from "@/components/workbench/app-shell";
+import { AppShell } from "@/components/action-center/app-shell";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
 import {
   isSidebarCollapsed,
   SIDEBAR_COLLAPSED_COOKIE,
 } from "@/lib/shell-preferences";
 
-export default async function WorkbenchLayout({
+export default async function ActionCenterLayout({
   children,
 }: {
   children: React.ReactNode;

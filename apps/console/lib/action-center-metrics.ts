@@ -1,15 +1,15 @@
 import { countInboxBuckets } from "./suggestions";
-import { loadActionFlowSummary } from "./action-flow-metrics";
+import { loadExecutionMetrics } from "./execution-metrics";
 import {
-  countMyActionsPending,
-  getMyActionsMockData,
-  resolveMyActionsAssigneeFromHk,
-} from "./my-actions-mock";
+  countExecutionActionsPending,
+  getExecutionActionsMockData,
+  resolveExecutionAssigneeFromHk,
+} from "./action-execution-mock";
 import { loadPilotHousekeepers } from "./pilot-housekeepers";
 import type { InboxBucketCounts } from "./tracking/types";
-import type { ActionCenterPrimaryKpi } from "./action-center-nav";
+import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 
-export type { ActionCenterPrimaryKpi, ActionCenterPrimaryKpiKey } from "./action-center-nav";
+export type { ActionCenterPrimaryKpi, ActionCenterPrimaryKpiKey } from "./action-center-kpi";
 
 const FALLBACK_PRIMARY: ActionCenterPrimaryKpi[] = [
   { key: "pendingReview", label: "待审核", value: 9, delta: -2, upIsGood: false },
@@ -40,7 +40,7 @@ function deltaFromValue(value: number, seed: number): number {
 function buildPrimaryFromSources(
   inbox: InboxBucketCounts,
   actionsTotal: number,
-  flow: Awaited<ReturnType<typeof loadActionFlowSummary>>
+  flow: Awaited<ReturnType<typeof loadExecutionMetrics>>
 ): ActionCenterPrimaryKpi[] {
   return [
     {
@@ -85,20 +85,20 @@ export async function loadActionCenterPrimaryKpis(
   hk?: string
 ): Promise<ActionCenterPrimaryKpi[]> {
   const pilots = loadPilotHousekeepers();
-  const assigneeId = resolveMyActionsAssigneeFromHk(hk, pilots);
-  const allActions = getMyActionsMockData();
+  const assigneeId = resolveExecutionAssigneeFromHk(hk, pilots);
+  const allActions = getExecutionActionsMockData();
   const scopedActions = assigneeId
     ? allActions.filter((a) => a.assigneeId === assigneeId)
     : allActions;
   const actionsTotal =
     scopedActions.length > 0
       ? scopedActions.length
-      : countMyActionsPending(allActions);
+      : countExecutionActionsPending(allActions);
 
   try {
     const [inbox, flow] = await Promise.all([
       countInboxBuckets(hk ? { housekeeperId: hk } : {}),
-      loadActionFlowSummary(hk),
+      loadExecutionMetrics(hk),
     ]);
     const hasSignal =
       inbox.active > 0 ||

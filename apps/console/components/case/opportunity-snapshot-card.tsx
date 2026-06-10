@@ -12,7 +12,7 @@ import { wecomPushMeta } from "@/lib/reanalysis-triggers";
 import {
   formatYuanCompact,
   parseQuoteAmountYuan,
-} from "@/lib/workbench-metrics";
+} from "@/lib/action-review-metric-cards";
 import { cn } from "@/lib/utils";
 
 export function OpportunitySnapshotCard({

@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   evaluationAgentsHref,
-  evaluationMyActionsHref,
+  evaluationExecutionActionsHref,
   evaluationRuleHref,
   evaluationSampleHref,
-  evaluationWorkbenchActiveHref,
+  evaluationActionReviewHref,
   QUALITY_SAMPLE_TAG_LABELS,
   type EvaluationQualitySample,
   type EvaluationQualitySampleTag,
@@ -74,11 +74,11 @@ export function EvaluationQualitySamples({
           </p>
         </div>
         <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
-          <Link href={evaluationMyActionsHref(hk)} className="hover:text-primary">
+          <Link href={evaluationExecutionActionsHref(hk)} className="hover:text-primary">
             Action 中心
           </Link>
           <span>·</span>
-          <Link href={evaluationWorkbenchActiveHref(hk)} className="hover:text-primary">
+          <Link href={evaluationActionReviewHref(hk)} className="hover:text-primary">
             待审核
           </Link>
           <span>·</span>
@@ -197,7 +197,7 @@ export function EvaluationQualitySamples({
       </div>
       <p className="text-muted-foreground mt-3 text-xs">
         共 {filtered.length} 条样本 ·{" "}
-        <Link href={evaluationWorkbenchActiveHref(hk)} className="hover:text-primary">
+        <Link href={evaluationActionReviewHref(hk)} className="hover:text-primary">
           查看待审核队列 →
         </Link>
       </p>

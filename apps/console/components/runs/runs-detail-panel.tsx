@@ -26,8 +26,8 @@ import {
   type PipelineStage,
   type PipelineStageStatus,
 } from "@/lib/runs-mock";
-import { myActionHref } from "@/lib/my-actions-mock";
-import { workbenchPaneHref } from "@/lib/workbench-nav";
+import { executionActionHref } from "@/lib/action-execution-mock";
+import { actionReviewPaneHref } from "@/lib/action-center-nav";
 import {
   runDetailHref,
   runsAgentFilterHref,
@@ -215,7 +215,7 @@ export function RunsDetailPanel({
               variant="outline"
               className="h-7 gap-1 text-xs"
               render={
-                <Link href={myActionHref(run.actionId, hk)} scroll={false} />
+                <Link href={executionActionHref(run.actionId, hk)} scroll={false} />
               }
             >
               Action 流转
@@ -230,7 +230,7 @@ export function RunsDetailPanel({
               className="h-7 gap-1 text-xs"
               render={
                 <Link
-                  href={workbenchPaneHref(run.workOrderKey, listContext)}
+                  href={actionReviewPaneHref(run.workOrderKey, listContext)}
                   scroll={false}
                 />
               }

@@ -45,7 +45,7 @@ function errorContext(pathname: string): {
   };
 }
 
-export default function WorkbenchError({
+export default function ActionCenterError({
   error,
   reset,
 }: {

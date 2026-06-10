@@ -10,8 +10,8 @@ import {
   detailHrefWithListContext,
   listContextFromDetailSearchParams,
   parseDetailPanel,
-  resolveWorkbenchBack,
-} from "@/lib/workbench-nav";
+  resolveActionCenterBack,
+} from "@/lib/action-center-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +53,7 @@ export default async function SuggestionDetail({
   const listContext = listContextFromDetailSearchParams(sp);
   const detailPath = `/suggestions/${encodeKey(dedupeKey)}`;
   const detailBase = detailHrefWithListContext(detailPath, listContext);
-  const back = resolveWorkbenchBack(sp, row.inboxBucket);
+  const back = resolveActionCenterBack(sp, row.inboxBucket);
 
   return (
     <main className="mx-auto w-full max-w-[1400px]">

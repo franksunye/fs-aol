@@ -1,7 +1,7 @@
-import { formatYuanCompact } from "./workbench-metrics";
-import type { WorkbenchMetricCards } from "./workbench-metrics";
-import type { ActionFlowSummaryResult } from "./action-flow-metrics";
-import { actionFlowStatusHref } from "./my-actions-mock";
+import { formatYuanCompact } from "./action-review-metric-cards";
+import type { ActionReviewMetricCards } from "./action-review-metric-cards";
+import type { ExecutionMetricsResult } from "./execution-metrics";
+import { executionStatusHref } from "./action-execution-mock";
 export type SecondaryMetricItem = {
   key: string;
   label: string;
@@ -12,7 +12,7 @@ export type SecondaryMetricItem = {
 };
 
 export function buildFlowSecondaryMetrics(
-  summary: ActionFlowSummaryResult,
+  summary: ExecutionMetricsResult,
   hk?: string,
   active?: { status?: string | null; quick?: string | null }
 ): SecondaryMetricItem[] {
@@ -24,35 +24,35 @@ export function buildFlowSecondaryMetrics(
       key: "pending_dispatch",
       label: "待分发",
       value: summary.pendingDispatch,
-      href: actionFlowStatusHref("pending_dispatch", hk),
+      href: executionStatusHref("pending_dispatch", hk),
       active: !isOverdueActive && status === "pending_dispatch",
     },
     {
       key: "dispatched",
       label: "已分发",
       value: summary.dispatched,
-      href: actionFlowStatusHref("dispatched", hk),
+      href: executionStatusHref("dispatched", hk),
       active: !isOverdueActive && status === "dispatched",
     },
     {
       key: "in_progress",
       label: "执行中",
       value: summary.inProgress,
-      href: actionFlowStatusHref("in_progress", hk),
+      href: executionStatusHref("in_progress", hk),
       active: !isOverdueActive && status === "in_progress",
     },
     {
       key: "with_feedback",
       label: "已反馈",
       value: summary.withFeedback,
-      href: actionFlowStatusHref("completed", hk),
+      href: executionStatusHref("completed", hk),
       active: !isOverdueActive && status === "completed",
     },
     {
       key: "timeout_anomaly",
       label: "超时/异常",
       value: summary.timeoutAnomaly,
-      href: actionFlowStatusHref("timeout_anomaly", hk),
+      href: executionStatusHref("timeout_anomaly", hk),
       active: isOverdueActive,
       tone: summary.timeoutAnomaly > 0 ? "danger" : "default",
     },
@@ -60,7 +60,7 @@ export function buildFlowSecondaryMetrics(
 }
 
 export function buildReviewSecondaryMetrics(
-  metrics: WorkbenchMetricCards,
+  metrics: ActionReviewMetricCards,
   hk?: string,
   priority?: string | null
 ): SecondaryMetricItem[] {

@@ -14,8 +14,8 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   evaluationActionsHref,
-  evaluationMyActionsHref,
-  evaluationWorkbenchActiveHref,
+  evaluationExecutionActionsHref,
+  evaluationActionReviewHref,
   type EvaluationKpi,
   type EvaluationKpiKey,
 } from "@/lib/evaluation-mock";
@@ -43,7 +43,7 @@ const KPI_ICON_CLASS: Record<EvaluationKpiKey, string> = {
 function kpiHref(key: EvaluationKpiKey, hk?: string): string {
   switch (key) {
     case "accuracy":
-      return evaluationWorkbenchActiveHref(hk);
+      return evaluationActionReviewHref(hk);
     case "adoption":
     case "modified":
     case "rejected":
@@ -52,7 +52,7 @@ function kpiHref(key: EvaluationKpiKey, hk?: string): string {
     case "completion":
       return evaluationActionsHref(hk);
     case "falsePositive":
-      return `${evaluationMyActionsHref(hk)}&aquick=agent`;
+      return `${evaluationExecutionActionsHref(hk)}&aquick=agent`;
     default:
       return "/analytics";
   }

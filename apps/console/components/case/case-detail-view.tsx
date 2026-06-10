@@ -9,7 +9,7 @@ import { CaseSection } from "@/components/case/case-section";
 import { CaseRecordHeader } from "@/components/case/case-record-header";
 import { CaseDetailTabs } from "@/components/case/case-detail-tabs";
 import { INBOX_TAB_LABELS, archiveReasonLabel } from "@/lib/labels";
-import type { DetailPanel } from "@/lib/workbench-nav";
+import type { DetailPanel } from "@/lib/action-center-nav";
 export function CaseDetailView({
   row,
   timelineEvents,

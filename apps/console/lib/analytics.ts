@@ -1,6 +1,6 @@
 import { db, ensureSchema, TABLE_LOGS, TABLE_OUTCOMES } from "./db";
 import type { Decision, SuggestionDoc, SuggestionRow } from "./suggestions";
-import { parseQuoteAmountYuan } from "./workbench-metrics";
+import { parseQuoteAmountYuan } from "./action-review-metric-cards";
 
 export type AnalyticsRangeKey =
   | "week"

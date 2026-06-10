@@ -4,7 +4,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
-import { stripPaneSelectionParams } from "@/lib/workbench-nav";
+import { stripPaneSelectionParams } from "@/lib/action-center-nav";
 
 const COOKIE = "aol_hk_filter";
 

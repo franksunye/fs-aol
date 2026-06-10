@@ -2,7 +2,7 @@ import { AGENTS_HOME_PATH } from "./agents-nav";
 import { governanceActionsHref } from "./governance-nav";
 import { INTEGRATIONS_HOME_PATH } from "./integrations-nav";
 import { RUNS_HOME_PATH } from "./runs-nav";
-import { workbenchHref } from "./workbench-nav";
+import { actionCenterTabHref } from "./action-center-nav";
 
 export const OVERVIEW_HOME_PATH = "/overview";
 
@@ -12,7 +12,7 @@ export function overviewHref(hk?: string): string {
 }
 
 export function overviewPendingReviewHref(hk?: string): string {
-  return workbenchHref({ hk, from: "active" });
+  return actionCenterTabHref({ hk, from: "active" });
 }
 
 export function overviewActionsHref(hk?: string): string {

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   evaluationAgentsHref,
-  evaluationMyActionsHref,
+  evaluationExecutionActionsHref,
   type EvaluationOpsMetric,
   type EvaluationOpsMetricKey,
 } from "@/lib/evaluation-mock";
@@ -29,7 +29,7 @@ const OPS_ICON_CLASS: Record<EvaluationOpsMetricKey, string> = {
 function opsHref(key: EvaluationOpsMetricKey, hk?: string): string {
   switch (key) {
     case "conversionIncrement":
-      return evaluationMyActionsHref(hk);
+      return evaluationExecutionActionsHref(hk);
     case "cost":
     case "latency":
     case "roi":

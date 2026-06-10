@@ -1,13 +1,13 @@
 import type { SuggestionRow } from "@/lib/suggestions";
-import { formatQuoteBadge } from "@/lib/opportunity-display";
-import { opportunityStageLabel } from "@/lib/opportunity-display";
+import { formatQuoteBadge } from "@/lib/action-review-display";
+import { actionReviewStageLabel } from "@/lib/action-review-display";
 import {
   decisionLabel,
   decisionClasses,
   priorityClasses,
 } from "@/lib/labels";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
-import { BadgeStack } from "@/components/workbench/badge-stack";
+import { BadgeStack } from "@/components/action-center/badge-stack";
 import type { ListBadge } from "@/lib/list-display";
 
 export function CaseRecordHeader({
@@ -20,7 +20,7 @@ export function CaseRecordHeader({
   const s = row.suggestion;
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
   const quoteBadge = formatQuoteBadge(s);
-  const stage = opportunityStageLabel(row);
+  const stage = actionReviewStageLabel(row);
 
   const badges: ListBadge[] = [
     {
