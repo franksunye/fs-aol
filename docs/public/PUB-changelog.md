@@ -38,6 +38,7 @@
 | 2026-06-04 | **v0.3.3** ui-feed | 统一 Activity Feed（业务+Agent 紫/中性轨）；移动页 token 与 case 组件对齐。 | `v0.3.3` |
 | 2026-06-04 | **v0.3.4** ui-industrial | 空态/错态/骨架、a11y、md 以下侧栏 Sheet；生产可演示抛光。 | `v0.3.4` |
 | 2026-06-04 | **v0.3.5** pilot-cap | **`run_summary`** JSON 日志、`pilot-cron` runbook、真发切换清单；**v0.3 线封版**。 | `v0.3.5` |
+| 2026-06-11 | **v0.4.0** followup-real-loop | **Follow-up 真实闭环**：`aol_actions` 表与执行状态机；批准→待执行（非直接闭环）；Console 执行反馈 API；Runs 中心接 Turso `reasoning_traces`；Action↔Run 双向链接；评估/Overview/Governance 真实区加厚；SOP metadata 入 trace；DRY_RUN 执行深链预览。 | `v0.4.0` |
 | 2026-06-11 | **v0.3.6** aol-console-industrialization | **Console 工业化首包**：三层 IA（Work / Agents / Systems）、**Action 中心**（四生命周期 Tab + 日历）、**数据状态四态** badge、Overview 驾驶舱、**DataList** 企业列表（Frame / URL scope / Turso 分页 / 列设置，Action·Runs·评估接入）、Runs / 评估 / Agents / 集成 / 治理 / AI 基础设施 **场景样例层**；Split 详情与 Runs 收起对齐；operator adapter 骨架；文档 **PUB-17–19**。吸收 PUB-18 的 I1 与 I3/I4 主体 UI，**未**收官 v0.4 Follow-up 完整执行链。 | `v0.3.6` |
 
 ---
@@ -102,7 +103,6 @@
 
 | 目标版本 | 主题 | 摘要（一句话） | 依赖 |
 | --- | --- | --- | --- |
-| **v0.4.0** | followup-real-loop | 打穿真实 Follow-up 楔子；吸收旧 `context-sop` 到 Context/Decision，吸收旧 `proof-metrics` 到 Evaluation/Outcome | `v0.3.6` |
 | **v0.5.0** | two-real-agents | 新增 2 个真实 Agent，并把 `proof-metrics` 从 Follow-up 证明包升级为多 Agent proof | `v0.4.0` |
 | **v0.6.0** | engineering-hardening | 前端 / 后端 / 数据契约 / 性能 / 测试 / CI 工程硬化，达到产品与开源质量门槛 | `v0.5.0` |
 | **v0.7.0** | bilingual-i18n | 支持中文和英文：Console 文案、枚举、日期数字格式、英文 Quickstart 与 sample 数据 | `v0.6.0` |

@@ -28,6 +28,7 @@ import {
 } from "./execution-status-badge";
 import { calendarHref } from "@/lib/calendar-nav";
 import { actionReviewPaneHref } from "@/lib/action-center-nav";
+import { ActionCompleteForm } from "./action-complete-form";
 
 export function ActionExecutionDetail({
   action,
@@ -172,6 +173,11 @@ export function ActionExecutionDetail({
         <p className="text-sm leading-relaxed">
           {action.terminalFeedback ?? "终端尚未回写反馈"}
         </p>
+        {action.status !== "completed" ? (
+          <div className="mt-3">
+            <ActionCompleteForm actionId={action.id} />
+          </div>
+        ) : null}
       </CaseSection>
 
       <CaseSection

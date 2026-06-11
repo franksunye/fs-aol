@@ -1,94 +1,70 @@
 import type { ExecutionStatus } from "./execution-status";
-import { listSuggestions } from "./suggestions";
 import {
-  computeExecutionSummary,
-  getExecutionActionsMockData,
-  resolveExecutionAssigneeFromHk,
+  type ExecutionAction,
   type ExecutionSummary,
 } from "./action-execution-mock";
+import { listActions, mapActionToExecution } from "./tracking/actions";
 import { loadPilotHousekeepers } from "./pilot-housekeepers";
+import { resolveExecutionAssigneeFromHk } from "./action-execution-mock";
 
-export type ExecutionDataSource = "execution" | "inbox" | "fallback";
+export type ExecutionDataSource = "execution" | "fallback";
 
 export type ExecutionMetricsResult = ExecutionSummary & {
   dataSource: ExecutionDataSource;
 };
 
-const FALLBACK_SUMMARY: ExecutionSummary = {
-  pendingDispatch: 5,
-  pendingDispatchDelta: -1,
-  dispatched: 18,
-  dispatchedDelta: 3,
-  inProgress: 7,
-  inProgressDelta: 2,
-  withFeedback: 16,
-  withFeedbackDelta: 4,
-  timeoutAnomaly: 3,
-  timeoutAnomalyDelta: -1,
+const EMPTY_SUMMARY: ExecutionSummary = {
+  pendingDispatch: 0,
+  pendingDispatchDelta: 0,
+  dispatched: 0,
+  dispatchedDelta: 0,
+  inProgress: 0,
+  inProgressDelta: 0,
+  withFeedback: 0,
+  withFeedbackDelta: 0,
+  timeoutAnomaly: 0,
+  timeoutAnomalyDelta: 0,
 };
 
-function hasLiveCounts(summary: ExecutionSummary): boolean {
-  return (
-    summary.pendingDispatch +
-      summary.dispatched +
-      summary.inProgress +
-      summary.withFeedback +
-      summary.timeoutAnomaly >
-    0
-  );
-}
-
-function summaryFromInboxProxy(activeCount: number): ExecutionSummary {
-  const pending = Math.max(1, Math.round(activeCount * 0.35));
-  const dispatched = Math.max(1, Math.round(activeCount * 0.25));
-  const inProgress = Math.max(1, Math.round(activeCount * 0.15));
-  const withFeedback = Math.max(1, Math.round(activeCount * 0.2));
-  const timeoutAnomaly = Math.max(0, activeCount - pending - dispatched - inProgress - withFeedback);
-
+function summaryFromActions(actions: ExecutionAction[]): ExecutionSummary {
+  const count = (s: ExecutionStatus) =>
+    actions.filter((a) => a.status === s).length;
   return {
-    pendingDispatch: pending,
-    pendingDispatchDelta: -1,
-    dispatched,
-    dispatchedDelta: 2,
-    inProgress,
-    inProgressDelta: 1,
-    withFeedback,
-    withFeedbackDelta: 3,
-    timeoutAnomaly,
-    timeoutAnomalyDelta: -1,
+    pendingDispatch: count("pending_dispatch"),
+    pendingDispatchDelta: 0,
+    dispatched: count("dispatched"),
+    dispatchedDelta: 0,
+    inProgress: count("in_progress"),
+    inProgressDelta: 0,
+    withFeedback: actions.filter((a) => Boolean(a.terminalFeedback)).length,
+    withFeedbackDelta: 0,
+    timeoutAnomaly: count("timeout") + count("no_feedback"),
+    timeoutAnomalyDelta: 0,
   };
 }
 
 export async function loadExecutionMetrics(
   hk?: string
 ): Promise<ExecutionMetricsResult> {
-  const pilots = loadPilotHousekeepers();
-  const assigneeId = resolveExecutionAssigneeFromHk(hk, pilots);
-  const allActions = getExecutionActionsMockData();
-  const scoped = assigneeId
-    ? allActions.filter((a) => a.assigneeId === assigneeId)
-    : allActions;
-
-  const fromActions = computeExecutionSummary(scoped);
-  if (hasLiveCounts(fromActions)) {
-    return { ...fromActions, dataSource: "execution" };
-  }
-
   try {
-    const activeRows = await listSuggestions({
-      inboxBucket: "active",
+    const pilots = loadPilotHousekeepers();
+    const assigneeId = resolveExecutionAssigneeFromHk(hk, pilots);
+    const rows = await listActions({
       housekeeperId: hk,
-      limit: 500,
+      limit: 200,
     });
-    if (activeRows.length > 0) {
+    const actions = await Promise.all(rows.map(mapActionToExecution));
+    const scoped = assigneeId
+      ? actions.filter((a) => a.assigneeId === assigneeId)
+      : actions;
+    if (scoped.length > 0) {
       return {
-        ...summaryFromInboxProxy(activeRows.length),
-        dataSource: "inbox",
+        ...summaryFromActions(scoped),
+        dataSource: "execution",
       };
     }
+    return { ...EMPTY_SUMMARY, dataSource: "execution" };
   } catch {
-    // Turso 不可用时回退演示数据
+    return { ...EMPTY_SUMMARY, dataSource: "fallback" };
   }
-
-  return { ...FALLBACK_SUMMARY, dataSource: "fallback" };
 }

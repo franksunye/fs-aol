@@ -1,9 +1,22 @@
-import { db, ensureSchema, TABLE_BLOCKERS, TABLE_LOGS, TABLE_OUTCOMES } from "../db";
+import {
+  db,
+  ensureSchema,
+  TABLE_BLOCKERS,
+  TABLE_LOGS,
+  TABLE_OUTCOMES,
+} from "../db";
 import type { BlockerType } from "../blockers";
 import { logsHasInboxColumns } from "../logs-schema";
 import { migrateInboxColumns } from "../migrate-inbox-columns";
 import type { BlockerRow, Decision, SuggestionDoc } from "./types";
 import { mapBlocker } from "./mappers";
+import {
+  createActionFromApproval,
+  getLatestOutcomeId,
+  resolveTraceIdForDedupe,
+} from "./actions";
+import { previewExecutionNotify } from "../execution-notify";
+import { getSuggestion } from "./inbox";
 
 async function ensureInboxColumnsReady(): Promise<boolean> {
   await ensureSchema();
@@ -49,6 +62,16 @@ export async function recordBlocker(input: {
   });
 }
 
+function inboxBucketForDecision(decision: Decision): string {
+  if (decision === "approved" || decision === "modified") return "execution";
+  return "closed";
+}
+
+function archiveReasonForDecision(decision: Decision): string {
+  if (decision === "approved" || decision === "modified") return "awaiting_execution";
+  return "has_outcome";
+}
+
 export async function recordOutcome(input: {
   dedupeKey: string;
   workOrderId: string;
@@ -75,10 +98,40 @@ export async function recordOutcome(input: {
       now,
     ],
   });
+
+  const bucket = inboxBucketForDecision(input.decision);
+  const archiveReason = archiveReasonForDecision(input.decision);
   await db.execute({
     sql: `UPDATE ${TABLE_LOGS}
-      SET inbox_bucket = 'closed', archive_reason = 'has_outcome', reconciled_at = ?
+      SET inbox_bucket = ?, archive_reason = ?, reconciled_at = ?
       WHERE dedupe_key = ?`,
-    args: [now, input.dedupeKey],
+    args: [bucket, archiveReason, now, input.dedupeKey],
   });
+
+  if (input.decision === "approved" || input.decision === "modified") {
+    const row = await getSuggestion(input.dedupeKey);
+    const suggestion =
+      input.modifiedSuggestion ?? row?.suggestion ?? ({} as SuggestionDoc);
+    const outcomeId = (await getLatestOutcomeId(input.dedupeKey)) ?? 0;
+    const traceId = await resolveTraceIdForDedupe(
+      input.dedupeKey,
+      input.workOrderId
+    );
+    const action = await createActionFromApproval({
+      dedupeKey: input.dedupeKey,
+      workOrderId: input.workOrderId,
+      reviewOutcomeId: outcomeId,
+      suggestion,
+      assigneeId: row?.housekeeperId || "",
+      traceId,
+      operator: input.operator,
+    });
+    previewExecutionNotify({
+      title: action.title,
+      orderRef: row?.orderNum || input.workOrderId,
+      assigneeId: action.assigneeId,
+      actionId: action.id,
+      dedupeKey: input.dedupeKey,
+    });
+  }
 }

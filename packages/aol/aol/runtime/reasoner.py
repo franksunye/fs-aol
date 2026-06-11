@@ -34,7 +34,23 @@ def reason_follow_up_steps(
 ) -> Tuple[Optional[FollowUpSuggestion], ReasoningTrace]:
     """展示轨：enrich（tool）→ LLM，步骤写入 trace.steps_json。"""
     now = bj_now().isoformat()
-    steps: List[Dict[str, Any]] = []
+    steps: List[Dict[str, Any]] = [
+        {
+            "step": 0,
+            "kind": "meta",
+            "name": "decision_policy",
+            "status": "ok",
+            "output": {
+                "sop_version": "206-sign-pending-v1",
+                "context_sources": [
+                    "mongo:serviceAppointment",
+                    "enrich:quotes",
+                    "enrich:contracts",
+                    "enrich:workflow",
+                ],
+            },
+        }
+    ]
     t0 = time.perf_counter()
     enrich_ctx = enrich_work_order_context(cfg, wo)
     steps.append({

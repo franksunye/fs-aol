@@ -68,15 +68,18 @@ export function encodeKey(key: string): string {
   return encodeURIComponent(key);
 }
 
-export type InboxBucket = "active" | "closed" | "archived";
+export type InboxBucket = "active" | "execution" | "closed" | "archived";
 
 export const INBOX_TAB_LABELS: Record<InboxBucket, string> = {
   active: "待审核",
+  execution: "待执行",
   closed: "已闭环",
   archived: "已归档",
 };
 
 export const ARCHIVE_REASON_LABELS: Record<string, string> = {
+  awaiting_execution: "待执行",
+  action_completed: "执行已完成",
   has_outcome: "已有处置反馈",
   agent_no_follow: "Agent 判定无需跟进",
   left_wedge: "已离开跟进楔子（非待签约等触发状态）",
@@ -94,7 +97,14 @@ export function parseInboxBucket(
   value?: string | null
 ): InboxBucket | undefined {
   const v = value?.trim();
-  if (v === "active" || v === "closed" || v === "archived") return v;
+  if (
+    v === "active" ||
+    v === "execution" ||
+    v === "closed" ||
+    v === "archived"
+  ) {
+    return v;
+  }
   return undefined;
 }
 

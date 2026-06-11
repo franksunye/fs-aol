@@ -48,6 +48,7 @@ export const TABLE_TRACES = _tables.traces;
 export const TABLE_OUTCOMES = _tables.outcomes;
 export const TABLE_BLOCKERS = _tables.blockers;
 export const TABLE_TIMELINE = _tables.timeline;
+export const TABLE_ACTIONS = _tables.actions;
 
 /** 幂等建表：outcomes + blocker 回写表（DDL 真源 contracts/aol_schema.sql）。 */
 export function ensureSchema(): Promise<void> {

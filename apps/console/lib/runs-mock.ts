@@ -44,6 +44,8 @@ export type MockRun = {
   model: string;
   actionGenerated: boolean;
   actionId?: string;
+  /** Numeric aol_actions.id for execution tab deep link */
+  actionDbId?: number;
   workOrderKey?: string;
   analysisRound?: number;
   errorCount: number;

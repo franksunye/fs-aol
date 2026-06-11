@@ -5,5 +5,6 @@
   "traces": "reasoning_traces",
   "outcomes": "suggestion_outcomes",
   "blockers": "blocker_feedback",
-  "timeline": "timeline_events"
+  "timeline": "timeline_events",
+  "actions": "actions"
 }

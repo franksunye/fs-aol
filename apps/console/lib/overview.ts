@@ -2,6 +2,7 @@ import { loadActionCenterPrimaryKpis } from "./action-center-metrics";
 import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 import { loadAnalyticsSnapshot } from "./analytics";
 import { loadExecutionMetrics } from "./execution-metrics";
+import { countPendingActions } from "./tracking/actions";
 import {
   getOverviewMockData,
   OVERVIEW_KPIS,
@@ -133,10 +134,11 @@ export async function loadOverviewSnapshot(
   const mock = getOverviewMockData(hk);
 
   try {
-    const [primaryKpis, analytics, flow] = await Promise.all([
+    const [primaryKpis, analytics, flow, pendingExecution] = await Promise.all([
       loadActionCenterPrimaryKpis(hk),
       loadAnalyticsSnapshot({ rangeKey: "last_7", housekeeperId: hk }),
       loadExecutionMetrics(hk),
+      countPendingActions(hk ? { housekeeperId: hk } : {}),
     ]);
 
     const hasKpiSignal = primaryKpis.some((k) => k.value > 0);
@@ -163,7 +165,13 @@ export async function loadOverviewSnapshot(
       ...mock,
       kpis: hasKpiSignal ? mapPrimaryToOverviewKpis(primaryKpis) : OVERVIEW_KPIS,
       today: useLiveToday
-        ? buildTodayPulse(analytics, mock.today)
+        ? {
+            ...buildTodayPulse(analytics, mock.today),
+            actionsToday: Math.max(
+              buildTodayPulse(analytics, mock.today).actionsToday,
+              pendingExecution
+            ),
+          }
         : mock.today,
       rates: useLiveRates
         ? buildRates(analytics, flow, mock.rates)

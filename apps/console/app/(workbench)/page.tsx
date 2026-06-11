@@ -42,10 +42,13 @@ import {
 } from "@/lib/action-center-tabs";
 import { calendarHref } from "@/lib/calendar-nav";
 import { ActionExecutionView } from "@/components/action-center/execution/action-execution-view";
+import type { ExecutionAction } from "@/lib/action-execution-mock";
+import type { SuggestionRow } from "@/lib/suggestions";
+import type { ClosedLoopFilter } from "@/lib/execution-status";
 import {
-  countExecutionActionsPending,
-  getExecutionActionsMockData,
-} from "@/lib/action-execution-mock";
+  countPendingActions,
+  listExecutionActions,
+} from "@/lib/tracking/actions";
 import { loadActionCenterPrimaryKpis } from "@/lib/action-center-metrics";
 import { loadExecutionMetrics } from "@/lib/execution-metrics";
 import {
@@ -57,6 +60,35 @@ import { ActionCenterSecondaryStrip } from "@/components/action-center/action-ce
 import { ActionReviewListSkeleton } from "@/components/action-center/action-center-skeleton";
 import { ExecutionToolbar } from "@/components/action-center/execution-toolbar";
 export const dynamic = "force-dynamic";
+
+function filterClosedLoopRows(
+  rows: SuggestionRow[],
+  filter: ClosedLoopFilter
+): SuggestionRow[] {
+  if (filter === "all") return rows;
+  if (filter === "archived") {
+    return rows.filter((r) => r.inboxBucket === "archived");
+  }
+  if (filter === "rejected") {
+    return rows.filter((r) => r.outcome?.decision === "rejected");
+  }
+  if (filter === "completed") {
+    return rows.filter((r) =>
+      ["approved", "modified", "followed_up"].includes(
+        r.outcome?.decision ?? ""
+      )
+    );
+  }
+  if (filter === "expired") {
+    return rows.filter(
+      (r) =>
+        r.archiveReason === "left_wedge" ||
+        r.archiveReason === "mongo_missing" ||
+        r.archiveReason === "agent_no_follow"
+    );
+  }
+  return rows;
+}
 
 export default async function ActionCenterPage({
   searchParams,
@@ -105,7 +137,10 @@ export default async function ActionCenterPage({
   const selectedKey = parseActionReviewPaneKey(sp.key);
   const pilots = loadPilotHousekeepers();
   const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
-  const executionCount = countExecutionActionsPending(getExecutionActionsMockData());
+  const [executionCount, executionActions] = await Promise.all([
+    countPendingActions(hkOpts),
+    isExecution ? listExecutionActions(hkOpts) : Promise.resolve([] as ExecutionAction[]),
+  ]);
   const sortKey = parseActionReviewSortKey(sp.sort);
   const listPage = parseDataListPage(sp.page);
   const listPageSize = parseDataListPageSize(sp.pageSize);
@@ -141,7 +176,11 @@ export default async function ActionCenterPage({
   const sorted = sortActionReviews(rawRows, sortKey, pilots);
   const beforePriority = sortActionReviews(metricsRawRows, sortKey, pilots);
   const priorityRows = filterByPriority(sorted, priorityFilter);
-  const filteredRows = filterActionReviewsByQuery(priorityRows, sp.q);
+  const closedFiltered =
+    isClosedLoop && closedLoopFilter !== "all"
+      ? filterClosedLoopRows(priorityRows, closedLoopFilter)
+      : priorityRows;
+  const filteredRows = filterActionReviewsByQuery(closedFiltered, sp.q);
 
   const listTotal =
     canDbPaginate && inboxPageResult
@@ -300,7 +339,11 @@ export default async function ActionCenterPage({
     return (
       <ActionCenterShell {...shellProps}>
         <Suspense fallback={null}>
-          <ActionExecutionView hkFilter={hkFilter} pilots={pilots} />
+          <ActionExecutionView
+            hkFilter={hkFilter}
+            pilots={pilots}
+            actions={executionActions}
+          />
         </Suspense>
       </ActionCenterShell>
     );

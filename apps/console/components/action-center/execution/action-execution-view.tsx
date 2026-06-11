@@ -7,8 +7,8 @@ import { formatDateKey } from "@/lib/calendar-mock";
 import type { ExecutionStatus } from "@/lib/execution-status";
 import {
   filterExecutionActions,
-  getExecutionActionsMockData,
   resolveExecutionAssigneeFromHk,
+  type ExecutionAction,
   type ExecutionQuickFilter,
   type ActionExecutionFilters as ExecutionFilterState,
 } from "@/lib/action-execution-mock";
@@ -51,13 +51,14 @@ function parseStatusFilter(
 export function ActionExecutionView({
   hkFilter,
   pilots = [],
+  actions,
 }: {
   hkFilter?: string;
   pilots?: PilotHousekeeper[];
+  actions: ExecutionAction[];
 }) {
   const sp = useSearchParams();
   const router = useRouter();
-  const allActions = useMemo(() => getExecutionActionsMockData(), []);
   const hkAssignee = useMemo(
     () => resolveExecutionAssigneeFromHk(hkFilter, pilots),
     [hkFilter, pilots]
@@ -75,27 +76,31 @@ export function ActionExecutionView({
   );
 
   const filtered = useMemo(
-    () => filterExecutionActions(allActions, filters),
-    [allActions, filters]
+    () => filterExecutionActions(actions, filters),
+    [actions, filters]
   );
 
   const quickCounts = useMemo(() => {
     const today = formatDateKey(new Date());
-    const base = filterExecutionActions(allActions, {
+    const base = filterExecutionActions(actions, {
       ...filters,
       quick: "all",
       query: "",
+      status: undefined,
     });
     return {
       all: base.length,
       today: base.filter((a) => a.dueDate === today).length,
       high: base.filter((a) => a.priority === "high").length,
       overdue: base.filter(
-        (a) => a.status === "timeout" || a.status === "no_feedback"
+        (a) =>
+          a.status === "timeout" ||
+          a.status === "no_feedback" ||
+          (a.dueDate < today && a.status !== "completed")
       ).length,
-      agent: base.length,
+      agent: base.filter((a) => a.agentId !== "follow-up").length,
     };
-  }, [allActions, filters]);
+  }, [actions, filters]);
 
   const selectedId = sp.get("action")?.trim() || null;
   const selectedAction = useMemo(
@@ -103,7 +108,6 @@ export function ActionExecutionView({
     [filtered, selectedId]
   );
 
-  // 筛选变化导致当前 action 不在列表中时，清除无效选中（不自动展开详情）
   useEffect(() => {
     if (selectedId && filtered.length > 0 && !selectedAction) {
       const q = new URLSearchParams(sp.toString());
@@ -111,15 +115,6 @@ export function ActionExecutionView({
       router.replace(`/?${q.toString()}`, { scroll: false });
     }
   }, [selectedId, filtered, selectedAction, sp, router]);
-
-  const filterBar = (
-    <ActionExecutionFilters
-      hk={hkFilter}
-      counts={quickCounts}
-      filters={filters}
-      embedded
-    />
-  );
 
   const listPane = (
     <div
@@ -129,44 +124,40 @@ export function ActionExecutionView({
           : "flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4"
       }
     >
-      {filtered.length === 0 ? (
-        <div className="mb-3 shrink-0">
-          <ActionExecutionFilters
-            hk={hkFilter}
-            counts={quickCounts}
-            filters={filters}
-          />
-        </div>
-      ) : null}
       <ActionExecutionList
         className="min-h-0 flex-1"
         items={filtered}
         selectedId={selectedId}
         hk={hkFilter}
         layout={selectedId ? "narrow" : "wide"}
-        toolbarStart={filtered.length > 0 ? filterBar : undefined}
         resetDeps={[
           filters.quick,
           filters.agentId,
           filters.query,
+          filters.hk,
           filters.status,
-          hkFilter,
         ]}
       />
     </div>
   );
 
   const detailPane = selectedAction ? (
-    <ActionExecutionDetail key={selectedAction.id} action={selectedAction} hk={hkFilter} />
+    <ActionExecutionDetail
+      key={selectedAction.id}
+      action={selectedAction}
+      hk={hkFilter}
+    />
   ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="shrink-0 px-3 pb-2 lg:px-4">
+        <ActionExecutionFilters counts={quickCounts} filters={filters} />
+      </div>
       <ActionExecutionSplitLayout
         list={listPane}
         detail={detailPane}
         selectedActionId={selectedAction ? selectedAction.id : null}
-        hk={hkFilter}
       />
     </div>
   );

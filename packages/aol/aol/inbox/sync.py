@@ -17,10 +17,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger("aol.inbox")
 
 BUCKET_ACTIVE = "active"
+BUCKET_EXECUTION = "execution"
 BUCKET_CLOSED = "closed"
 BUCKET_ARCHIVED = "archived"
 
 REASON_HAS_OUTCOME = "has_outcome"
+REASON_AWAITING_EXECUTION = "awaiting_execution"
+REASON_ACTION_COMPLETED = "action_completed"
 REASON_AGENT_NO_FOLLOW = "agent_no_follow"
 REASON_LEFT_WEDGE = "left_wedge"
 REASON_SIGNED_CONTRACT = "signed_contract"
@@ -50,6 +53,12 @@ def _parse_suggestion(raw: Any) -> FollowUpSuggestion:
     return FollowUpSuggestion()
 
 
+@dataclass
+class ActionRecord:
+    dedupe_key: str
+    status: str
+
+
 def reconcile_inbox_row(
     cfg: Config,
     log: Dict[str, Any],
@@ -57,10 +66,15 @@ def reconcile_inbox_row(
     sa_doc: Optional[Dict[str, Any]],
     *,
     wedge_statuses: Optional[List[str]] = None,
+    action: Optional[ActionRecord] = None,
 ) -> InboxState:
-    """根据 outcome、快照建议、当前 Mongo 判定 inbox_bucket。"""
-    if outcome and outcome.decision:
+    """根据 outcome、Action、快照建议、当前 Mongo 判定 inbox_bucket。"""
+    if outcome and outcome.decision in ("rejected", "followed_up"):
         return InboxState(BUCKET_CLOSED, REASON_HAS_OUTCOME)
+    if outcome and outcome.decision in ("approved", "modified"):
+        if action and action.status == "completed":
+            return InboxState(BUCKET_CLOSED, REASON_ACTION_COMPLETED)
+        return InboxState(BUCKET_EXECUTION, REASON_AWAITING_EXECUTION)
 
     suggestion = _parse_suggestion(log.get("suggestion"))
     if not suggestion.needs_follow_up:
@@ -155,6 +169,7 @@ def run_inbox_sync(
     stats = {
         "total": len(logs),
         "active": 0,
+        "execution": 0,
         "closed": 0,
         "archived": 0,
         "unchanged": 0,
@@ -165,14 +180,23 @@ def run_inbox_sync(
 
     keys = [str(r.get("dedupe_key") or "") for r in logs if r.get("dedupe_key")]
     outcomes = store.get_outcomes_for_dedupe_keys(keys)
+    actions = store.get_actions_for_dedupe_keys(keys)
     wids = list({str(r.get("work_order_id") or "") for r in logs if r.get("work_order_id")})
     sa_docs = _fetch_sa_docs(cfg, wids)
 
     for log in logs:
         dk = str(log.get("dedupe_key") or "")
         outcome = outcomes.get(dk)
+        action_row = actions.get(dk)
+        action = (
+            ActionRecord(dedupe_key=dk, status=str(action_row.get("status") or ""))
+            if action_row
+            else None
+        )
         wid = str(log.get("work_order_id") or "")
-        state = reconcile_inbox_row(cfg, log, outcome, sa_docs.get(wid))
+        state = reconcile_inbox_row(
+            cfg, log, outcome, sa_docs.get(wid), action=action
+        )
         stats[state.bucket] = stats.get(state.bucket, 0) + 1
 
         prev_bucket = str(log.get("inbox_bucket") or BUCKET_ACTIVE)

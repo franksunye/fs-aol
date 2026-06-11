@@ -9,7 +9,7 @@ export const SKILL_FOLLOW_UP = "follow-up" as const;
 
 export type SkillId = typeof SKILL_FOLLOW_UP | (string & {});
 
-export type InboxState = "active" | "closed" | "archived";
+export type InboxState = "active" | "execution" | "closed" | "archived";
 
 export type WorkItemPriority = "high" | "medium" | "low";
 

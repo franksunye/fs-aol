@@ -21,7 +21,6 @@ import { SidebarBrand } from "./sidebar-brand";
 import { cn } from "@/lib/utils";
 import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
 import { RUNS_HOME_PATH } from "@/lib/runs-nav";
-import { RUNS_TODAY_MOCK_COUNT } from "@/lib/runs-mock";
 import { GOVERNANCE_HOME_PATH } from "@/lib/governance-nav";
 import { calendarHref } from "@/lib/calendar-nav";
 import { actionCenterHref } from "@/lib/action-center-nav";
@@ -143,7 +142,6 @@ export function SidebarNav({
       icon: Play,
       href: RUNS_HOME_PATH,
       active: onRuns,
-      badge: RUNS_TODAY_MOCK_COUNT,
     },
     {
       label: "评估",

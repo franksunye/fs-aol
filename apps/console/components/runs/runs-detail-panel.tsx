@@ -218,17 +218,20 @@ export function RunsDetailPanel({
             Agent 配置
             <ExternalLink className="size-3" aria-hidden />
           </Button>
-          {run.actionId ? (
+          {run.actionDbId ? (
             <Button
               type="button"
               size="sm"
               variant="outline"
               className="h-7 gap-1 text-xs"
               render={
-                <Link href={executionActionHref(run.actionId, hk)} scroll={false} />
+                <Link
+                  href={executionActionHref(String(run.actionDbId), hk)}
+                  scroll={false}
+                />
               }
             >
-              Action 流转
+              待执行 Action
               <ChevronRight className="size-3" aria-hidden />
             </Button>
           ) : null}

@@ -66,7 +66,7 @@ export async function countInboxBuckets(options?: {
       : `SELECT COUNT(*) AS c FROM ${TABLE_LOGS}`;
     const res = await db.execute({ sql, args: hk ? [hk] : [] });
     const c = Number((res.rows as { c?: number }[])[0]?.c ?? 0);
-    return { active: c, closed: 0, archived: 0 };
+    return { active: c, execution: 0, closed: 0, archived: 0 };
   }
   const clauses: string[] = [];
   const args: string[] = [];
@@ -78,14 +78,21 @@ export async function countInboxBuckets(options?: {
   const res = await db.execute({
     sql: `SELECT
             SUM(CASE WHEN inbox_bucket IS NULL OR inbox_bucket = 'active' THEN 1 ELSE 0 END) AS active,
+            SUM(CASE WHEN inbox_bucket = 'execution' THEN 1 ELSE 0 END) AS execution,
             SUM(CASE WHEN inbox_bucket = 'closed' THEN 1 ELSE 0 END) AS closed,
             SUM(CASE WHEN inbox_bucket = 'archived' THEN 1 ELSE 0 END) AS archived
           FROM ${TABLE_LOGS} ${where}`,
     args,
   });
-  const row = (res.rows as { active?: number; closed?: number; archived?: number }[])[0];
+  const row = (res.rows as {
+    active?: number;
+    execution?: number;
+    closed?: number;
+    archived?: number;
+  }[])[0];
   return {
     active: Number(row?.active ?? 0),
+    execution: Number(row?.execution ?? 0),
     closed: Number(row?.closed ?? 0),
     archived: Number(row?.archived ?? 0),
   };

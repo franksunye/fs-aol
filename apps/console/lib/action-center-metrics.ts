@@ -1,11 +1,6 @@
 import { countInboxBuckets } from "./suggestions";
 import { loadExecutionMetrics } from "./execution-metrics";
-import {
-  countExecutionActionsPending,
-  getExecutionActionsMockData,
-  resolveExecutionAssigneeFromHk,
-} from "./action-execution-mock";
-import { loadPilotHousekeepers } from "./pilot-housekeepers";
+import { countPendingActions } from "./tracking/actions";
 import type { InboxBucketCounts } from "./tracking/types";
 import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 
@@ -84,24 +79,18 @@ function buildPrimaryFromSources(
 export async function loadActionCenterPrimaryKpis(
   hk?: string
 ): Promise<ActionCenterPrimaryKpi[]> {
-  const pilots = loadPilotHousekeepers();
-  const assigneeId = resolveExecutionAssigneeFromHk(hk, pilots);
-  const allActions = getExecutionActionsMockData();
-  const scopedActions = assigneeId
-    ? allActions.filter((a) => a.assigneeId === assigneeId)
-    : allActions;
-  const actionsTotal =
-    scopedActions.length > 0
-      ? scopedActions.length
-      : countExecutionActionsPending(allActions);
+  const hkOpts = hk ? { housekeeperId: hk } : {};
 
   try {
-    const [inbox, flow] = await Promise.all([
-      countInboxBuckets(hk ? { housekeeperId: hk } : {}),
+    const [inbox, flow, pendingActions] = await Promise.all([
+      countInboxBuckets(hkOpts),
       loadExecutionMetrics(hk),
+      countPendingActions(hkOpts),
     ]);
+    const actionsTotal = pendingActions + inbox.execution;
     const hasSignal =
       inbox.active > 0 ||
+      inbox.execution > 0 ||
       inbox.closed > 0 ||
       flow.dataSource !== "fallback" ||
       actionsTotal > 0;

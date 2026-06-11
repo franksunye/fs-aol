@@ -28,6 +28,7 @@ def _tables_manifest() -> dict[str, str]:
         "outcomes": data["outcomes"],
         "blockers": data["blockers"],
         "timeline": data["timeline"],
+        "actions": data["actions"],
     }
 
 
@@ -38,6 +39,7 @@ TABLE_TRACES = f"{TABLE_PREFIX}{_SUFFIX['traces']}"
 TABLE_OUTCOMES = f"{TABLE_PREFIX}{_SUFFIX['outcomes']}"
 TABLE_BLOCKERS = f"{TABLE_PREFIX}{_SUFFIX['blockers']}"
 TABLE_TIMELINE = f"{TABLE_PREFIX}{_SUFFIX['timeline']}"
+TABLE_ACTIONS = f"{TABLE_PREFIX}{_SUFFIX['actions']}"
 
 
 def _render_schema_sql(prefix: str = TABLE_PREFIX) -> str:
@@ -72,6 +74,7 @@ SCHEMA_TRACES = _statement_for_table(_rendered, TABLE_TRACES)
 SCHEMA_OUTCOMES = _statement_for_table(_rendered, TABLE_OUTCOMES)
 SCHEMA_BLOCKERS = _statement_for_table(_rendered, TABLE_BLOCKERS)
 SCHEMA_TIMELINE = _statement_for_table(_rendered, TABLE_TIMELINE)
+SCHEMA_ACTIONS = _statement_for_table(_rendered, TABLE_ACTIONS)
 
 # Index on outcomes (Console ensureSchema also runs this)
 _OUTCOMES_INDEX = re.compile(
@@ -97,4 +100,28 @@ _TIMELINE_INDEX = re.compile(
 SCHEMA_TIMELINE_INDEX = next(
     (s for s in _split_statements(_rendered) if _TIMELINE_INDEX.search(s)),
     f"CREATE INDEX IF NOT EXISTS idx_{TABLE_TIMELINE}_wo ON {TABLE_TIMELINE}(work_order_id);",
+)
+_ACTIONS_DEDUPE_INDEX = re.compile(
+    rf"CREATE INDEX IF NOT EXISTS idx_{re.escape(TABLE_ACTIONS)}_dedupe\b",
+    re.IGNORECASE,
+)
+SCHEMA_ACTIONS_DEDUPE_INDEX = next(
+    (s for s in _split_statements(_rendered) if _ACTIONS_DEDUPE_INDEX.search(s)),
+    f"CREATE INDEX IF NOT EXISTS idx_{TABLE_ACTIONS}_dedupe ON {TABLE_ACTIONS}(dedupe_key);",
+)
+_ACTIONS_STATUS_INDEX = re.compile(
+    rf"CREATE INDEX IF NOT EXISTS idx_{re.escape(TABLE_ACTIONS)}_status\b",
+    re.IGNORECASE,
+)
+SCHEMA_ACTIONS_STATUS_INDEX = next(
+    (s for s in _split_statements(_rendered) if _ACTIONS_STATUS_INDEX.search(s)),
+    f"CREATE INDEX IF NOT EXISTS idx_{TABLE_ACTIONS}_status ON {TABLE_ACTIONS}(status);",
+)
+_TRACES_CREATED_INDEX = re.compile(
+    rf"CREATE INDEX IF NOT EXISTS idx_{re.escape(TABLE_TRACES)}_created\b",
+    re.IGNORECASE,
+)
+SCHEMA_TRACES_CREATED_INDEX = next(
+    (s for s in _split_statements(_rendered) if _TRACES_CREATED_INDEX.search(s)),
+    f"CREATE INDEX IF NOT EXISTS idx_{TABLE_TRACES}_created ON {TABLE_TRACES}(created_at);",
 )

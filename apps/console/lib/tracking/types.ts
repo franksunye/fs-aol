@@ -97,6 +97,31 @@ export interface TraceRow {
 
 export type InboxBucketCounts = Record<InboxBucket, number>;
 
+export type ActionStatus =
+  | "pending_dispatch"
+  | "in_progress"
+  | "completed"
+  | "rejected"
+  | "timeout"
+  | "no_feedback";
+
+export interface ActionRow {
+  id: number;
+  dedupeKey: string;
+  workOrderId: string;
+  traceId: number | null;
+  title: string;
+  priority: string;
+  assigneeId: string;
+  status: ActionStatus;
+  reviewOutcomeId: number | null;
+  terminalFeedback: string;
+  operator: string;
+  createdAt: string;
+  dispatchedAt: string | null;
+  completedAt: string | null;
+}
+
 export interface DashboardStats {
   total: number;
   needFollow: number;

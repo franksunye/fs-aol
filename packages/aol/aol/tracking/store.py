@@ -22,8 +22,13 @@ from .schema import (
     SCHEMA_OUTCOMES_INDEX,
     SCHEMA_TIMELINE,
     SCHEMA_TIMELINE_INDEX,
+    SCHEMA_ACTIONS,
+    SCHEMA_ACTIONS_DEDUPE_INDEX,
+    SCHEMA_ACTIONS_STATUS_INDEX,
+    SCHEMA_TRACES_CREATED_INDEX,
     SCHEMA_TRACES,
     TABLE_BLOCKERS,
+    TABLE_ACTIONS,
     TABLE_LOGS,
     TABLE_OUTCOMES,
     TABLE_TIMELINE,
@@ -181,6 +186,10 @@ class TrackingStore:
             SCHEMA_BLOCKERS_INDEX,
             SCHEMA_TIMELINE,
             SCHEMA_TIMELINE_INDEX,
+            SCHEMA_ACTIONS,
+            SCHEMA_ACTIONS_DEDUPE_INDEX,
+            SCHEMA_ACTIONS_STATUS_INDEX,
+            SCHEMA_TRACES_CREATED_INDEX,
         )
         if self._conn is not None:
             for stmt in stmts:
@@ -703,6 +712,26 @@ class TrackingStore:
                 operator=str(row.get("operator") or ""),
                 created_at=str(row.get("created_at") or ""),
             )
+        return out
+
+    def get_actions_for_dedupe_keys(
+        self, dedupe_keys: List[str]
+    ) -> Dict[str, Dict[str, Any]]:
+        if not dedupe_keys:
+            return {}
+        ph = ",".join("?" * len(dedupe_keys))
+        sql = f"""
+            SELECT a.* FROM {TABLE_ACTIONS} a
+            INNER JOIN (
+                SELECT dedupe_key, MAX(id) AS mid FROM {TABLE_ACTIONS}
+                WHERE dedupe_key IN ({ph}) GROUP BY dedupe_key
+            ) m ON a.id = m.mid
+        """
+        out: Dict[str, Dict[str, Any]] = {}
+        for row in self._fetchall_dicts(sql, tuple(dedupe_keys)):
+            dk = str(row.get("dedupe_key") or "")
+            if dk:
+                out[dk] = row
         return out
 
     def update_inbox_state(

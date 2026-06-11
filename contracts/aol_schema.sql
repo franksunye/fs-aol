@@ -85,3 +85,30 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}timeline_events (
 
 CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}timeline_events_wo
     ON {{AOL_TABLE_PREFIX}}timeline_events(work_order_id);
+
+-- Trusted Execution：人审批准后生成的可执行 Action（v0.4+）
+CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}actions (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    dedupe_key          TEXT NOT NULL,
+    work_order_id       TEXT,
+    trace_id            INTEGER,
+    title               TEXT NOT NULL,
+    priority            TEXT,
+    assignee_id         TEXT,
+    status              TEXT NOT NULL DEFAULT 'pending_dispatch',
+    review_outcome_id   INTEGER,
+    terminal_feedback   TEXT,
+    operator            TEXT,
+    created_at          TEXT NOT NULL,
+    dispatched_at       TEXT,
+    completed_at        TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}actions_dedupe
+    ON {{AOL_TABLE_PREFIX}}actions(dedupe_key);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}actions_status
+    ON {{AOL_TABLE_PREFIX}}actions(status);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}reasoning_traces_created
+    ON {{AOL_TABLE_PREFIX}}reasoning_traces(created_at);

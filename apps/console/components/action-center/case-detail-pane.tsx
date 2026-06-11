@@ -9,6 +9,7 @@ import {
   actionReviewPaneDetailHref,
 } from "@/lib/action-center-nav";
 import { CaseDetailView } from "@/components/case/case-detail-view";
+import { CaseRunLinks } from "@/components/case/case-run-links";
 
 export async function CaseDetailPane({
   dedupeKey,
@@ -44,7 +45,13 @@ export async function CaseDetailPane({
   const detailBase = actionReviewPaneDetailHref(row.dedupeKey, listContext);
 
   return (
-    <CaseDetailView
+    <>
+      <CaseRunLinks
+        dedupeKey={row.dedupeKey}
+        workOrderId={row.workOrderId}
+        hk={listContext.hk}
+      />
+      <CaseDetailView
       row={row}
       timelineEvents={timelineEvents}
       initialRound={initialRound}
@@ -53,6 +60,7 @@ export async function CaseDetailPane({
       panel={parseDetailPanel(searchParams.panel, searchParams.view)}
       variant="pane"
     />
+    </>
   );
 }
 

@@ -7,11 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
 import {
-  computeRunsSummary,
   filterRuns,
-  getRunsMockData,
+  type MockRun,
   type RunQuickFilter,
   type RunsFilters as RunsFilterState,
+  type RunsSummary,
 } from "@/lib/runs-mock";
 import { RunsSummaryCards } from "./runs-summary-cards";
 import { RunsFilters } from "./runs-filters";
@@ -26,10 +26,21 @@ function parseQuickFilter(value?: string | null): RunQuickFilter {
   return "all";
 }
 
-export function RunsPage({ hkFilter }: { hkFilter?: string }) {
+export function RunsPage({
+  hkFilter,
+  runs,
+  total,
+  summary,
+  selectedRun,
+}: {
+  hkFilter?: string;
+  runs: MockRun[];
+  total: number;
+  summary: RunsSummary;
+  selectedRun: MockRun | null;
+}) {
   const sp = useSearchParams();
   const router = useRouter();
-  const allRuns = useMemo(() => getRunsMockData(), []);
 
   const filters: RunsFilterState = useMemo(
     () => ({
@@ -43,36 +54,32 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
   );
 
   const filtered = useMemo(
-    () => filterRuns(allRuns, filters),
-    [allRuns, filters]
+    () => filterRuns(runs, filters),
+    [runs, filters]
   );
 
-  const summary = useMemo(() => computeRunsSummary(allRuns), [allRuns]);
-
   const quickCounts = useMemo(() => {
-    const base = filterRuns(allRuns, { ...filters, quick: "all", query: "" });
+    const base = filterRuns(runs, { ...filters, quick: "all", query: "" });
     return {
-      all: base.length,
+      all: total,
       success: base.filter((r) => r.status === "success").length,
       anomaly: base.filter((r) => r.status === "anomaly").length,
       retried: base.filter((r) => r.status === "retried").length,
     };
-  }, [allRuns, filters]);
+  }, [runs, filters, total]);
 
   const selectedId = sp.get("run")?.trim() || null;
-  const selectedRun = useMemo(
-    () => filtered.find((r) => r.id === selectedId) ?? null,
-    [filtered, selectedId]
-  );
+  const activeRun =
+    selectedRun ??
+    (selectedId ? filtered.find((r) => r.id === selectedId) ?? null : null);
 
-  // 筛选变化导致当前 run 不在列表中时，清除无效选中（不自动展开详情）
   useEffect(() => {
-    if (selectedId && filtered.length > 0 && !selectedRun) {
+    if (selectedId && filtered.length > 0 && !activeRun) {
       const q = new URLSearchParams(sp.toString());
       q.delete("run");
       router.replace(`/runs?${q.toString()}`, { scroll: false });
     }
-  }, [selectedId, filtered, selectedRun, sp, router]);
+  }, [selectedId, filtered, activeRun, sp, router]);
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col px-3 py-3 lg:px-4 lg:py-4">
@@ -93,8 +100,8 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
     </div>
   );
 
-  const detailPane = selectedRun ? (
-    <RunsDetailPanel key={selectedRun.id} run={selectedRun} hk={hkFilter} />
+  const detailPane = activeRun ? (
+    <RunsDetailPanel key={activeRun.id} run={activeRun} hk={hkFilter} />
   ) : null;
 
   return (
@@ -115,10 +122,9 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <DataStateBadge state="live" label="Follow-up trace" />
-              <DataStateBadge state="scenario" label="多 Agent Run 样例" />
             </div>
             <DataStateNote className="mt-2 max-w-2xl">
-              真实 Follow-up Action 应能从这里追溯到触发、判断依据和执行结果；非 Follow-up Run 用于展示未来可观测形态。
+              列表来自 Turso reasoning_traces；成本为基于 token 的估算值。
             </DataStateNote>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +164,7 @@ export function RunsPage({ hkFilter }: { hkFilter?: string }) {
       <RunsSplitLayout
         list={listPane}
         detail={detailPane}
-        selectedRunId={selectedRun ? selectedRun.id : null}
+        selectedRunId={activeRun ? activeRun.id : null}
       />
     </main>
   );

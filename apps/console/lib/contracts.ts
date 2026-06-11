@@ -25,6 +25,7 @@ export interface TablesManifest {
   outcomes: string;
   blockers: string;
   timeline: string;
+  actions: string;
 }
 
 let _manifest: TablesManifest | undefined;
@@ -51,6 +52,7 @@ export function tableNames(prefix = tablePrefix()): {
   outcomes: string;
   blockers: string;
   timeline: string;
+  actions: string;
 } {
   const m = loadTablesManifest();
   return {
@@ -59,6 +61,7 @@ export function tableNames(prefix = tablePrefix()): {
     outcomes: `${prefix}${m.outcomes}`,
     blockers: `${prefix}${m.blockers}`,
     timeline: `${prefix}${m.timeline}`,
+    actions: `${prefix}${m.actions}`,
   };
 }
 
@@ -88,7 +91,7 @@ export function schemaStatements(prefix = tablePrefix()): string[] {
 
 /** Console bootstrap: outcomes + blocker + timeline（DDL 真源 contracts/aol_schema.sql）。 */
 export function trackingBootstrapStatements(prefix = tablePrefix()): string[] {
-  const { outcomes, blockers, timeline } = tableNames(prefix);
+  const { outcomes, blockers, timeline, actions, traces } = tableNames(prefix);
   return schemaStatements(prefix).filter(
     (stmt) =>
       stmt.includes(outcomes) ||
@@ -96,7 +99,10 @@ export function trackingBootstrapStatements(prefix = tablePrefix()): string[] {
       stmt.includes(blockers) ||
       stmt.includes(`idx_${blockers}`) ||
       stmt.includes(timeline) ||
-      stmt.includes(`idx_${timeline}`)
+      stmt.includes(`idx_${timeline}`) ||
+      stmt.includes(actions) ||
+      stmt.includes(`idx_${actions}`) ||
+      stmt.includes(`idx_${traces}_created`)
   );
 }
 

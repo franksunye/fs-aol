@@ -14,6 +14,7 @@ import { AccessBoundariesSection } from "./access-boundaries-section";
 import { SensitiveFieldMaskingSection } from "./sensitive-field-masking-section";
 import { ReleaseGovernanceSection } from "./release-governance-section";
 import { GovernanceSidebar } from "./governance-sidebar";
+import { FollowUpRulesCard } from "./follow-up-rules-card";
 
 export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
   const data = getGovernanceMockData();
@@ -76,6 +77,7 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
         </header>
 
         <div className="space-y-6">
+          <FollowUpRulesCard />
           <GovernanceSummaryCards summary={data.summary} />
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] xl:items-start">
