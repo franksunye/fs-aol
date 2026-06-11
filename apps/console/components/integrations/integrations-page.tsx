@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronRight, FileText, Link2, Plus } from "lucide-react";
-import { INTEGRATIONS_HOME_PATH } from "@/lib/integrations-nav";
+import {
+  FSM_INTEGRATION_ID,
+  INTEGRATIONS_HOME_PATH,
+} from "@/lib/integrations-nav";
+import type { FsmIntegrationView } from "@/lib/integration-bindings/types";
 import { MOCK_INTEGRATIONS } from "@/lib/integrations-mock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,24 +18,37 @@ import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
 import { IntegrationDetailPanel } from "./integration-detail-panel";
 import { IntegrationInsightPanel } from "./integration-insight-panel";
-import { IntegrationsLiveEditor } from "./integrations-live-editor";
+import { FsmIntegrationWorkspace } from "./fsm-integration-workspace";
+import { WecomLiveCard } from "./wecom-live-card";
+import { TursoBootstrapCard } from "./turso-bootstrap-card";
 import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
 import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
 
+type FsmTab = "connection" | "ingestion" | "protocol" | "health";
+
 export function IntegrationsPage({
   runtimeConfig = null,
+  fsmView,
   tursoOk = false,
   snapshotRunAt = null,
 }: {
   runtimeConfig?: RuntimeConfigPublic | null;
+  fsmView: FsmIntegrationView;
   tursoOk?: boolean;
   snapshotRunAt?: string | null;
 }) {
   const sp = useSearchParams();
   const [selectedId, setSelectedId] = useState("crm-self");
 
+  const fsmTab = useMemo((): FsmTab => {
+    const t = sp.get("tab")?.trim();
+    if (t === "ingestion" || t === "protocol" || t === "health") return t;
+    return "connection";
+  }, [sp]);
+
   useEffect(() => {
     const fromQuery = sp.get("integration")?.trim();
+    if (fromQuery === FSM_INTEGRATION_ID) return;
     if (
       fromQuery &&
       MOCK_INTEGRATIONS.some((item) => item.id === fromQuery)
@@ -82,12 +99,12 @@ export function IntegrationsPage({
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {runtimeConfig ? (
-                  <DataStateBadge state="live" label="Follow-up 三连接器" />
+                  <DataStateBadge state="live" label="Follow-up 已接入" />
                 ) : null}
                 <DataStateBadge state="scenario" label="目标态样例" />
               </div>
               <DataStateNote className="mt-2 max-w-2xl">
-                Follow-up 集成可在 Console 配置并测试；下方为目标态集成样例。
+                XLink FSM 集成协议与摄取策略可在下方工作台配置；折叠区为目标态场景样例。
               </DataStateNote>
             </div>
 
@@ -96,7 +113,7 @@ export function IntegrationsPage({
                 type="button"
                 onClick={() =>
                   toast.message("新建连接暂未接入真实配置", {
-                    description: "新建连接向导暂未接入真实配置",
+                    description: "多 connector 注册表规划在 v0.5+",
                   })
                 }
               >
@@ -120,35 +137,51 @@ export function IntegrationsPage({
         </header>
 
         <div className="space-y-6">
-          <RuntimeSyncStatusCard
-            runtime={runtimeConfig}
-            snapshotRunAt={snapshotRunAt}
-          />
-          {runtimeConfig ? (
-            <IntegrationsLiveEditor
-              initial={runtimeConfig}
-              tursoOk={tursoOk}
-            />
-          ) : null}
+          <section aria-label="已接入集成">
+            <h2 className="mb-3 text-sm font-semibold">已接入（live）</h2>
+            <div className="space-y-4">
+              <RuntimeSyncStatusCard
+                runtime={runtimeConfig}
+                snapshotRunAt={snapshotRunAt}
+              />
+              {runtimeConfig ? (
+                <>
+                  <FsmIntegrationWorkspace
+                    initial={runtimeConfig}
+                    view={fsmView}
+                    defaultTab={fsmTab}
+                  />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <WecomLiveCard initial={runtimeConfig} />
+                    <TursoBootstrapCard tursoOk={tursoOk} />
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  运行时配置未初始化，请执行 migrate-env-to-runtime-config。
+                </p>
+              )}
+            </div>
+          </section>
 
           <details className="rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
             <summary className="cursor-pointer text-sm font-medium">
-              AOL 目标态集成样例（{MOCK_INTEGRATIONS.length} 个连接器）
+              AOL 目标态集成样例（{MOCK_INTEGRATIONS.length} 个连接器 · scenario）
             </summary>
             <div className="mt-4 space-y-6">
-          <IntegrationsSummaryCards />
+              <IntegrationsSummaryCards />
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
-            <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
-              <IntegrationListPanel
-                integrations={MOCK_INTEGRATIONS}
-                selectedId={selectedIntegration.id}
-                onSelect={setSelectedId}
-              />
-            </div>
-            <IntegrationDetailPanel integration={selectedIntegration} />
-            <IntegrationInsightPanel integration={selectedIntegration} />
-          </div>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
+                <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
+                  <IntegrationListPanel
+                    integrations={MOCK_INTEGRATIONS}
+                    selectedId={selectedIntegration.id}
+                    onSelect={setSelectedId}
+                  />
+                </div>
+                <IntegrationDetailPanel integration={selectedIntegration} />
+                <IntegrationInsightPanel integration={selectedIntegration} />
+              </div>
             </div>
           </details>
         </div>

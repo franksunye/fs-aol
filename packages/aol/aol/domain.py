@@ -27,7 +27,7 @@ def bj_now() -> datetime:
 
 
 # ======================================================================
-# 系统语义常量与码表（仅本层可见）
+# 系统语义常量与码表（binding SSOT；运行时与 xlink-fsm.v1.json 对齐）
 # ======================================================================
 SYSTEM_NAME = "xlink"
 SA_COLLECTION = "serviceAppointment"
@@ -282,26 +282,45 @@ class FollowUpSuggestion:
 # ======================================================================
 # 翻译：serviceAppointment(系统) → WorkOrder(领域)
 # ======================================================================
+def _xlink_binding() -> Dict[str, Any]:
+    from .integration.binding import load_builtin_binding
+
+    return load_builtin_binding("xlink-fsm")
+
+
+def sa_projection() -> Dict[str, int]:
+    from .integration.binding import ingestion_projection
+
+    return ingestion_projection(_xlink_binding())
+
+
+_DEFAULT_SA_PROJECTION: Dict[str, int] = {
+    "_id": 1,
+    "orderNum": 1,
+    "city": 1,
+    "serviceType": 1,
+    "title": 1,
+    "describe": 1,
+    "name": 1,
+    "phone": 1,
+    "assignee": 1,
+    "status": 1,
+    "updateTime": 1,
+    "createTime": 1,
+    "exts": 1,
+}
+
+try:
+    SA_PROJECTION = sa_projection()
+except Exception:
+    SA_PROJECTION = _DEFAULT_SA_PROJECTION
+
+
 def work_order_from_sa(doc: Dict[str, Any]) -> WorkOrder:
-    status = str(doc.get("status", ""))
-    wid = str(doc.get("_id", "") or doc.get("id", ""))
-    exts = doc.get("exts") or {}
-    return WorkOrder(
-        work_order_id=wid,
-        order_num=doc.get("orderNum", "") or "",
-        title=doc.get("title", "") or "",
-        task_type=_task_type(status),
-        group=_group(status),
-        city=_city_name(doc.get("city")),
-        customer_name=doc.get("name", "") or "",
-        phone=doc.get("phone", "") or "",
-        assignee=doc.get("assignee", "") or "",
-        summary=doc.get("describe", "") or "",
-        completed_at=str(doc.get("updateTime", "") or doc.get("createTime", "")),
-        event_type=event_type_for_status(status),
-        housekeeper_id=str(exts.get("supervisorId", "") or ""),
-        source_ref={"system": SYSTEM_NAME, "collection": SA_COLLECTION, "id": wid},
-    )
+    """serviceAppointment → WorkOrder（binding-driven mapper）。"""
+    from .integration.mapper import map_record
+
+    return map_record(doc, _xlink_binding(), object_id="work-order")
 
 
 def completed_query(
@@ -379,13 +398,6 @@ def follow_up_events_query(
     if processed_ids:
         q["_id"] = {"$nin": list(processed_ids)}
     return q
-
-
-SA_PROJECTION = {
-    "_id": 1, "orderNum": 1, "city": 1, "serviceType": 1,
-    "title": 1, "describe": 1, "name": 1, "phone": 1, "assignee": 1,
-    "status": 1, "updateTime": 1, "createTime": 1, "exts": 1,
-}
 
 
 MOCK_SA_RECORDS: List[Dict[str, Any]] = [

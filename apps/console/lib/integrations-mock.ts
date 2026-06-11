@@ -503,7 +503,7 @@ export function mappingStatusClass(status: MockObjectMapping["status"]): string 
 
 /** Follow-up Agent 数据来源 id → 集成页深链 */
 export const AGENT_DATA_SOURCE_INTEGRATION: Record<string, string> = {
-  "work-order": "fsm-core",
+  "work-order": "xlink-fsm",
   quote: "crm-self",
   customer: "crm-self",
   "call-log": "call-center",

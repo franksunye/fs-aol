@@ -26,6 +26,7 @@ import {
   agentDetailHref,
 } from "@/lib/agents-nav";
 import {
+  FSM_INTEGRATION_ID,
   INTEGRATIONS_HOME_PATH,
   integrationHref,
 } from "@/lib/integrations-nav";
@@ -441,9 +442,13 @@ export function FollowUpAgentSettingsPage({
                   type="button"
                   variant="outline"
                   size="sm"
-                  render={<Link href={INTEGRATIONS_HOME_PATH} />}
+                  render={
+                    <Link
+                      href={integrationHref(FSM_INTEGRATION_ID, "protocol")}
+                    />
+                  }
                 >
-                  管理系统集成
+                  查看 FSM 集成协议
                 </Button>
               }
             >
@@ -485,7 +490,12 @@ export function FollowUpAgentSettingsPage({
                   return (
                     <Link
                       key={source.id}
-                      href={integrationHref(integrationId)}
+                      href={integrationHref(
+                        integrationId,
+                        integrationId === FSM_INTEGRATION_ID
+                          ? "protocol"
+                          : undefined
+                      )}
                       className="border-border bg-muted/30 hover:border-primary/30 hover:bg-primary/5 flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors"
                     >
                       {content}

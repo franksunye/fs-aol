@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { IntegrationsPage } from "@/components/integrations/integrations-page";
 import { db, ensureSchema } from "@/lib/db";
+import { mergeFsmLiveView } from "@/lib/integration-bindings";
 import { getRuntimeConfig } from "@/lib/runtime-config/store";
 import { getLatestEngineRuntimeSnapshot } from "@/lib/tracking/engine-runtime";
 
@@ -19,10 +20,12 @@ export default async function IntegrationsRoutePage() {
     getRuntimeConfig(),
     getLatestEngineRuntimeSnapshot(),
   ]);
+  const fsmView = mergeFsmLiveView(runtime, snapshot);
   return (
     <Suspense fallback={null}>
       <IntegrationsPage
         runtimeConfig={runtime}
+        fsmView={fsmView}
         tursoOk={tursoOk}
         snapshotRunAt={snapshot?.runAt ?? null}
       />

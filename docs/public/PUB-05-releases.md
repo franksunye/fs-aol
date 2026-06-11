@@ -554,6 +554,31 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
+## v0.4.3 · integration-protocol-surface
+
+**目标**：FSM 集成协议产品化 — Binding SSOT + Console 集成工作台；用户可见业务系统 ↔ AOL 映射契约；消除 Agent/集成双处编辑。
+
+### 交付
+
+| 区域 | 内容 |
+|------|------|
+| 契约 | `contracts/integration-bindings/` + `mapper.py` parity |
+| Console API | `GET/POST /api/integrations/fsm/*` |
+| UI | `FsmIntegrationWorkspace` 四 Tab；`IntegrationProtocolPanel`；WeCom/Turso 卡片 |
+| Agent | `FsmConfigMirrorCard` 只读镜像 |
+
+### 验收清单
+
+- [ ] Binding parity 测试通过
+- [ ] `/integrations?integration=xlink-fsm` 工作台可用
+- [ ] 样例转换 API 可用
+- [ ] Agent 设置 FSM 摄取链到集成页
+- [ ] `e2e-v043-integration-protocol.sh` + `pnpm build`
+
+详见 [PUB-23-v043-integration-protocol-surface.md](PUB-23-v043-integration-protocol-surface.md)。
+
+---
+
 ## v0.5 · two-real-agents（建议 3–4 周）
 
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。

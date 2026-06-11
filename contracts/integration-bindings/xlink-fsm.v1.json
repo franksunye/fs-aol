@@ -1,0 +1,212 @@
+{
+  "id": "xlink-fsm",
+  "version": "1.0.0",
+  "display_name": "XLink FSM",
+  "connector": "mongo",
+  "direction": "inbound",
+  "connection_keys": ["fsm_mongo_url", "fsm_mongo_db", "fsm_source"],
+  "ingestion_keys": [
+    "fsm_event_statuses",
+    "fsm_stale_days",
+    "fsm_max_age_days",
+    "fsm_time_field",
+    "lookback_hours",
+    "fsm_batch_limit",
+    "pilot_housekeepers",
+    "pilot_housekeeper_ids"
+  ],
+  "objects": [
+    {
+      "id": "work-order",
+      "canonical": { "type": "WorkOrder", "label": "工单" },
+      "external": { "collection": "serviceAppointment", "label": "服务预约" },
+      "identity": {
+        "external_paths": ["_id", "id"],
+        "canonical_field": "work_order_id"
+      },
+      "fields": [
+        {
+          "to": "work_order_id",
+          "op": "coalesce",
+          "paths": ["_id", "id"],
+          "description": "Mongo 主键"
+        },
+        { "to": "order_num", "from": "orderNum", "op": "direct", "description": "工单号" },
+        { "to": "title", "from": "title", "op": "direct", "description": "标题" },
+        {
+          "to": "task_type",
+          "from": "status",
+          "op": "lookup",
+          "table": "status_to_task_type",
+          "description": "状态码 → 任务类型（中文）"
+        },
+        {
+          "to": "group",
+          "from": "status",
+          "op": "lookup",
+          "table": "status_to_group",
+          "description": "状态码 → 分组"
+        },
+        {
+          "to": "city",
+          "from": "city",
+          "op": "lookup",
+          "table": "city_code",
+          "description": "区划码 → 城市名"
+        },
+        { "to": "customer_name", "from": "name", "op": "direct", "description": "客户姓名" },
+        { "to": "phone", "from": "phone", "op": "direct", "description": "联系电话" },
+        { "to": "assignee", "from": "assignee", "op": "direct", "description": "指派人" },
+        { "to": "summary", "from": "describe", "op": "direct", "description": "备注" },
+        {
+          "to": "completed_at",
+          "op": "coalesce",
+          "paths": ["updateTime", "createTime"],
+          "description": "最近更新时间（用于停滞天数）"
+        },
+        {
+          "to": "event_type",
+          "from": "status",
+          "op": "lookup",
+          "table": "status_to_event_type",
+          "description": "状态码 → 领域事件类型"
+        },
+        {
+          "to": "housekeeper_id",
+          "from": "exts.supervisorId",
+          "op": "direct",
+          "description": "归属管家 userId"
+        },
+        {
+          "to": "source_ref",
+          "op": "source_ref",
+          "description": "业务系统溯源锚点"
+        }
+      ],
+      "enrichment": [
+        {
+          "canonical": "housekeeper_name",
+          "source": "user.name",
+          "via": "housekeeper_id",
+          "phase": "post_fetch"
+        },
+        {
+          "canonical": "stale_days",
+          "source": "computed",
+          "via": "completed_at",
+          "phase": "post_fetch"
+        }
+      ]
+    }
+  ],
+  "code_tables": {
+    "status_to_task_type": {
+      "101": "待接单",
+      "102": "待接单",
+      "103": "待接单",
+      "104": "联系客户",
+      "105": "预约上门",
+      "200": "暂不上门",
+      "201": "暂不上门",
+      "202": "上门服务",
+      "203": "待下单",
+      "204": "上门跟进",
+      "205": "跟进方案",
+      "206": "跟进签约",
+      "207": "待确认",
+      "300": "现场服务",
+      "301": "现场服务",
+      "302": "现场服务",
+      "401": "验收回款",
+      "402": "验收回款",
+      "403": "已完工",
+      "407": "验收回款",
+      "501": "待评价",
+      "502": "待评价",
+      "999": "跟进超时"
+    },
+    "status_to_group": {
+      "101": "to_accept",
+      "102": "to_accept",
+      "103": "to_accept",
+      "104": "need_contact",
+      "105": "onsite",
+      "202": "onsite"
+    },
+    "city_code": {
+      "110100": "北京",
+      "120100": "天津",
+      "310100": "上海",
+      "440100": "广州",
+      "440300": "深圳",
+      "330100": "杭州",
+      "510100": "成都",
+      "320100": "南京",
+      "420100": "武汉",
+      "610100": "西安"
+    },
+    "status_to_event_type": {
+      "206": "STALE_SIGN_PENDING",
+      "204": "STALE_VISIT_NO_DEAL",
+      "205": "PAYMENT_PENDING",
+      "403": "COMPLETED_CARE"
+    }
+  },
+  "event_rules": {
+    "trigger_field": "status",
+    "lookup_table": "status_to_event_type",
+    "labels": {
+      "STALE_SIGN_PENDING": "待签约停滞",
+      "STALE_VISIT_NO_DEAL": "上门未成交停滞",
+      "PAYMENT_PENDING": "待支付停滞",
+      "COMPLETED_CARE": "完工关怀"
+    }
+  },
+  "ingestion": {
+    "system_name": "xlink",
+    "collection": "serviceAppointment",
+    "state_active": 1,
+    "projection": {
+      "_id": 1,
+      "orderNum": 1,
+      "city": 1,
+      "serviceType": 1,
+      "title": 1,
+      "describe": 1,
+      "name": 1,
+      "phone": 1,
+      "assignee": 1,
+      "status": 1,
+      "updateTime": 1,
+      "createTime": 1,
+      "exts": 1
+    },
+    "query": {
+      "status_field": "status",
+      "state_field": "state",
+      "time_field_config_key": "fsm_time_field",
+      "supervisor_path": "exts.supervisorId",
+      "id_field": "_id"
+    },
+    "sample_documents": [
+      {
+        "_id": "SA-MOCK-206-001",
+        "orderNum": "GD206-001",
+        "status": "206",
+        "state": 1,
+        "city": "110100",
+        "serviceType": "40",
+        "title": "刘先生待签约",
+        "describe": "已正式报价，客户说再考虑，需跟进签约。",
+        "name": "刘先生",
+        "phone": "138****0001",
+        "updateTime": "2026-06-01T10:00:00",
+        "exts": { "supervisorId": "3439283044423912324" }
+      }
+    ]
+  },
+  "write_back": {
+    "enabled": false,
+    "capabilities": []
+  }
+}

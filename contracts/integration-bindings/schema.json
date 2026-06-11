@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fs-aol.local/contracts/integration-bindings/schema.json",
+  "title": "IntegrationBinding",
+  "type": "object",
+  "required": ["id", "version", "connector", "objects", "code_tables", "ingestion", "write_back"],
+  "properties": {
+    "id": { "type": "string" },
+    "version": { "type": "string" },
+    "display_name": { "type": "string" },
+    "connector": { "type": "string", "enum": ["mongo", "mock", "rest"] },
+    "direction": { "type": "string", "enum": ["inbound", "outbound", "bidirectional"] },
+    "connection_keys": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ingestion_keys": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "canonical", "external", "fields"],
+        "properties": {
+          "id": { "type": "string" },
+          "canonical": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          },
+          "external": {
+            "type": "object",
+            "required": ["collection"],
+            "properties": {
+              "collection": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "external_paths": { "type": "array", "items": { "type": "string" } },
+              "canonical_field": { "type": "string" }
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["to", "op"],
+              "properties": {
+                "to": { "type": "string" },
+                "from": { "type": "string" },
+                "paths": { "type": "array", "items": { "type": "string" } },
+                "op": {
+                  "type": "string",
+                  "enum": ["direct", "lookup", "coalesce", "const", "source_ref"]
+                },
+                "table": { "type": "string" },
+                "value": { "type": "object" },
+                "description": { "type": "string" }
+              }
+            }
+          },
+          "enrichment": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "canonical": { "type": "string" },
+                "source": { "type": "string" },
+                "via": { "type": "string" },
+                "phase": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "code_tables": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "event_rules": {
+      "type": "object",
+      "properties": {
+        "trigger_field": { "type": "string" },
+        "lookup_table": { "type": "string" },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "ingestion": {
+      "type": "object",
+      "properties": {
+        "system_name": { "type": "string" },
+        "collection": { "type": "string" },
+        "state_active": { "type": "integer" },
+        "projection": { "type": "object" },
+        "query": { "type": "object" },
+        "sample_documents": { "type": "array" }
+      }
+    },
+    "write_back": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "capabilities": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
