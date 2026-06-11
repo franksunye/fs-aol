@@ -9,15 +9,26 @@ const ACTION_CODES = [
   { code: "CLOSE_LOST", label: "判定丢单（须人工确认）" },
 ];
 
-export function FollowUpRulesCard() {
+export function FollowUpRulesCard({
+  eventStatuses = "206",
+  maxAgeDays = 14,
+  pilots = "",
+}: {
+  eventStatuses?: string;
+  maxAgeDays?: number;
+  pilots?: string;
+}) {
   return (
     <Card className="border-border p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold">Follow-up 楔子规则（206 待签约）</h2>
-        <DataStateBadge state="live" label="真实 SOP 大纲" />
+        <DataStateBadge state="live" label="运行时配置" />
       </div>
       <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-        <li>仅跟进 status=206，14 天窗内工单</li>
+        <li>
+          仅跟进 status={eventStatuses || "206"}，{maxAgeDays} 天窗内工单
+        </li>
+        {pilots ? <li>试点管家：{pilots}</li> : null}
         <li>人审批准后进入待执行；拒绝/已跟进直接闭环</li>
         <li>企微通知保持 DRY_RUN 预览，Console 提交执行反馈</li>
       </ul>

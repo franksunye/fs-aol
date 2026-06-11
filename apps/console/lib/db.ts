@@ -50,6 +50,8 @@ export const TABLE_BLOCKERS = _tables.blockers;
 export const TABLE_TIMELINE = _tables.timeline;
 export const TABLE_ACTIONS = _tables.actions;
 export const TABLE_ENGINE_SNAPSHOTS = _tables.engineSnapshots;
+export const TABLE_RUNTIME_CONFIG = _tables.runtimeConfig;
+export const TABLE_RUNTIME_CONFIG_REVISIONS = _tables.runtimeConfigRevisions;
 
 /** 幂等建表：outcomes + blocker 回写表（DDL 真源 contracts/aol_schema.sql）。 */
 export function ensureSchema(): Promise<void> {

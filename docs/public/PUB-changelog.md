@@ -38,6 +38,7 @@
 | 2026-06-04 | **v0.3.3** ui-feed | 统一 Activity Feed（业务+Agent 紫/中性轨）；移动页 token 与 case 组件对齐。 | `v0.3.3` |
 | 2026-06-04 | **v0.3.4** ui-industrial | 空态/错态/骨架、a11y、md 以下侧栏 Sheet；生产可演示抛光。 | `v0.3.4` |
 | 2026-06-04 | **v0.3.5** pilot-cap | **`run_summary`** JSON 日志、`pilot-cron` runbook、真发切换清单；**v0.3 线封版**。 | `v0.3.5` |
+| 2026-06-11 | **v0.4.2** runtime-config-plane | **Console 控制面**：Turso `runtime_config` + AES 加密密钥；LLM/FSM/集成/Agent 设置可保存；`/api/runtime/*` + 连接测试；引擎 `Config.load()`；`migrate-env` + `e2e-v042` + PUB-22。 | — |
 | 2026-06-11 | **v0.4.1** follow-up-live-surface | **真实数据接活**：日历/评估/总览 Follow-up 主路径 live；引擎脱敏配置快照 `aol_engine_runtime_snapshots`；集成三连接器 + Agent 设置/模型策略只读镜像；治理审批审计 feed；`v041-live-surface-audit` + `e2e-v041-local.sh`。 | `v0.4.1` |
 | 2026-06-11 | **v0.4.0** followup-real-loop | **Follow-up 真实闭环**：`aol_actions` 表与执行状态机；批准→待执行（非直接闭环）；Console 执行反馈 API；Runs 中心接 Turso `reasoning_traces`；Action↔Run 双向链接；评估/Overview/Governance 真实区加厚；SOP metadata 入 trace；DRY_RUN 执行深链预览。 | `v0.4.0` |
 | 2026-06-11 | **v0.3.6** aol-console-industrialization | **Console 工业化首包**：三层 IA（Work / Agents / Systems）、**Action 中心**（四生命周期 Tab + 日历）、**数据状态四态** badge、Overview 驾驶舱、**DataList** 企业列表（Frame / URL scope / Turso 分页 / 列设置，Action·Runs·评估接入）、Runs / 评估 / Agents / 集成 / 治理 / AI 基础设施 **场景样例层**；Split 详情与 Runs 收起对齐；operator adapter 骨架；文档 **PUB-17–19**。吸收 PUB-18 的 I1 与 I3/I4 主体 UI，**未**收官 v0.4 Follow-up 完整执行链。 | `v0.3.6` |

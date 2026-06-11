@@ -43,6 +43,9 @@ import { Button } from "@/components/ui/button";
 import { DataStateBadge } from "@/components/data-state-badge";
 import type { EngineRuntimeSnapshot } from "@/lib/tracking/engine-runtime";
 import { FollowUpRuntimeMirrorCard } from "./follow-up-runtime-mirror-card";
+import { FollowUpConfigLiveForm } from "./follow-up-config-live-form";
+import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
 import { SettingsSectionCard } from "./settings-section-card";
 import {
   Table,
@@ -123,8 +126,10 @@ function FieldLabel({ children }: { children: ReactNode }) {
 
 export function FollowUpAgentSettingsPage({
   runtime = null,
+  runtimeConfig = null,
 }: {
   runtime?: EngineRuntimeSnapshot | null;
+  runtimeConfig?: RuntimeConfigPublic | null;
 }) {
   const mock = FOLLOW_UP_SETTINGS_MOCK;
   const [enabled, setEnabled] = useState(mock.basic.enabled);
@@ -218,8 +223,8 @@ export function FollowUpAgentSettingsPage({
                 定义目标、触发条件、数据来源与人在回路规则
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <DataStateBadge state="live" label="运行时镜像" />
-                <DataStateBadge state="not_connected" label="配置写回未接入" />
+                <DataStateBadge state="live" label="运行时配置" />
+                <DataStateBadge state="scenario" label="目标态样例区" />
               </div>
             </div>
 
@@ -261,9 +266,22 @@ export function FollowUpAgentSettingsPage({
           <AgentSettingsSubNav />
         </header>
 
+        <RuntimeSyncStatusCard
+          runtime={runtimeConfig}
+          snapshotRunAt={runtime?.runAt ?? null}
+          snapshotProvider={
+            runtime?.snapshot?.llm_provider as string | undefined
+          }
+          snapshotDryRun={runtime?.snapshot?.dry_run as boolean | undefined}
+        />
         <FollowUpRuntimeMirrorCard runtime={runtime} />
+        {runtimeConfig ? <FollowUpConfigLiveForm initial={runtimeConfig} /> : null}
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
+        <details className="mt-4 rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
+          <summary className="cursor-pointer text-sm font-medium">
+            目标态 Agent 配置样例（mock）
+          </summary>
+        <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
           <div className="space-y-4">
             <SettingsSectionCard title="基础信息">
               <div className="grid gap-4 md:grid-cols-2">
@@ -698,6 +716,7 @@ export function FollowUpAgentSettingsPage({
             </div>
           </aside>
         </div>
+        </details>
       </div>
     </main>
   );

@@ -1,16 +1,30 @@
 import { Suspense } from "react";
 import { IntegrationsPage } from "@/components/integrations/integrations-page";
-import { loadFollowUpLiveIntegrations } from "@/lib/integrations-live";
+import { db, ensureSchema } from "@/lib/db";
+import { getRuntimeConfig } from "@/lib/runtime-config/store";
+import { getLatestEngineRuntimeSnapshot } from "@/lib/tracking/engine-runtime";
 
 export const dynamic = "force-dynamic";
 
 export default async function IntegrationsRoutePage() {
-  const live = await loadFollowUpLiveIntegrations();
+  let tursoOk = false;
+  try {
+    await ensureSchema();
+    await db.execute({ sql: "SELECT 1" });
+    tursoOk = true;
+  } catch {
+    tursoOk = false;
+  }
+  const [runtime, snapshot] = await Promise.all([
+    getRuntimeConfig(),
+    getLatestEngineRuntimeSnapshot(),
+  ]);
   return (
     <Suspense fallback={null}>
       <IntegrationsPage
-        liveConnectors={live.connectors}
-        snapshotRunAt={live.snapshotRunAt}
+        runtimeConfig={runtime}
+        tursoOk={tursoOk}
+        snapshotRunAt={snapshot?.runAt ?? null}
       />
     </Suspense>
   );

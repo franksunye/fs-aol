@@ -15,12 +15,21 @@ import { ProviderListPanel } from "./provider-list-panel";
 import { ProviderDetailPanel } from "./provider-detail-panel";
 import { ProviderInsightPanel } from "./provider-insight-panel";
 import type { AiInfraLiveContext } from "@/lib/ai-infra-live";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
 import { Card } from "@/components/ui/card";
+import { AiLiveProvidersSection } from "./ai-live-providers-section";
+import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
 
 export function AiInfrastructurePage({
   liveContext,
+  runtimeConfig = null,
+  snapshotRunAt = null,
+  snapshotProvider,
 }: {
   liveContext?: AiInfraLiveContext;
+  runtimeConfig?: RuntimeConfigPublic | null;
+  snapshotRunAt?: string | null;
+  snapshotProvider?: string;
 }) {
   const sp = useSearchParams();
   const [selectedId, setSelectedId] = useState("openai");
@@ -81,11 +90,10 @@ export function AiInfrastructurePage({
                     label={`引擎: ${liveContext.providerLabel}`}
                   />
                 ) : null}
-                <DataStateBadge state="scenario" label="模型治理样例" />
-                <DataStateBadge state="not_connected" label="供应商写回未接入" />
+                <DataStateBadge state="scenario" label="目标态样例" />
               </div>
               <DataStateNote className="mt-2 max-w-2xl">
-                当前 Follow-up 引擎 provider 来自 cron 快照；其余供应商为目标态样例。
+                Follow-up LLM 可在 Console 保存；下轮 cron 生效。其余供应商为目标态样例。
               </DataStateNote>
             </div>
 
@@ -133,19 +141,35 @@ export function AiInfrastructurePage({
               </p>
             </Card>
           ) : null}
-          <AiInfrastructureSummaryCards />
+          <RuntimeSyncStatusCard
+            runtime={runtimeConfig}
+            snapshotRunAt={snapshotRunAt}
+            snapshotProvider={snapshotProvider}
+          />
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
-            <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
-              <ProviderListPanel
-                providers={MOCK_LLM_PROVIDERS}
-                selectedId={selectedProvider.id}
-                onSelect={setSelectedId}
-              />
+          {runtimeConfig ? (
+            <AiLiveProvidersSection initial={runtimeConfig} />
+          ) : null}
+
+          <details className="rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
+            <summary className="cursor-pointer text-sm font-medium">
+              AOL 目标态 LLM 样例（{MOCK_LLM_PROVIDERS.length} 个供应商）
+            </summary>
+            <div className="mt-4 space-y-6">
+              <AiInfrastructureSummaryCards />
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
+                <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
+                  <ProviderListPanel
+                    providers={MOCK_LLM_PROVIDERS}
+                    selectedId={selectedProvider.id}
+                    onSelect={setSelectedId}
+                  />
+                </div>
+                <ProviderDetailPanel provider={selectedProvider} />
+                <ProviderInsightPanel provider={selectedProvider} />
+              </div>
             </div>
-            <ProviderDetailPanel provider={selectedProvider} />
-            <ProviderInsightPanel provider={selectedProvider} />
-          </div>
+          </details>
         </div>
       </div>
     </main>

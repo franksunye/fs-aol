@@ -7,5 +7,7 @@
   "blockers": "blocker_feedback",
   "timeline": "timeline_events",
   "actions": "actions",
-  "engineSnapshots": "engine_runtime_snapshots"
+  "engineSnapshots": "engine_runtime_snapshots",
+  "runtimeConfig": "runtime_config",
+  "runtimeConfigRevisions": "runtime_config_revisions"
 }

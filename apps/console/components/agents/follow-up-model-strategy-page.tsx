@@ -112,8 +112,10 @@ function FieldLabel({ children }: { children: ReactNode }) {
 
 export function FollowUpModelStrategyPage({
   liveStats = null,
+  runtimeConfig = null,
 }: {
   liveStats?: ModelStrategyLiveStats | null;
+  runtimeConfig?: import("@/lib/runtime-config/store").RuntimeConfigPublic | null;
 }) {
   const mock = FOLLOW_UP_MODEL_STRATEGY_MOCK;
   const [constraints, setConstraints] = useState<MockRuntimeConstraint[]>(
@@ -192,7 +194,13 @@ export function FollowUpModelStrategyPage({
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <DataStateBadge state="live" label="Trace 聚合" />
-                <DataStateBadge state="not_connected" label="策略发布未接入" />
+                {runtimeConfig ? (
+                  <DataStateBadge
+                    state="live"
+                    label={`${runtimeConfig.config.llm_provider}/${runtimeConfig.config.llm_model || "—"}`}
+                  />
+                ) : null}
+                <DataStateBadge state="scenario" label="策略发布样例" />
               </div>
             </div>
 

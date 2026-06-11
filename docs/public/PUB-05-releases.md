@@ -528,6 +528,32 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
+## v0.4.2 · runtime-config-plane
+
+**目标**：将已运行的 Follow-up 能力（LLM、FSM、集成密钥、触发规则）迁入 Turso 配置平面，Console 可读写；mock 保留为目标态示意。
+
+### 交付
+
+| 区域 | 内容 |
+|------|------|
+| 数据 | `aol_runtime_config` + `aol_runtime_config_revisions`；AES-256-GCM 密钥列 |
+| 引擎 | `Config.load()` 优先 Turso；`CONFIG_FALLBACK_ENV` 应急回退 |
+| Console API | `GET/PUT /api/runtime/config`、`PUT /api/runtime/secrets`、rollback、test llm/mongo/wecom |
+| UI | `/settings/ai`、`/integrations`、Follow-up Agent 设置 live 表单；治理楔子规则同源 |
+| 运维 | `scripts/migrate-env-to-runtime-config.mjs`、`e2e-v042-runtime-config.sh` |
+
+### 验收清单
+
+- [ ] Console 改 LLM / Mongo / WeCom / FSM 配置可保存
+- [ ] 下轮 cron `public_snapshot` 与已保存配置一致
+- [ ] 密钥不出现在 GET config 明文与 snapshot
+- [ ] mock 区折叠且标 `scenario`
+- [ ] `pnpm build` + `v042-runtime-config-audit.mjs` 通过
+
+详见 [PUB-22-v042-runtime-config-plane.md](PUB-22-v042-runtime-config-plane.md)。
+
+---
+
 ## v0.5 · two-real-agents（建议 3–4 周）
 
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。

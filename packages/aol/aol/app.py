@@ -67,7 +67,7 @@ def reset_tracking(cfg: Config) -> None:
 
 
 def run(cfg: Optional[Config] = None) -> int:
-    cfg = cfg or Config()
+    cfg = cfg or Config.load()
     prov, _, _, model, _ = cfg.resolved_llm()
     statuses = resolve_event_statuses(cfg)
     pilot_label = (cfg.pilot_housekeepers or cfg.pilot_housekeeper_ids or "全部").strip()
@@ -258,7 +258,7 @@ def main() -> int:
         help="运行前清空本地 sqlite 表数据（保留 db 文件，E2E 重复验证用）",
     )
     args = parser.parse_args()
-    cfg = Config()
+    cfg = Config.load()
     if args.reset_tracking or env_bool("TRACKING_RESET"):
         reset_tracking(cfg)
     return run(cfg)

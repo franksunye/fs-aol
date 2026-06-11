@@ -123,3 +123,29 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}engine_runtime_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}engine_runtime_snapshots_run_at
     ON {{AOL_TABLE_PREFIX}}engine_runtime_snapshots(run_at);
+
+-- 运行时配置平面（Console 控制面 SSOT，v0.4.2+）
+CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}runtime_config (
+    scope               TEXT PRIMARY KEY,
+    config_json         TEXT NOT NULL,
+    secrets_ciphertext  TEXT NOT NULL,
+    secrets_nonce       TEXT NOT NULL,
+    version             INTEGER NOT NULL,
+    updated_at          TEXT NOT NULL,
+    updated_by          TEXT
+);
+
+CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}runtime_config_revisions (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    scope               TEXT NOT NULL,
+    version             INTEGER NOT NULL,
+    config_json         TEXT NOT NULL,
+    secrets_ciphertext  TEXT NOT NULL,
+    secrets_nonce       TEXT NOT NULL,
+    change_summary      TEXT,
+    updated_at          TEXT NOT NULL,
+    updated_by          TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}runtime_config_revisions_scope
+    ON {{AOL_TABLE_PREFIX}}runtime_config_revisions(scope, version);

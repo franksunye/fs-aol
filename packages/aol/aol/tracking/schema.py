@@ -30,6 +30,8 @@ def _tables_manifest() -> dict[str, str]:
         "timeline": data["timeline"],
         "actions": data["actions"],
         "engineSnapshots": data["engineSnapshots"],
+        "runtimeConfig": data["runtimeConfig"],
+        "runtimeConfigRevisions": data["runtimeConfigRevisions"],
     }
 
 
@@ -42,6 +44,8 @@ TABLE_BLOCKERS = f"{TABLE_PREFIX}{_SUFFIX['blockers']}"
 TABLE_TIMELINE = f"{TABLE_PREFIX}{_SUFFIX['timeline']}"
 TABLE_ACTIONS = f"{TABLE_PREFIX}{_SUFFIX['actions']}"
 TABLE_ENGINE_SNAPSHOTS = f"{TABLE_PREFIX}{_SUFFIX['engineSnapshots']}"
+TABLE_RUNTIME_CONFIG = f"{TABLE_PREFIX}{_SUFFIX['runtimeConfig']}"
+TABLE_RUNTIME_CONFIG_REVISIONS = f"{TABLE_PREFIX}{_SUFFIX['runtimeConfigRevisions']}"
 
 
 def _render_schema_sql(prefix: str = TABLE_PREFIX) -> str:
@@ -78,6 +82,8 @@ SCHEMA_BLOCKERS = _statement_for_table(_rendered, TABLE_BLOCKERS)
 SCHEMA_TIMELINE = _statement_for_table(_rendered, TABLE_TIMELINE)
 SCHEMA_ACTIONS = _statement_for_table(_rendered, TABLE_ACTIONS)
 SCHEMA_ENGINE_SNAPSHOTS = _statement_for_table(_rendered, TABLE_ENGINE_SNAPSHOTS)
+SCHEMA_RUNTIME_CONFIG = _statement_for_table(_rendered, TABLE_RUNTIME_CONFIG)
+SCHEMA_RUNTIME_CONFIG_REVISIONS = _statement_for_table(_rendered, TABLE_RUNTIME_CONFIG_REVISIONS)
 
 # Index on outcomes (Console ensureSchema also runs this)
 _OUTCOMES_INDEX = re.compile(
@@ -135,4 +141,13 @@ _ENGINE_SNAPSHOTS_RUN_AT_INDEX = re.compile(
 SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX = next(
     (s for s in _split_statements(_rendered) if _ENGINE_SNAPSHOTS_RUN_AT_INDEX.search(s)),
     f"CREATE INDEX IF NOT EXISTS idx_{TABLE_ENGINE_SNAPSHOTS}_run_at ON {TABLE_ENGINE_SNAPSHOTS}(run_at);",
+)
+_RUNTIME_CONFIG_REVISIONS_SCOPE_INDEX = re.compile(
+    rf"CREATE INDEX IF NOT EXISTS idx_{re.escape(TABLE_RUNTIME_CONFIG_REVISIONS)}_scope\b",
+    re.IGNORECASE,
+)
+SCHEMA_RUNTIME_CONFIG_REVISIONS_SCOPE_INDEX = next(
+    (s for s in _split_statements(_rendered) if _RUNTIME_CONFIG_REVISIONS_SCOPE_INDEX.search(s)),
+    f"CREATE INDEX IF NOT EXISTS idx_{TABLE_RUNTIME_CONFIG_REVISIONS}_scope "
+    f"ON {TABLE_RUNTIME_CONFIG_REVISIONS}(scope, version);",
 )

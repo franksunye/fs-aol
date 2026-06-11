@@ -55,7 +55,7 @@ def main() -> int:
     args = parser.parse_args()
 
     limit = args.limit if args.limit > 0 else None
-    cfg = Config()
+    cfg = Config.load()
     store = TrackingStore(cfg)
     try:
         if not args.timelines_only:

@@ -48,7 +48,7 @@ def main() -> int:
 
     limit = args.limit if args.limit > 0 else None
 
-    cfg = Config()
+    cfg = Config.load()
     store = TrackingStore(cfg)
     try:
         stats = store.backfill_timelines(

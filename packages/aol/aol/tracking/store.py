@@ -28,10 +28,15 @@ from .schema import (
     SCHEMA_TRACES_CREATED_INDEX,
     SCHEMA_ENGINE_SNAPSHOTS,
     SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX,
+    SCHEMA_RUNTIME_CONFIG,
+    SCHEMA_RUNTIME_CONFIG_REVISIONS,
+    SCHEMA_RUNTIME_CONFIG_REVISIONS_SCOPE_INDEX,
     SCHEMA_TRACES,
     TABLE_BLOCKERS,
     TABLE_ACTIONS,
     TABLE_ENGINE_SNAPSHOTS,
+    TABLE_RUNTIME_CONFIG,
+    TABLE_RUNTIME_CONFIG_REVISIONS,
     TABLE_LOGS,
     TABLE_OUTCOMES,
     TABLE_TIMELINE,
@@ -195,6 +200,9 @@ class TrackingStore:
             SCHEMA_TRACES_CREATED_INDEX,
             SCHEMA_ENGINE_SNAPSHOTS,
             SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX,
+            SCHEMA_RUNTIME_CONFIG,
+            SCHEMA_RUNTIME_CONFIG_REVISIONS,
+            SCHEMA_RUNTIME_CONFIG_REVISIONS_SCOPE_INDEX,
         )
         if self._conn is not None:
             for stmt in stmts:
@@ -812,6 +820,86 @@ class TrackingStore:
             self._conn.commit()
         else:
             self._turso.execute(sql, list(row))
+
+    def get_active_runtime_config(self, scope: str = "follow_up") -> Optional[Dict[str, Any]]:
+        """读取 Console 写入的 active runtime config（含加密 secrets 列）。"""
+        sql = (
+            f"SELECT scope, config_json, secrets_ciphertext, secrets_nonce, "
+            f"version, updated_at, updated_by FROM {TABLE_RUNTIME_CONFIG} WHERE scope = ?"
+        )
+        if self._conn is not None:
+            row = self._conn.execute(sql, (scope,)).fetchone()
+        else:
+            res = self._turso.execute(sql, [scope])
+            row = res.rows[0] if res.rows else None
+        if not row:
+            return None
+        if hasattr(row, "keys"):
+            return dict(row)
+        return {
+            "scope": row[0],
+            "config_json": row[1],
+            "secrets_ciphertext": row[2],
+            "secrets_nonce": row[3],
+            "version": row[4],
+            "updated_at": row[5],
+            "updated_by": row[6] if len(row) > 6 else None,
+        }
+
+    def upsert_runtime_config(
+        self,
+        scope: str,
+        config_json: str,
+        secrets_ciphertext: str,
+        secrets_nonce: str,
+        version: int,
+        updated_at: str,
+        updated_by: str,
+        change_summary: str = "",
+    ) -> None:
+        sql = (
+            f"INSERT INTO {TABLE_RUNTIME_CONFIG} "
+            "(scope, config_json, secrets_ciphertext, secrets_nonce, version, updated_at, updated_by) "
+            "VALUES (?,?,?,?,?,?,?) "
+            "ON CONFLICT(scope) DO UPDATE SET "
+            "config_json=excluded.config_json, "
+            "secrets_ciphertext=excluded.secrets_ciphertext, "
+            "secrets_nonce=excluded.secrets_nonce, "
+            "version=excluded.version, "
+            "updated_at=excluded.updated_at, "
+            "updated_by=excluded.updated_by"
+        )
+        args = (
+            scope,
+            config_json,
+            secrets_ciphertext,
+            secrets_nonce,
+            version,
+            updated_at,
+            updated_by,
+        )
+        rev_sql = (
+            f"INSERT INTO {TABLE_RUNTIME_CONFIG_REVISIONS} "
+            "(scope, version, config_json, secrets_ciphertext, secrets_nonce, "
+            "change_summary, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?)"
+        )
+        rev_args = (
+            scope,
+            version,
+            config_json,
+            secrets_ciphertext,
+            secrets_nonce,
+            change_summary,
+            updated_at,
+            updated_by,
+        )
+        if self._conn is not None:
+            self._conn.execute(sql, args)
+            self._conn.execute(rev_sql, rev_args)
+            self._conn.commit()
+        else:
+            self._turso.execute(sql, list(args))
+            self._turso.execute(rev_sql, list(rev_args))
 
     def save_engine_runtime_snapshot(
         self, snapshot: Dict[str, Any], run_summary: Optional[Dict[str, Any]] = None

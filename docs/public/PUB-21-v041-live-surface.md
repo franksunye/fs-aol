@@ -15,7 +15,7 @@
 | 评估 Follow-up KPI | `live` / `mixed` | 多 Agent 对比表 `scenario` |
 | 总览 | `live` / `mixed` | Agent 舰队非 Follow-up `scenario` |
 | 集成 | Follow-up 三连接器 `live` | 其余 `scenario` |
-| Agent 设置 / 模型策略 | 运行时镜像 `live`（只读） | 编辑/发布 `not_connected` |
+| Agent 设置 / 模型策略 | 运行时配置 `live`（可编辑，v0.4.2+） | 目标态编排/发布 `scenario` |
 | 治理 | Follow-up 规则 + 审计 feed `live` | 企业矩阵 `scenario` |
 | AI 基础设施 | 当前 provider `live` | 其余 `scenario` |
 

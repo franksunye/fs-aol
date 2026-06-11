@@ -1,12 +1,16 @@
-"""运行配置（环境变量 → Config）。"""
+"""运行配置（bootstrap env + Turso runtime config plane）。"""
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .util import env_bool
+
+logger = logging.getLogger("aol.config")
 
 
 @dataclass
@@ -87,6 +91,51 @@ class Config:
     reanalyze_push_on_same_priority: bool = field(
         default_factory=lambda: env_bool("REANALYZE_PUSH_ON_SAME_PRIORITY", False)
     )
+
+    @classmethod
+    def load(cls) -> "Config":
+        """Bootstrap from env, overlay Turso runtime_config when present."""
+        bootstrap = cls()
+        from .runtime_config.contract import (
+            RUNTIME_SCOPE_FOLLOW_UP,
+            apply_runtime_to_config,
+            config_fallback_env,
+            encryption_key_from_env,
+        )
+
+        if config_fallback_env():
+            logger.info("CONFIG_FALLBACK_ENV=true，跳过 Turso runtime config")
+            return bootstrap
+
+        key = encryption_key_from_env()
+        if not key:
+            return bootstrap
+
+        try:
+            from .runtime_config.crypto import decrypt_secrets
+            from .tracking.store import TrackingStore
+
+            store = TrackingStore(bootstrap)
+            try:
+                row = store.get_active_runtime_config(RUNTIME_SCOPE_FOLLOW_UP)
+            finally:
+                store.close()
+            if not row:
+                return bootstrap
+            config_json = json.loads(row["config_json"])
+            secrets = decrypt_secrets(
+                row["secrets_ciphertext"], row["secrets_nonce"], key
+            )
+            merged = apply_runtime_to_config(bootstrap, config_json, secrets)
+            logger.info(
+                "已加载 Turso runtime config scope=%s version=%s",
+                row.get("scope"),
+                row.get("version"),
+            )
+            return merged
+        except Exception as exc:
+            logger.warning("Turso runtime config 加载失败，回退 env: %s", exc)
+            return bootstrap
 
     def public_snapshot(self) -> Dict[str, Any]:
         """脱敏运行时配置，供 Turso 快照与 Console 只读镜像（不含 secret/URL）。"""

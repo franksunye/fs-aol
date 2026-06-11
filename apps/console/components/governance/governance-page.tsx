@@ -17,13 +17,20 @@ import { GovernanceSidebar } from "./governance-sidebar";
 import { FollowUpRulesCard } from "./follow-up-rules-card";
 import { FollowUpAuditFeed } from "./follow-up-audit-feed";
 import type { GovernanceAuditRow } from "@/lib/governance-audit";
+import type { GovernanceLiveSummary } from "@/lib/governance-live-summary";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
+import { Card } from "@/components/ui/card";
 
 export function GovernancePage({
   hkFilter,
   auditRows = [],
+  liveSummary,
+  runtimeConfig = null,
 }: {
   hkFilter?: string;
   auditRows?: GovernanceAuditRow[];
+  liveSummary?: GovernanceLiveSummary;
+  runtimeConfig?: RuntimeConfigPublic | null;
 }) {
   const data = getGovernanceMockData();
 
@@ -85,9 +92,32 @@ export function GovernancePage({
         </header>
 
         <div className="space-y-6">
-          <FollowUpRulesCard />
+          <FollowUpRulesCard
+            eventStatuses={runtimeConfig?.config.fsm_event_statuses}
+            maxAgeDays={runtimeConfig?.config.fsm_max_age_days}
+            pilots={runtimeConfig?.config.pilot_housekeepers}
+          />
           <FollowUpAuditFeed rows={auditRows} />
-          <GovernanceSummaryCards summary={data.summary} />
+          {liveSummary ? (
+            <Card className="border-border gap-2 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold">Follow-up 真实计数</span>
+                <DataStateBadge state="live" />
+              </div>
+              <p className="text-muted-foreground text-xs">
+                待审核 {liveSummary.activeInbox} · 已闭环 {liveSummary.closedInbox}{" "}
+                · 审批记录 {liveSummary.outcomeCount}
+              </p>
+            </Card>
+          ) : null}
+          <details className="rounded-xl border border-dashed p-4">
+            <summary className="cursor-pointer text-sm font-medium">
+              企业治理样例（mock summary）
+            </summary>
+            <div className="mt-4">
+              <GovernanceSummaryCards summary={data.summary} />
+            </div>
+          </details>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] xl:items-start">
             <div className="space-y-6">

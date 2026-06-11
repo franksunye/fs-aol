@@ -14,14 +14,17 @@ import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
 import { IntegrationDetailPanel } from "./integration-detail-panel";
 import { IntegrationInsightPanel } from "./integration-insight-panel";
-import { IntegrationsLiveSection } from "./integrations-live-section";
-import type { LiveIntegrationConnector } from "@/lib/integrations-live";
+import { IntegrationsLiveEditor } from "./integrations-live-editor";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
+import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
 
 export function IntegrationsPage({
-  liveConnectors = [],
+  runtimeConfig = null,
+  tursoOk = false,
   snapshotRunAt = null,
 }: {
-  liveConnectors?: LiveIntegrationConnector[];
+  runtimeConfig?: RuntimeConfigPublic | null;
+  tursoOk?: boolean;
   snapshotRunAt?: string | null;
 }) {
   const sp = useSearchParams();
@@ -78,14 +81,13 @@ export function IntegrationsPage({
                 提供业务上下文与执行能力。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {liveConnectors.length > 0 ? (
+                {runtimeConfig ? (
                   <DataStateBadge state="live" label="Follow-up 三连接器" />
                 ) : null}
                 <DataStateBadge state="scenario" label="目标态样例" />
-                <DataStateBadge state="not_connected" label="写回未接入" />
               </div>
               <DataStateNote className="mt-2 max-w-2xl">
-                上方为 Follow-up 实际运行时依赖；下方为目标态集成样例，配置写回尚未接入。
+                Follow-up 集成可在 Console 配置并测试；下方为目标态集成样例。
               </DataStateNote>
             </div>
 
@@ -118,10 +120,14 @@ export function IntegrationsPage({
         </header>
 
         <div className="space-y-6">
-          {liveConnectors.length > 0 ? (
-            <IntegrationsLiveSection
-              connectors={liveConnectors}
-              snapshotRunAt={snapshotRunAt}
+          <RuntimeSyncStatusCard
+            runtime={runtimeConfig}
+            snapshotRunAt={snapshotRunAt}
+          />
+          {runtimeConfig ? (
+            <IntegrationsLiveEditor
+              initial={runtimeConfig}
+              tursoOk={tursoOk}
             />
           ) : null}
 
