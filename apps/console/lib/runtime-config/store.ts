@@ -34,6 +34,30 @@ function parseRow(row: Record<string, unknown>) {
   };
 }
 
+export function isRuntimeEncryptionConfigured(): boolean {
+  return Boolean(encryptionKey());
+}
+
+/** UI/bootstrap: key configured but Turso row missing → defaults (first save creates v1). */
+export async function getRuntimeConfigForUi(
+  scope = RUNTIME_SCOPE_FOLLOW_UP
+): Promise<{ runtime: RuntimeConfigPublic; isBootstrap: boolean } | null> {
+  if (!isRuntimeEncryptionConfigured()) return null;
+  const existing = await getRuntimeConfig(scope);
+  if (existing) return { runtime: existing, isBootstrap: false };
+  return {
+    isBootstrap: true,
+    runtime: {
+      scope,
+      version: 0,
+      updatedAt: "",
+      updatedBy: null,
+      config: defaultRuntimeConfig(),
+      secretsMasked: maskSecrets(emptySecrets()),
+    },
+  };
+}
+
 export async function getRuntimeConfig(
   scope = RUNTIME_SCOPE_FOLLOW_UP
 ): Promise<RuntimeConfigPublic | null> {

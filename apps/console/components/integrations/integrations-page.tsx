@@ -28,11 +28,13 @@ type FsmTab = "connection" | "ingestion" | "protocol" | "health";
 
 export function IntegrationsPage({
   runtimeConfig = null,
+  runtimeBootstrap = false,
   fsmView,
   tursoOk = false,
   snapshotRunAt = null,
 }: {
   runtimeConfig?: RuntimeConfigPublic | null;
+  runtimeBootstrap?: boolean;
   fsmView: FsmIntegrationView;
   tursoOk?: boolean;
   snapshotRunAt?: string | null;
@@ -142,6 +144,7 @@ export function IntegrationsPage({
             <div className="space-y-4">
               <RuntimeSyncStatusCard
                 runtime={runtimeConfig}
+                isBootstrap={runtimeBootstrap}
                 snapshotRunAt={snapshotRunAt}
               />
               {runtimeConfig ? (
@@ -158,7 +161,8 @@ export function IntegrationsPage({
                 </>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  运行时配置未初始化，请执行 migrate-env-to-runtime-config。
+                  未配置 AOL_CONFIG_ENCRYPTION_KEY，无法编辑 FSM / 企微集成。请在
+                  Vercel 设置与 GHA 相同的密钥后刷新。
                 </p>
               )}
             </div>

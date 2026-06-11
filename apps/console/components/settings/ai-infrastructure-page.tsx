@@ -23,11 +23,13 @@ import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-
 export function AiInfrastructurePage({
   liveContext,
   runtimeConfig = null,
+  runtimeBootstrap = false,
   snapshotRunAt = null,
   snapshotProvider,
 }: {
   liveContext?: AiInfraLiveContext;
   runtimeConfig?: RuntimeConfigPublic | null;
+  runtimeBootstrap?: boolean;
   snapshotRunAt?: string | null;
   snapshotProvider?: string;
 }) {
@@ -143,13 +145,22 @@ export function AiInfrastructurePage({
           ) : null}
           <RuntimeSyncStatusCard
             runtime={runtimeConfig}
+            isBootstrap={runtimeBootstrap}
             snapshotRunAt={snapshotRunAt}
             snapshotProvider={snapshotProvider}
           />
 
           {runtimeConfig ? (
             <AiLiveProvidersSection initial={runtimeConfig} />
-          ) : null}
+          ) : (
+            <Card className="border-dashed p-4">
+              <DataStateBadge state="not_connected" className="mb-2" />
+              <p className="text-muted-foreground text-sm">
+                未配置 AOL_CONFIG_ENCRYPTION_KEY，无法显示混元 / DeepSeek 可编辑表单。
+                请在部署环境设置与 GHA 相同的密钥后刷新。
+              </p>
+            </Card>
+          )}
 
           <details className="rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
             <summary className="cursor-pointer text-sm font-medium">
