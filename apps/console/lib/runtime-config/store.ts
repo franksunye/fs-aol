@@ -258,6 +258,38 @@ function validateConfig(c: RuntimeConfigJson): void {
   }
 }
 
+export type RuntimeConfigRevisionSummary = {
+  version: number;
+  changeSummary: string;
+  updatedAt: string;
+  updatedBy: string | null;
+};
+
+export async function listRuntimeConfigRevisions(
+  scope = RUNTIME_SCOPE_FOLLOW_UP,
+  limit = 10
+): Promise<RuntimeConfigRevisionSummary[]> {
+  await ensureSchema();
+  const capped = Math.min(Math.max(1, limit), 50);
+  const res = await db.execute({
+    sql: `SELECT version, change_summary, updated_at, updated_by
+          FROM ${TABLE_RUNTIME_CONFIG_REVISIONS}
+          WHERE scope = ?
+          ORDER BY version DESC
+          LIMIT ?`,
+    args: [scope, capped],
+  });
+  return res.rows.map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      version: Number(rowVal(r, "version", 0)),
+      changeSummary: String(rowVal(r, "change_summary", 1) ?? ""),
+      updatedAt: String(rowVal(r, "updated_at", 2)),
+      updatedBy: rowVal<string | null>(r, "updated_by", 3) ?? null,
+    };
+  });
+}
+
 export function mergeSecretsForTest(
   stored: RuntimeSecrets | null,
   patch?: Partial<RuntimeSecrets>

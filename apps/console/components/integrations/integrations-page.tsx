@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronRight, FileText, Link2, Plus } from "lucide-react";
 import {
   FSM_INTEGRATION_ID,
   INTEGRATIONS_HOME_PATH,
 } from "@/lib/integrations-nav";
+import { buildIntegrationRegistry } from "@/lib/adapters/integration-registry";
 import type { FsmIntegrationView } from "@/lib/integration-bindings/types";
-import { MOCK_INTEGRATIONS } from "@/lib/integrations-mock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
+import { DataStateBadge } from "@/components/data-state-badge";
 import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
-import { IntegrationDetailPanel } from "./integration-detail-panel";
-import { IntegrationInsightPanel } from "./integration-insight-panel";
-import { FsmIntegrationWorkspace } from "./fsm-integration-workspace";
-import { WecomLiveCard } from "./wecom-live-card";
-import { TursoBootstrapCard } from "./turso-bootstrap-card";
-import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
+import {
+  IntegrationRegistryDetail,
+  IntegrationRegistryInsight,
+} from "./integration-registry-panels";
 import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
 
 type FsmTab = "connection" | "ingestion" | "protocol" | "health";
+
+const DEFAULT_SELECTION = FSM_INTEGRATION_ID;
 
 export function IntegrationsPage({
   runtimeConfig = null,
@@ -40,7 +41,18 @@ export function IntegrationsPage({
   snapshotRunAt?: string | null;
 }) {
   const sp = useSearchParams();
-  const [selectedId, setSelectedId] = useState("crm-self");
+  const router = useRouter();
+
+  const registry = useMemo(
+    () =>
+      buildIntegrationRegistry({
+        runtimeConfig,
+        fsmView,
+        snapshotRunAt,
+        tursoOk,
+      }),
+    [runtimeConfig, fsmView, snapshotRunAt, tursoOk]
+  );
 
   const fsmTab = useMemo((): FsmTab => {
     const t = sp.get("tab")?.trim();
@@ -48,23 +60,55 @@ export function IntegrationsPage({
     return "connection";
   }, [sp]);
 
-  useEffect(() => {
+  const initialSelection = useMemo(() => {
     const fromQuery = sp.get("integration")?.trim();
-    if (fromQuery === FSM_INTEGRATION_ID) return;
-    if (
-      fromQuery &&
-      MOCK_INTEGRATIONS.some((item) => item.id === fromQuery)
-    ) {
-      setSelectedId(fromQuery);
+    if (fromQuery && registry.some((r) => r.id === fromQuery)) {
+      return fromQuery;
     }
-  }, [sp]);
+    return DEFAULT_SELECTION;
+  }, [sp, registry]);
 
-  const selectedIntegration = useMemo(
+  const [selectedId, setSelectedId] = useState(initialSelection);
+
+  useEffect(() => {
+    setSelectedId(initialSelection);
+  }, [initialSelection]);
+
+  const selectedItem = useMemo(
     () =>
-      MOCK_INTEGRATIONS.find((item) => item.id === selectedId) ??
-      MOCK_INTEGRATIONS[0],
-    [selectedId]
+      registry.find((item) => item.id === selectedId) ?? registry[0],
+    [registry, selectedId]
   );
+
+  const syncUrl = useCallback(
+    (integrationId: string, tab?: FsmTab) => {
+      const params = new URLSearchParams();
+      params.set("integration", integrationId);
+      if (integrationId === FSM_INTEGRATION_ID && tab) {
+        params.set("tab", tab);
+      }
+      router.replace(`${INTEGRATIONS_HOME_PATH}?${params.toString()}`, {
+        scroll: false,
+      });
+    },
+    [router]
+  );
+
+  function handleSelect(id: string) {
+    setSelectedId(id);
+    syncUrl(id, id === FSM_INTEGRATION_ID ? fsmTab : undefined);
+  }
+
+  function handleFsmTabChange(tab: FsmTab) {
+    if (selectedId === FSM_INTEGRATION_ID) {
+      syncUrl(FSM_INTEGRATION_ID, tab);
+    }
+  }
+
+  const liveCount = registry.filter(
+    (r) => r.dataState === "live" || r.dataState === "readonly"
+  ).length;
+  const scenarioCount = registry.filter((r) => r.dataState === "scenario").length;
 
   return (
     <main
@@ -100,14 +144,14 @@ export function IntegrationsPage({
                 提供业务上下文与执行能力。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {runtimeConfig ? (
-                  <DataStateBadge state="live" label="Follow-up 已接入" />
+                <DataStateBadge state="live" label={`${liveCount} 已接入`} />
+                {scenarioCount > 0 ? (
+                  <DataStateBadge
+                    state="scenario"
+                    label={`${scenarioCount} 规划`}
+                  />
                 ) : null}
-                <DataStateBadge state="scenario" label="目标态样例" />
               </div>
-              <DataStateNote className="mt-2 max-w-2xl">
-                XLink FSM 集成协议与摄取策略可在下方工作台配置；折叠区为目标态场景样例。
-              </DataStateNote>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -139,55 +183,52 @@ export function IntegrationsPage({
         </header>
 
         <div className="space-y-6">
-          <section aria-label="已接入集成">
-            <h2 className="mb-3 text-sm font-semibold">已接入（live）</h2>
-            <div className="space-y-4">
-              <RuntimeSyncStatusCard
-                runtime={runtimeConfig}
-                isBootstrap={runtimeBootstrap}
-                snapshotRunAt={snapshotRunAt}
+          <RuntimeSyncStatusCard
+            runtime={runtimeConfig}
+            isBootstrap={runtimeBootstrap}
+            snapshotRunAt={snapshotRunAt}
+          />
+
+          <IntegrationsSummaryCards
+            connectedSystems={liveCount}
+            healthySync={
+              fsmView.syncHealth.status === "live"
+                ? liveCount
+                : Math.max(0, liveCount - 1)
+            }
+            pendingConfig={registry.filter((r) => r.status === "pending").length}
+          />
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
+            <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
+              <IntegrationListPanel
+                registryItems={registry}
+                selectedId={selectedItem?.id ?? DEFAULT_SELECTION}
+                onSelect={handleSelect}
               />
-              {runtimeConfig ? (
-                <>
-                  <FsmIntegrationWorkspace
-                    initial={runtimeConfig}
-                    view={fsmView}
-                    defaultTab={fsmTab}
-                  />
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <WecomLiveCard initial={runtimeConfig} />
-                    <TursoBootstrapCard tursoOk={tursoOk} />
-                  </div>
-                </>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  未配置 AOL_CONFIG_ENCRYPTION_KEY，无法编辑 FSM / 企微集成。请在
-                  Vercel 设置与 GHA 相同的密钥后刷新。
-                </p>
-              )}
             </div>
-          </section>
-
-          <details className="rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
-            <summary className="cursor-pointer text-sm font-medium">
-              AOL 目标态集成样例（{MOCK_INTEGRATIONS.length} 个连接器 · scenario）
-            </summary>
-            <div className="mt-4 space-y-6">
-              <IntegrationsSummaryCards />
-
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
-                <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
-                  <IntegrationListPanel
-                    integrations={MOCK_INTEGRATIONS}
-                    selectedId={selectedIntegration.id}
-                    onSelect={setSelectedId}
-                  />
-                </div>
-                <IntegrationDetailPanel integration={selectedIntegration} />
-                <IntegrationInsightPanel integration={selectedIntegration} />
-              </div>
+            <div className="min-w-0">
+              {selectedItem ? (
+                <IntegrationRegistryDetail
+                  item={selectedItem}
+                  runtimeConfig={runtimeConfig}
+                  fsmView={fsmView}
+                  fsmTab={fsmTab}
+                  tursoOk={tursoOk}
+                  onFsmTabChange={handleFsmTabChange}
+                />
+              ) : null}
             </div>
-          </details>
+            <div>
+              {selectedItem ? (
+                <IntegrationRegistryInsight
+                  item={selectedItem}
+                  fsmView={fsmView}
+                  tursoOk={tursoOk}
+                />
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
     </main>

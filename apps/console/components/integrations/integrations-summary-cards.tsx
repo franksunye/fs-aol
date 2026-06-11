@@ -31,9 +31,24 @@ function SummaryCard({
   );
 }
 
-export function IntegrationsSummaryCards() {
-  const { connectedSystems, healthySync, pendingConfig, eventsToday } =
-    INTEGRATIONS_SUMMARY;
+export function IntegrationsSummaryCards({
+  connectedSystems,
+  healthySync,
+  pendingConfig,
+  eventsToday,
+}: {
+  connectedSystems?: number;
+  healthySync?: number;
+  pendingConfig?: number;
+  eventsToday?: number;
+} = {}) {
+  const summary = INTEGRATIONS_SUMMARY;
+  const values = {
+    connectedSystems: connectedSystems ?? summary.connectedSystems,
+    healthySync: healthySync ?? summary.healthySync,
+    pendingConfig: pendingConfig ?? summary.pendingConfig,
+    eventsToday: eventsToday ?? summary.eventsToday,
+  };
 
   return (
     <section
@@ -42,25 +57,25 @@ export function IntegrationsSummaryCards() {
     >
       <SummaryCard
         label="已连接系统"
-        value={connectedSystems}
+        value={values.connectedSystems}
         icon={<Link2 className="size-4" aria-hidden />}
         iconClassName="bg-primary/10 text-primary"
       />
       <SummaryCard
         label="健康同步"
-        value={healthySync}
+        value={values.healthySync}
         icon={<CheckCircle2 className="size-4" aria-hidden />}
         iconClassName="bg-emerald-500/10 text-emerald-600"
       />
       <SummaryCard
         label="待配置"
-        value={pendingConfig}
+        value={values.pendingConfig}
         icon={<Settings2 className="size-4" aria-hidden />}
         iconClassName="bg-amber-500/10 text-amber-700"
       />
       <SummaryCard
         label="今日事件"
-        value={eventsToday.toLocaleString("zh-CN")}
+        value={values.eventsToday.toLocaleString("zh-CN")}
         icon={<Activity className="size-4" aria-hidden />}
         iconClassName="bg-sky-500/10 text-sky-600"
       />

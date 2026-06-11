@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Filter, Search } from "lucide-react";
+import type { IntegrationRegistryItem } from "@/lib/adapters/integration-registry";
+import { registryItemToListIntegration } from "@/lib/adapters/integration-registry";
 import {
   filterIntegrations,
   INTEGRATION_FILTER_TABS,
@@ -14,6 +16,10 @@ import {
   type IntegrationStatus,
   type MockIntegration,
 } from "@/lib/integrations-mock";
+import {
+  integrationRegistryBadgeLabel,
+  integrationRegistryBadgeState,
+} from "./integration-registry-panels";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,10 +38,12 @@ function IntegrationRow({
   integration,
   selected,
   onSelect,
+  dataState,
 }: {
   integration: MockIntegration;
   selected: boolean;
   onSelect: () => void;
+  dataState?: IntegrationRegistryItem["dataState"];
 }) {
   return (
     <button
@@ -63,7 +71,17 @@ function IntegrationRow({
               {integration.name}
             </span>
             <StatusBadge status={integration.status} />
-            <DataStateBadge state="scenario" className="h-4 px-1.5 text-[10px]" />
+            <DataStateBadge
+              state={
+                dataState
+                  ? integrationRegistryBadgeState(dataState)
+                  : "scenario"
+              }
+              label={
+                dataState ? integrationRegistryBadgeLabel(dataState) : undefined
+              }
+              className="h-4 px-1.5 text-[10px]"
+            />
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             {integration.categoryLabel} · 最近活动 {integration.lastActivity}
@@ -76,10 +94,12 @@ function IntegrationRow({
 
 export function IntegrationListPanel({
   integrations,
+  registryItems,
   selectedId,
   onSelect,
 }: {
-  integrations: MockIntegration[];
+  integrations?: MockIntegration[];
+  registryItems?: IntegrationRegistryItem[];
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
@@ -87,13 +107,26 @@ export function IntegrationListPanel({
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<IntegrationSortKey>("status");
 
+  const listIntegrations = useMemo(() => {
+    if (registryItems?.length) {
+      return registryItems.map(registryItemToListIntegration);
+    }
+    return integrations ?? [];
+  }, [integrations, registryItems]);
+
+  const dataStateById = useMemo(() => {
+    const map = new Map<string, IntegrationRegistryItem["dataState"]>();
+    registryItems?.forEach((item) => map.set(item.id, item.dataState));
+    return map;
+  }, [registryItems]);
+
   const visible = useMemo(() => {
-    const filtered = filterIntegrations(integrations, {
+    const filtered = filterIntegrations(listIntegrations, {
       tab: filterTab,
       query,
     });
     return sortIntegrations(filtered, sortKey);
-  }, [integrations, filterTab, query, sortKey]);
+  }, [listIntegrations, filterTab, query, sortKey]);
 
   return (
     <Card className="flex h-full min-h-[24rem] flex-col gap-0 overflow-hidden rounded-xl border-border py-0 shadow-sm xl:min-h-0">
@@ -165,6 +198,7 @@ export function IntegrationListPanel({
               integration={integration}
               selected={integration.id === selectedId}
               onSelect={() => onSelect(integration.id)}
+              dataState={dataStateById.get(integration.id)}
             />
           ))
         )}

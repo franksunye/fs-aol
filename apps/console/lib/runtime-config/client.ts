@@ -52,6 +52,25 @@ export async function saveRuntimeSecrets(
   return res.json();
 }
 
+export type RuntimeConfigRevisionSummary = {
+  version: number;
+  changeSummary: string;
+  updatedAt: string;
+  updatedBy: string | null;
+};
+
+export async function fetchRuntimeConfigRevisions(
+  limit = 10
+): Promise<RuntimeConfigRevisionSummary[]> {
+  const res = await fetch(`/api/runtime/config/revisions?limit=${limit}`);
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.error ?? `HTTP ${res.status}`);
+  }
+  const data = (await res.json()) as { revisions?: RuntimeConfigRevisionSummary[] };
+  return data.revisions ?? [];
+}
+
 export async function rollbackRuntimeConfig(
   version: number
 ): Promise<RuntimeConfigPublic> {

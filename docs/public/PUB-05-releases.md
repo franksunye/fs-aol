@@ -579,6 +579,30 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
+## v0.4.4 · product-shell-live
+
+**目标**：纠正「技术 live 区 + 折叠 mock」双轨；以第一版 UX mock 为产品壳，通过适配层装入 `runtime_config`、引擎快照、binding、trace。
+
+### 交付
+
+| 区域 | 内容 |
+|------|------|
+| 纪律 | [PUB-24](PUB-24-v044-product-shell-live.md) mock-as-shell |
+| 适配层 | `follow-up-agent-settings` / `follow-up-model-strategy` / `integration-registry` |
+| API | `GET /api/runtime/config/revisions` |
+| Agent 设置 | 双栏产品壳；摄取策略/通知/运行行为 live；发布历史 |
+| 模型策略 | 单 LLM + 3 步管线；评估接 trace 聚合 |
+| 集成 | 三栏主界面；live 注册表（xlink-fsm/wecom/turso） |
+
+### 验收清单
+
+- [ ] 三页无整页 `<details>` 折叠产品壳
+- [ ] Agent 设置无页顶技术表单栈
+- [ ] `?integration=xlink-fsm&tab=ingestion` 深链生效
+- [ ] `e2e-v044-product-shell.sh` + `pnpm build`
+
+---
+
 ## v0.5 · two-real-agents（建议 3–4 周）
 
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。

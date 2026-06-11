@@ -1,5 +1,6 @@
 "use client";
 
+/** @deprecated v0.4.4 — logic merged into follow-up-agent-settings-page product shell */
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { History, Save } from "lucide-react";
 import type { FsmIntegrationView } from "@/lib/integration-bindings/types";
@@ -42,10 +42,15 @@ export function FsmIntegrationWorkspace({
   initial,
   view,
   defaultTab = "connection",
+  onTabChange,
+  embedded = false,
 }: {
   initial: RuntimeConfigPublic;
   view: FsmIntegrationView;
   defaultTab?: TabId;
+  onTabChange?: (tab: TabId) => void;
+  /** When true, omit outer Card wrapper (three-column shell). */
+  embedded?: boolean;
 }) {
   const [runtime, setRuntime] = useState(initial);
   const [connectionForm, setConnectionForm] = useState({
@@ -64,6 +69,10 @@ export function FsmIntegrationWorkspace({
   });
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<TabId>(defaultTab);
+
+  useEffect(() => {
+    setTab(defaultTab);
+  }, [defaultTab]);
 
   const connectionDirty = useMemo(
     () =>
@@ -176,9 +185,16 @@ export function FsmIntegrationWorkspace({
 
   const health = view.syncHealth;
 
+  const shellClass = embedded
+    ? "space-y-4"
+    : "gap-0 overflow-hidden py-0 shadow-sm";
+  const Shell = embedded ? "div" : Card;
+  const Body = embedded ? "div" : CardContent;
+  const bodyClass = embedded ? "space-y-4" : "space-y-4 px-5 py-5";
+
   return (
-    <Card className="gap-0 overflow-hidden py-0 shadow-sm">
-      <CardContent className="space-y-4 px-5 py-5">
+    <Shell className={cn(!embedded && shellClass)}>
+      <Body className={bodyClass}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -229,7 +245,11 @@ export function FsmIntegrationWorkspace({
 
         <Tabs
           value={tab}
-          onValueChange={(v) => setTab(v as TabId)}
+          onValueChange={(v) => {
+            const next = v as TabId;
+            setTab(next);
+            onTabChange?.(next);
+          }}
           className="gap-4"
         >
           <TabsList variant="line">
@@ -410,7 +430,7 @@ export function FsmIntegrationWorkspace({
         {tabDirty ? (
           <p className="text-amber-700 text-xs">有未保存的更改</p>
         ) : null}
-      </CardContent>
-    </Card>
+      </Body>
+    </Shell>
   );
 }
