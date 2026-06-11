@@ -4,6 +4,7 @@ import { CalendarView } from "@/components/action-center/calendar/calendar-view"
 import { ActionCenterHeader } from "@/components/action-center/action-center-header";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
 import { loadPilotHousekeepers } from "@/lib/pilot-housekeepers";
+import { loadCalendarActions } from "@/lib/calendar";
 import { CALENDAR_SUBTITLE, CALENDAR_TITLE } from "@/lib/calendar-nav";
 import { shellScrollClass } from "@/lib/shell-preferences";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,9 @@ export default async function CalendarRoutePage({
   const hkFromCookie = cookieStore.get(HOUSEKEEPER_FILTER_COOKIE)?.value?.trim();
   const hkFilter = sp.hk?.trim() || hkFromCookie || undefined;
   const pilots = loadPilotHousekeepers();
+  const { actions: calendarActions, dataSource } = await loadCalendarActions(
+    hkFilter
+  );
 
   return (
     <main className="flex h-full min-h-0 w-full flex-col overflow-hidden">
@@ -34,7 +38,12 @@ export default async function CalendarRoutePage({
       </div>
       <div className={cn(shellScrollClass, "min-h-0 flex-1 px-3 pb-4 lg:px-4")}>
         <Suspense fallback={null}>
-          <CalendarView hkFilter={hkFilter} pilots={pilots} />
+          <CalendarView
+            hkFilter={hkFilter}
+            pilots={pilots}
+            initialActions={calendarActions}
+            dataSource={dataSource}
+          />
         </Suspense>
       </div>
     </main>

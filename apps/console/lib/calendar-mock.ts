@@ -492,6 +492,37 @@ export function filterCalendarActions(
   });
 }
 
+/** Live data summary (deltas zero — no historical compare in v0.4.1). */
+export function computeLiveCalendarSummary(
+  actions: CalendarAction[]
+): CalendarSummary {
+  const today = new Date();
+  const todayKey = formatDateKey(today);
+  const weekStart = addDays(today, -((today.getDay() + 6) % 7));
+  const weekEnd = addDays(weekStart, 6);
+
+  const todayActions = actions.filter((a) => a.date === todayKey);
+  const dueToday = todayActions.filter(
+    (a) => a.status === "pending" || a.status === "in_progress"
+  );
+  const weeklySchedule = actions.filter((a) => {
+    const d = parseDateKey(a.date);
+    return d >= weekStart && d <= weekEnd;
+  });
+  const overdue = actions.filter((a) => a.status === "overdue");
+
+  return {
+    todayActions: todayActions.length,
+    todayActionsDelta: 0,
+    dueToday: dueToday.length,
+    dueTodayDelta: 0,
+    weeklySchedule: weeklySchedule.length,
+    weeklyScheduleDelta: 0,
+    overdue: overdue.length,
+    overdueDelta: 0,
+  };
+}
+
 export function computeCalendarSummary(
   actions: CalendarAction[]
 ): CalendarSummary {

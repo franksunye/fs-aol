@@ -26,9 +26,12 @@ from .schema import (
     SCHEMA_ACTIONS_DEDUPE_INDEX,
     SCHEMA_ACTIONS_STATUS_INDEX,
     SCHEMA_TRACES_CREATED_INDEX,
+    SCHEMA_ENGINE_SNAPSHOTS,
+    SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX,
     SCHEMA_TRACES,
     TABLE_BLOCKERS,
     TABLE_ACTIONS,
+    TABLE_ENGINE_SNAPSHOTS,
     TABLE_LOGS,
     TABLE_OUTCOMES,
     TABLE_TIMELINE,
@@ -190,6 +193,8 @@ class TrackingStore:
             SCHEMA_ACTIONS_DEDUPE_INDEX,
             SCHEMA_ACTIONS_STATUS_INDEX,
             SCHEMA_TRACES_CREATED_INDEX,
+            SCHEMA_ENGINE_SNAPSHOTS,
+            SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX,
         )
         if self._conn is not None:
             for stmt in stmts:
@@ -807,6 +812,26 @@ class TrackingStore:
             self._conn.commit()
         else:
             self._turso.execute(sql, list(row))
+
+    def save_engine_runtime_snapshot(
+        self, snapshot: Dict[str, Any], run_summary: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """写入脱敏引擎配置快照（每轮 cron 一次）。"""
+        run_at = (run_summary or {}).get("run_at") or bj_now()
+        snapshot_json = json.dumps(snapshot, ensure_ascii=False)
+        run_summary_json = (
+            json.dumps(run_summary, ensure_ascii=False) if run_summary else None
+        )
+        sql = (
+            f"INSERT INTO {TABLE_ENGINE_SNAPSHOTS} "
+            "(run_at, snapshot_json, run_summary_json) VALUES (?,?,?)"
+        )
+        args = (run_at, snapshot_json, run_summary_json)
+        if self._conn is not None:
+            self._conn.execute(sql, args)
+            self._conn.commit()
+        else:
+            self._turso.execute(sql, list(args))
 
     def clear_all_data(self) -> int:
         """清空水位线与 trace 表数据，保留 db 文件（E2E 可重复 + GUI 可刷新）。"""

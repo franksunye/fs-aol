@@ -14,8 +14,16 @@ import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
 import { IntegrationDetailPanel } from "./integration-detail-panel";
 import { IntegrationInsightPanel } from "./integration-insight-panel";
+import { IntegrationsLiveSection } from "./integrations-live-section";
+import type { LiveIntegrationConnector } from "@/lib/integrations-live";
 
-export function IntegrationsPage() {
+export function IntegrationsPage({
+  liveConnectors = [],
+  snapshotRunAt = null,
+}: {
+  liveConnectors?: LiveIntegrationConnector[];
+  snapshotRunAt?: string | null;
+}) {
   const sp = useSearchParams();
   const [selectedId, setSelectedId] = useState("crm-self");
 
@@ -70,11 +78,14 @@ export function IntegrationsPage() {
                 提供业务上下文与执行能力。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <DataStateBadge state="scenario" label="集成场景样例" />
+                {liveConnectors.length > 0 ? (
+                  <DataStateBadge state="live" label="Follow-up 三连接器" />
+                ) : null}
+                <DataStateBadge state="scenario" label="目标态样例" />
                 <DataStateBadge state="not_connected" label="写回未接入" />
               </div>
               <DataStateNote className="mt-2 max-w-2xl">
-                当前页展示 AOL Business Harness 的目标形态；真实试点仍以 Follow-up 追踪库和 XLink 工单数据为主。
+                上方为 Follow-up 实际运行时依赖；下方为目标态集成样例，配置写回尚未接入。
               </DataStateNote>
             </div>
 
@@ -107,6 +118,18 @@ export function IntegrationsPage() {
         </header>
 
         <div className="space-y-6">
+          {liveConnectors.length > 0 ? (
+            <IntegrationsLiveSection
+              connectors={liveConnectors}
+              snapshotRunAt={snapshotRunAt}
+            />
+          ) : null}
+
+          <details className="rounded-xl border border-dashed border-violet-200 bg-violet-50/20 p-4">
+            <summary className="cursor-pointer text-sm font-medium">
+              AOL 目标态集成样例（{MOCK_INTEGRATIONS.length} 个连接器）
+            </summary>
+            <div className="mt-4 space-y-6">
           <IntegrationsSummaryCards />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
@@ -120,6 +143,8 @@ export function IntegrationsPage() {
             <IntegrationDetailPanel integration={selectedIntegration} />
             <IntegrationInsightPanel integration={selectedIntegration} />
           </div>
+            </div>
+          </details>
         </div>
       </div>
     </main>

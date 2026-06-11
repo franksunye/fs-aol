@@ -6,5 +6,6 @@
   "outcomes": "suggestion_outcomes",
   "blockers": "blocker_feedback",
   "timeline": "timeline_events",
-  "actions": "actions"
+  "actions": "actions",
+  "engineSnapshots": "engine_runtime_snapshots"
 }

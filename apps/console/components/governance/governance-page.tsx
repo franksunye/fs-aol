@@ -15,8 +15,16 @@ import { SensitiveFieldMaskingSection } from "./sensitive-field-masking-section"
 import { ReleaseGovernanceSection } from "./release-governance-section";
 import { GovernanceSidebar } from "./governance-sidebar";
 import { FollowUpRulesCard } from "./follow-up-rules-card";
+import { FollowUpAuditFeed } from "./follow-up-audit-feed";
+import type { GovernanceAuditRow } from "@/lib/governance-audit";
 
-export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
+export function GovernancePage({
+  hkFilter,
+  auditRows = [],
+}: {
+  hkFilter?: string;
+  auditRows?: GovernanceAuditRow[];
+}) {
   const data = getGovernanceMockData();
 
   return (
@@ -78,6 +86,7 @@ export function GovernancePage({ hkFilter }: { hkFilter?: string }) {
 
         <div className="space-y-6">
           <FollowUpRulesCard />
+          <FollowUpAuditFeed rows={auditRows} />
           <GovernanceSummaryCards summary={data.summary} />
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] xl:items-start">

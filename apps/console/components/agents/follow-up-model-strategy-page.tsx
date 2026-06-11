@@ -28,6 +28,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataStateBadge } from "@/components/data-state-badge";
+import type { ModelStrategyLiveStats } from "@/lib/model-strategy-live";
+import { ModelStrategyLiveCard } from "./model-strategy-live-card";
 import { AgentSettingsSubNav } from "./agent-settings-sub-nav";
 import { SettingsSectionCard } from "./settings-section-card";
 import {
@@ -107,7 +110,11 @@ function FieldLabel({ children }: { children: ReactNode }) {
   );
 }
 
-export function FollowUpModelStrategyPage() {
+export function FollowUpModelStrategyPage({
+  liveStats = null,
+}: {
+  liveStats?: ModelStrategyLiveStats | null;
+}) {
   const mock = FOLLOW_UP_MODEL_STRATEGY_MOCK;
   const [constraints, setConstraints] = useState<MockRuntimeConstraint[]>(
     mock.constraints.map((item) => ({ ...item }))
@@ -181,8 +188,12 @@ export function FollowUpModelStrategyPage() {
                 <Badge variant="secondary">{mock.version}</Badge>
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                为各任务节点选择模型、约束与评估方式（策略样例，暂未接入真实发布）
+                为各任务节点选择模型、约束与评估方式
               </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <DataStateBadge state="live" label="Trace 聚合" />
+                <DataStateBadge state="not_connected" label="策略发布未接入" />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -221,6 +232,8 @@ export function FollowUpModelStrategyPage() {
 
           <AgentSettingsSubNav />
         </header>
+
+        <ModelStrategyLiveCard stats={liveStats} />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
           <div className="space-y-4">

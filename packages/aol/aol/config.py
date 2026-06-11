@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .util import env_bool
 
@@ -87,6 +87,71 @@ class Config:
     reanalyze_push_on_same_priority: bool = field(
         default_factory=lambda: env_bool("REANALYZE_PUSH_ON_SAME_PRIORITY", False)
     )
+
+    def public_snapshot(self) -> Dict[str, Any]:
+        """脱敏运行时配置，供 Turso 快照与 Console 只读镜像（不含 secret/URL）。"""
+        _, _, _, model, _ = self.resolved_llm()
+        pilots: List[Dict[str, str]] = []
+        if self.resolved_pilot_ids:
+            for pid in self.resolved_pilot_ids:
+                pilots.append(
+                    {
+                        "id": pid,
+                        "name": self.pilot_id_to_name.get(pid, pid),
+                    }
+                )
+        elif self.pilot_housekeeper_ids.strip():
+            for pid in self.pilot_housekeeper_ids.split(","):
+                p = pid.strip()
+                if p:
+                    pilots.append({"id": p, "name": p})
+        elif self.pilot_housekeepers.strip():
+            for name in self.pilot_housekeepers.split(","):
+                n = name.strip()
+                if n:
+                    pilots.append({"id": "", "name": n})
+
+        wecom_webhook_map_count = 0
+        if self.wecom_webhook_map.strip():
+            wecom_webhook_map_count = len(
+                [x for x in self.wecom_webhook_map.split(",") if x.strip()]
+            )
+
+        return {
+            "dry_run": self.dry_run,
+            "fsm_source": self.fsm_source,
+            "fsm_mongo_configured": bool(self.fsm_mongo_url.strip()),
+            "fsm_mongo_db": self.fsm_mongo_db if self.fsm_mongo_url.strip() else "",
+            "fsm_event_statuses": [
+                s.strip()
+                for s in (self.fsm_event_statuses or "206").split(",")
+                if s.strip()
+            ],
+            "fsm_max_age_days": self.fsm_max_age_days,
+            "fsm_stale_days": self.fsm_stale_days,
+            "fsm_batch_limit": self.fsm_batch_limit,
+            "fsm_lookback_hours": self.lookback_hours,
+            "pilots": pilots,
+            "llm_provider": self.llm_provider,
+            "llm_model": model,
+            "agent_mode": self.agent_mode,
+            "tracking_source": self.tracking_source,
+            "console_base_url": self.console_base_url,
+            "wecom_configured": bool(
+                self.wecom_webhook.strip()
+                or self.wecom_webhook_map.strip()
+                or (
+                    self.wecom_corp_id.strip()
+                    and self.wecom_agent_id.strip()
+                    and self.wecom_agent_secret.strip()
+                )
+            ),
+            "wecom_webhook_map_count": wecom_webhook_map_count,
+            "reanalyze_enabled": self.reanalyze_enabled,
+            "reanalyze_interval_days": self.reanalyze_interval_days,
+            "reanalyze_stale_step_days": self.reanalyze_stale_step_days,
+            "reanalyze_max_per_run": self.reanalyze_max_per_run,
+        }
 
     def resolved_llm(self) -> tuple[str, str, str, str, bool]:
         """返回 (provider_label, api_key, base_url, model, use_json_mode)。"""

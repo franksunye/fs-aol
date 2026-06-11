@@ -1,4 +1,4 @@
-import { db, ensureSchema, TABLE_LOGS, TABLE_OUTCOMES } from "./db";
+import { db, ensureSchema, TABLE_ACTIONS, TABLE_LOGS, TABLE_OUTCOMES, TABLE_TRACES } from "./db";
 import type { Decision, SuggestionDoc, SuggestionRow } from "./suggestions";
 import { parseQuoteAmountYuan } from "./action-review-metric-cards";
 
@@ -42,6 +42,35 @@ export interface AnalyticsPrioritySlice {
   percent: number;
 }
 
+export interface OutcomeBreakdown {
+  approved: number;
+  modified: number;
+  rejected: number;
+  followed_up: number;
+  prevApproved: number;
+  prevModified: number;
+  prevRejected: number;
+  prevFollowedUp: number;
+}
+
+export interface ActionCompletionMetrics {
+  total: number;
+  completed: number;
+  pending: number;
+  timeout: number;
+  prevTotal: number;
+  prevCompleted: number;
+}
+
+export interface TraceCostAggregate {
+  runCount: number;
+  totalTokens: number;
+  avgLatencyMs: number;
+  prevRunCount: number;
+  prevTotalTokens: number;
+  prevAvgLatencyMs: number;
+}
+
 export interface AnalyticsSnapshot {
   range: DateRangeWindow;
   discovered: number;
@@ -55,6 +84,9 @@ export interface AnalyticsSnapshot {
   prevAvgStaleDays: number | null;
   trend: AnalyticsTrendPoint[];
   priorityDistribution: AnalyticsPrioritySlice[];
+  outcomeBreakdown: OutcomeBreakdown;
+  actionCompletion: ActionCompletionMetrics;
+  traceCost: TraceCostAggregate;
 }
 
 function startOfDay(d: Date): Date {
@@ -452,6 +484,12 @@ export async function loadAnalyticsSnapshot(options?: {
     range.prevEnd
   );
 
+  const [outcomeBreakdown, actionCompletion, traceCost] = await Promise.all([
+    loadOutcomeBreakdown(range, hk),
+    loadActionCompletionMetrics(range, hk),
+    loadTraceCostAggregate(range, hk),
+  ]);
+
   return {
     range,
     discovered: current.discovered,
@@ -467,6 +505,133 @@ export async function loadAnalyticsSnapshot(options?: {
     prevAvgStaleDays: prev.avgStaleDays,
     trend: buildTrend(range, current),
     priorityDistribution: buildPriorityDistribution(current.byPriority),
+    outcomeBreakdown,
+    actionCompletion,
+    traceCost,
+  };
+}
+
+function countDecisions(outcomes: OutcomeInRange[]): OutcomeBreakdown {
+  const counts = { approved: 0, modified: 0, rejected: 0, followed_up: 0 };
+  for (const o of outcomes) {
+    if (o.decision in counts) {
+      counts[o.decision as keyof typeof counts] += 1;
+    }
+  }
+  return {
+    ...counts,
+    prevApproved: 0,
+    prevModified: 0,
+    prevRejected: 0,
+    prevFollowedUp: 0,
+  };
+}
+
+export async function loadOutcomeBreakdown(
+  range: DateRangeWindow,
+  housekeeperId?: string
+): Promise<OutcomeBreakdown> {
+  const [current, prev] = await Promise.all([
+    fetchOutcomesBetween(range.start, range.end, housekeeperId),
+    fetchOutcomesBetween(range.prevStart, range.prevEnd, housekeeperId),
+  ]);
+  const cur = countDecisions(current);
+  const previous = countDecisions(prev);
+  return {
+    approved: cur.approved,
+    modified: cur.modified,
+    rejected: cur.rejected,
+    followed_up: cur.followed_up,
+    prevApproved: previous.approved,
+    prevModified: previous.modified,
+    prevRejected: previous.rejected,
+    prevFollowedUp: previous.followed_up,
+  };
+}
+
+export async function loadActionCompletionMetrics(
+  range: DateRangeWindow,
+  housekeeperId?: string
+): Promise<ActionCompletionMetrics> {
+  await ensureSchema();
+  async function periodMetrics(start: Date, end: Date) {
+    const where = ["created_at >= ?", "created_at < ?"];
+    const args: (string | number)[] = [toIso(start), toIso(end)];
+    if (housekeeperId?.trim()) {
+      where.push("assignee_id = ?");
+      args.push(housekeeperId.trim());
+    }
+    const res = await db.execute({
+      sql: `SELECT status, COUNT(*) AS c FROM ${TABLE_ACTIONS}
+            WHERE ${where.join(" AND ")}
+            GROUP BY status`,
+      args,
+    });
+    let total = 0;
+    let completed = 0;
+    let pending = 0;
+    let timeout = 0;
+    for (const row of res.rows as unknown as Record<string, unknown>[]) {
+      const status = str(row.status);
+      const c = Number(row.c ?? 0);
+      total += c;
+      if (status === "completed") completed += c;
+      else if (status === "pending_dispatch" || status === "in_progress" || status === "dispatched")
+        pending += c;
+      else if (status === "timeout" || status === "no_feedback") timeout += c;
+    }
+    return { total, completed, pending, timeout };
+  }
+  const [current, prev] = await Promise.all([
+    periodMetrics(range.start, range.end),
+    periodMetrics(range.prevStart, range.prevEnd),
+  ]);
+  return {
+    ...current,
+    prevTotal: prev.total,
+    prevCompleted: prev.completed,
+  };
+}
+
+export async function loadTraceCostAggregate(
+  range: DateRangeWindow,
+  housekeeperId?: string
+): Promise<TraceCostAggregate> {
+  await ensureSchema();
+  async function periodAgg(start: Date, end: Date) {
+    const where = ["t.created_at >= ?", "t.created_at < ?"];
+    const args: (string | number)[] = [toIso(start), toIso(end)];
+    if (housekeeperId?.trim()) {
+      where.push("l.housekeeper_id = ?");
+      args.push(housekeeperId.trim());
+    }
+    const fromClause = housekeeperId?.trim()
+      ? `FROM ${TABLE_TRACES} t INNER JOIN ${TABLE_LOGS} l ON l.work_order_id = t.work_order_id`
+      : `FROM ${TABLE_TRACES} t`;
+    const res = await db.execute({
+      sql: `SELECT COUNT(*) AS runs,
+                   COALESCE(SUM(t.total_tokens), 0) AS tokens,
+                   COALESCE(AVG(t.latency_ms), 0) AS avg_latency
+            ${fromClause}
+            WHERE ${where.join(" AND ")}`,
+      args,
+    });
+    const row = (res.rows[0] ?? {}) as Record<string, unknown>;
+    return {
+      runCount: Number(row.runs ?? 0),
+      totalTokens: Number(row.tokens ?? 0),
+      avgLatencyMs: Math.round(Number(row.avg_latency ?? 0)),
+    };
+  }
+  const [current, prev] = await Promise.all([
+    periodAgg(range.start, range.end),
+    periodAgg(range.prevStart, range.prevEnd),
+  ]);
+  return {
+    ...current,
+    prevRunCount: prev.runCount,
+    prevTotalTokens: prev.totalTokens,
+    prevAvgLatencyMs: prev.avgLatencyMs,
   };
 }
 

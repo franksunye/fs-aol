@@ -67,15 +67,21 @@ export function EvaluationPage({
           actionStatusTrend={data.actionStatusTrend}
           hk={hk}
         />
-        <EvaluationMiddleSections
-          agents={data.agents}
-          versions={data.versions}
-          rules={data.rules}
-          problemCases={data.problemCases}
-          roles={data.roles}
-          modules={data.modules}
-          hk={hk}
-        />
+        <div className="relative space-y-4 rounded-xl border border-dashed border-violet-200 bg-violet-50/30 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">多 Agent 对比样例</span>
+            <DataStateBadge state="scenario" />
+          </div>
+          <EvaluationMiddleSections
+            agents={data.agents}
+            versions={data.versions}
+            rules={data.rules}
+            problemCases={data.problemCases}
+            roles={data.roles}
+            modules={data.modules}
+            hk={hk}
+          />
+        </div>
         <EvaluationQualitySamples samples={data.qualitySamples} hk={hk} />
       </div>
     </main>

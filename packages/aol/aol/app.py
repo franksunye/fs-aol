@@ -241,6 +241,10 @@ def run(cfg: Optional[Config] = None) -> int:
             "timeline_sync": timeline_stats,
         }
         logger.info("run_summary %s", json.dumps(run_summary, ensure_ascii=False))
+        try:
+            store.save_engine_runtime_snapshot(cfg.public_snapshot(), run_summary)
+        except Exception:
+            logger.exception("引擎运行时快照写入失败（不影响主流程）。")
         return 0
     finally:
         store.close()

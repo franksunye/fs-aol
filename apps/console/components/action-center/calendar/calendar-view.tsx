@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import type { PilotHousekeeper } from "@/lib/pilot-housekeepers";
 import {
-  computeCalendarSummary,
+  computeLiveCalendarSummary,
   filterCalendarActions,
-  getCalendarMockActions,
   resolveCalendarAssigneeFromHk,
   upcomingActions,
+  type CalendarAction,
   type CalendarFilters,
 } from "@/lib/calendar-mock";
 import { CalendarSummaryCards } from "./calendar-summary-cards";
@@ -21,12 +21,16 @@ import { DataStateNote } from "@/components/data-state-badge";
 export function CalendarView({
   hkFilter,
   pilots = [],
+  initialActions = [],
+  dataSource = "empty",
 }: {
   hkFilter?: string;
   pilots?: PilotHousekeeper[];
+  initialActions?: CalendarAction[];
+  dataSource?: "live" | "empty";
 }) {
   const today = useMemo(() => new Date(), []);
-  const allActions = useMemo(() => getCalendarMockActions(), []);
+  const allActions = useMemo(() => initialActions, [initialActions]);
   const hkAssignee = useMemo(
     () => resolveCalendarAssigneeFromHk(hkFilter, pilots),
     [hkFilter, pilots]
@@ -62,9 +66,10 @@ export function CalendarView({
   );
 
   const summary = useMemo(
-    () => computeCalendarSummary(filteredActions),
+    () => computeLiveCalendarSummary(filteredActions),
     [filteredActions]
   );
+  const summaryDataState = dataSource === "live" ? "live" : "scenario";
 
   const recent = useMemo(
     () => upcomingActions(filteredActions, 7),
@@ -83,9 +88,11 @@ export function CalendarView({
   return (
     <div className="pb-6">
       <DataStateNote className="mb-3 max-w-3xl">
-        SLA 日历复用 Follow-up Action 数据形成执行时间视图；跨 CRM/FSM 日程写回仍处于未接入阶段。
+        {dataSource === "live"
+          ? "日历展示 Follow-up 待执行 Action 的真实到期日；跨 CRM/FSM 日程写回仍处于未接入阶段。"
+          : "暂无待执行 Action。批准建议后将在此显示真实排期。"}
       </DataStateNote>
-      <CalendarSummaryCards summary={summary} />
+      <CalendarSummaryCards summary={summary} dataState={summaryDataState} />
 
       <CalendarToolbar
         month={month}

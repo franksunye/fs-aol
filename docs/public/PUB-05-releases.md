@@ -503,6 +503,31 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
+## v0.4.1 · follow-up-live-surface
+
+**目标**：用 Turso 真实试点数据穿过 Console mock 壳，证明 Follow-up UX 可落地；Systems 层通过引擎脱敏快照只读镜像，诚实标注 `DataState`。
+
+### 交付
+
+| 区域 | 内容 |
+|------|------|
+| Work | 日历接 `aol_actions`；Action 指标与评估同源 |
+| Agents | 评估 Follow-up KPI/趋势 live；总览 trend/attention/agentFleet 加厚 |
+| Systems | `engine_runtime_snapshots`；集成三连接器；Agent 设置/模型策略只读镜像；治理审计 feed；AI infra provider 健康 |
+| 验证 | `scripts/e2e-v041-local.sh`、`apps/console/scripts/v041-live-surface-audit.mjs` |
+
+### 验收清单（tag `v0.4.1`）
+
+- [ ] Follow-up 主路径（Action / Runs / Calendar / 评估 KPI）`dataSource=live` 或诚实 mixed
+- [ ] 待审核/待执行/采纳率在 Action 中心、总览、评估一致
+- [ ] 集成/Agent 设置与 engine snapshot 字段一致
+- [ ] mock 区均有 `scenario` / `not_connected` badge
+- [ ] `pnpm build` 通过
+
+详见 [PUB-21-v041-live-surface.md](PUB-21-v041-live-surface.md)。
+
+---
+
 ## v0.5 · two-real-agents（建议 3–4 周）
 
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。

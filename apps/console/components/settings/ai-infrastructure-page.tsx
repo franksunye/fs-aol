@@ -14,8 +14,14 @@ import { AiInfrastructureSummaryCards } from "./ai-infrastructure-summary-cards"
 import { ProviderListPanel } from "./provider-list-panel";
 import { ProviderDetailPanel } from "./provider-detail-panel";
 import { ProviderInsightPanel } from "./provider-insight-panel";
+import type { AiInfraLiveContext } from "@/lib/ai-infra-live";
+import { Card } from "@/components/ui/card";
 
-export function AiInfrastructurePage() {
+export function AiInfrastructurePage({
+  liveContext,
+}: {
+  liveContext?: AiInfraLiveContext;
+}) {
   const sp = useSearchParams();
   const [selectedId, setSelectedId] = useState("openai");
 
@@ -69,11 +75,17 @@ export function AiInfrastructurePage() {
                 统一接入、治理与监控平台使用的 LLM / 模型能力。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                {liveContext?.activeProviderId ? (
+                  <DataStateBadge
+                    state="live"
+                    label={`引擎: ${liveContext.providerLabel}`}
+                  />
+                ) : null}
                 <DataStateBadge state="scenario" label="模型治理样例" />
-                <DataStateBadge state="not_connected" label="供应商配置未接入" />
+                <DataStateBadge state="not_connected" label="供应商写回未接入" />
               </div>
               <DataStateNote className="mt-2 max-w-2xl">
-                AOL 的核心不在模型供应商；本页展示模型可替换、可观测、可治理的基础设施形态。
+                当前 Follow-up 引擎 provider 来自 cron 快照；其余供应商为目标态样例。
               </DataStateNote>
             </div>
 
@@ -106,6 +118,21 @@ export function AiInfrastructurePage() {
         </header>
 
         <div className="space-y-6">
+          {liveContext?.stats ? (
+            <Card className="border-border gap-2 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold">Follow-up 近 7 天 LLM 健康</span>
+                <DataStateBadge state="live" />
+                <DataStateBadge state="estimated" label="成本估算" />
+              </div>
+              <p className="text-muted-foreground text-xs">
+                {liveContext.stats.runCount} runs · 平均{" "}
+                {(liveContext.stats.avgLatencyMs / 1000).toFixed(1)}s ·{" "}
+                {liveContext.stats.totalTokens.toLocaleString()} tokens · 约 ¥
+                {liveContext.stats.estCostYuan.toFixed(2)}
+              </p>
+            </Card>
+          ) : null}
           <AiInfrastructureSummaryCards />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">

@@ -112,3 +112,14 @@ CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}actions_status
 
 CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}reasoning_traces_created
     ON {{AOL_TABLE_PREFIX}}reasoning_traces(created_at);
+
+-- 引擎运行时脱敏配置快照（每轮 cron 写入，Console 只读镜像 v0.4.1+）
+CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}engine_runtime_snapshots (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_at              TEXT NOT NULL,
+    snapshot_json       TEXT NOT NULL,
+    run_summary_json    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_{{AOL_TABLE_PREFIX}}engine_runtime_snapshots_run_at
+    ON {{AOL_TABLE_PREFIX}}engine_runtime_snapshots(run_at);

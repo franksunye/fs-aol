@@ -40,6 +40,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DataStateBadge } from "@/components/data-state-badge";
+import type { EngineRuntimeSnapshot } from "@/lib/tracking/engine-runtime";
+import { FollowUpRuntimeMirrorCard } from "./follow-up-runtime-mirror-card";
 import { SettingsSectionCard } from "./settings-section-card";
 import {
   Table,
@@ -118,7 +121,11 @@ function FieldLabel({ children }: { children: ReactNode }) {
   );
 }
 
-export function FollowUpAgentSettingsPage() {
+export function FollowUpAgentSettingsPage({
+  runtime = null,
+}: {
+  runtime?: EngineRuntimeSnapshot | null;
+}) {
   const mock = FOLLOW_UP_SETTINGS_MOCK;
   const [enabled, setEnabled] = useState(mock.basic.enabled);
   const [rules, setRules] = useState<MockTriggerRule[]>(
@@ -141,17 +148,33 @@ export function FollowUpAgentSettingsPage() {
     );
   }
 
-  function runTest() {
-    const id = testWorkOrderId.trim() || "WO-2026-0412";
-    const result = {
-      workOrderId: id,
-      at: "刚刚",
-      outcome: "生成跟进建议 · 建议已推送管家（演示）",
-    };
-    setLastTestRun(result);
-    toast.success("测试运行完成", {
-      description: `${id} · ${result.outcome}`,
-    });
+  async function runTest() {
+    const id = testWorkOrderId.trim();
+    if (!id) {
+      toast.error("请输入工单 ID");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/traces/${encodeURIComponent(id)}`);
+      if (!res.ok) {
+        toast.error("未找到该工单的 trace", { description: id });
+        return;
+      }
+      const data = (await res.json()) as { traces?: unknown[] };
+      const count = Array.isArray(data.traces) ? data.traces.length : 0;
+      const result = {
+        workOrderId: id,
+        at: "刚刚",
+        outcome:
+          count > 0
+            ? `找到 ${count} 条真实 trace`
+            : "无 trace 记录",
+      };
+      setLastTestRun(result);
+      toast.success("已查询真实 trace", { description: result.outcome });
+    } catch {
+      toast.error("查询 trace 失败");
+    }
   }
 
   return (
@@ -192,8 +215,12 @@ export function FollowUpAgentSettingsPage() {
                 <Badge variant="secondary">{mock.version}</Badge>
               </div>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                定义目标、触发条件、数据来源与人在回路规则（配置样例，暂未接入真实发布）
+                定义目标、触发条件、数据来源与人在回路规则
               </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <DataStateBadge state="live" label="运行时镜像" />
+                <DataStateBadge state="not_connected" label="配置写回未接入" />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -233,6 +260,8 @@ export function FollowUpAgentSettingsPage() {
 
           <AgentSettingsSubNav />
         </header>
+
+        <FollowUpRuntimeMirrorCard runtime={runtime} />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
           <div className="space-y-4">

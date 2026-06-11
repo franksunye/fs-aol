@@ -29,6 +29,7 @@ def _tables_manifest() -> dict[str, str]:
         "blockers": data["blockers"],
         "timeline": data["timeline"],
         "actions": data["actions"],
+        "engineSnapshots": data["engineSnapshots"],
     }
 
 
@@ -40,6 +41,7 @@ TABLE_OUTCOMES = f"{TABLE_PREFIX}{_SUFFIX['outcomes']}"
 TABLE_BLOCKERS = f"{TABLE_PREFIX}{_SUFFIX['blockers']}"
 TABLE_TIMELINE = f"{TABLE_PREFIX}{_SUFFIX['timeline']}"
 TABLE_ACTIONS = f"{TABLE_PREFIX}{_SUFFIX['actions']}"
+TABLE_ENGINE_SNAPSHOTS = f"{TABLE_PREFIX}{_SUFFIX['engineSnapshots']}"
 
 
 def _render_schema_sql(prefix: str = TABLE_PREFIX) -> str:
@@ -75,6 +77,7 @@ SCHEMA_OUTCOMES = _statement_for_table(_rendered, TABLE_OUTCOMES)
 SCHEMA_BLOCKERS = _statement_for_table(_rendered, TABLE_BLOCKERS)
 SCHEMA_TIMELINE = _statement_for_table(_rendered, TABLE_TIMELINE)
 SCHEMA_ACTIONS = _statement_for_table(_rendered, TABLE_ACTIONS)
+SCHEMA_ENGINE_SNAPSHOTS = _statement_for_table(_rendered, TABLE_ENGINE_SNAPSHOTS)
 
 # Index on outcomes (Console ensureSchema also runs this)
 _OUTCOMES_INDEX = re.compile(
@@ -124,4 +127,12 @@ _TRACES_CREATED_INDEX = re.compile(
 SCHEMA_TRACES_CREATED_INDEX = next(
     (s for s in _split_statements(_rendered) if _TRACES_CREATED_INDEX.search(s)),
     f"CREATE INDEX IF NOT EXISTS idx_{TABLE_TRACES}_created ON {TABLE_TRACES}(created_at);",
+)
+_ENGINE_SNAPSHOTS_RUN_AT_INDEX = re.compile(
+    rf"CREATE INDEX IF NOT EXISTS idx_{re.escape(TABLE_ENGINE_SNAPSHOTS)}_run_at\b",
+    re.IGNORECASE,
+)
+SCHEMA_ENGINE_SNAPSHOTS_RUN_AT_INDEX = next(
+    (s for s in _split_statements(_rendered) if _ENGINE_SNAPSHOTS_RUN_AT_INDEX.search(s)),
+    f"CREATE INDEX IF NOT EXISTS idx_{TABLE_ENGINE_SNAPSHOTS}_run_at ON {TABLE_ENGINE_SNAPSHOTS}(run_at);",
 )
