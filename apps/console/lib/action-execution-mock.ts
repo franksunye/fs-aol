@@ -1,11 +1,4 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  ClipboardCheck,
-  FileSearch,
-  MessageSquare,
-  Phone,
-  RefreshCw,
-} from "lucide-react";
+import type { ExecutionActionIconKey } from "./execution-action-icons";
 import type { ActionEntityRef } from "./action-list-display";
 import { XLINK_SOURCE_SYSTEM } from "./action-list-display";
 import { FOLLOW_UP_SKILL, skillSourceAgent } from "./skills";
@@ -49,7 +42,7 @@ export type ExecutionAction = {
   assigneeId: string;
   estimateMins: number;
   workOrderKey?: string;
-  icon: LucideIcon;
+  iconKey: ExecutionActionIconKey;
   /** Action 内容摘要 */
   goal: string;
   dispatchTarget: string;
@@ -83,9 +76,9 @@ export const MY_ACTIONS_AGENT_OPTIONS = [
 function action(
   partial: Omit<
     ExecutionAction,
-    "icon" | "dispatchTarget" | "createdAt" | "lastSyncedAt" | "sourceSystem"
+    "iconKey" | "dispatchTarget" | "createdAt" | "lastSyncedAt" | "sourceSystem"
   > & {
-    icon?: LucideIcon;
+    iconKey?: ExecutionActionIconKey;
     dispatchTarget?: string;
     createdAt?: string;
     lastSyncedAt?: string;
@@ -93,7 +86,7 @@ function action(
   }
 ): ExecutionAction {
   return {
-    icon: Phone,
+    iconKey: partial.iconKey ?? "phone",
     dispatchTarget: "CRM 待办",
     createdAt: "今天 08:40",
     lastSyncedAt: "5 分钟前",
@@ -124,7 +117,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assigneeId: "zhangmin",
       estimateMins: 5,
       workOrderKey: "demo:sz-zhizao-001",
-      icon: Phone,
+      iconKey: "phone",
       goal: "确认客户对 V3 报价方案的接受度，推动进入签约流程。",
       dispatchTarget: "CRM · 管家待办",
       terminalFeedback: "终端尚未回写",
@@ -161,7 +154,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "李伟",
       assigneeId: "liwei",
       estimateMins: 8,
-      icon: ClipboardCheck,
+      iconKey: "clipboard-check",
       goal: "跟进法务审批节点，确认补件清单并推动今日出结论。",
       dispatchTarget: "FSM · 合同审批",
       terminalFeedback: "法务已接单，补件清单整理中",
@@ -190,7 +183,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "张敏",
       assigneeId: "zhangmin",
       estimateMins: 10,
-      icon: MessageSquare,
+      iconKey: "message-square",
       goal: "回应客户对交付进度的顾虑，恢复信任并确认下一步安排。",
       dispatchTarget: "企微 · 管家任务",
       contextFacts: [
@@ -213,7 +206,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "陈浩",
       assigneeId: "chenhao",
       estimateMins: 6,
-      icon: RefreshCw,
+      iconKey: "refresh-cw",
       goal: "重新建立联系，确认停滞原因并约定下一步推进时间。",
       dispatchTarget: "CRM · 管家待办",
       terminalFeedback: "超过 SLA，终端未回写",
@@ -242,7 +235,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assigneeId: "zhangmin",
       estimateMins: 12,
       workOrderKey: "demo:ht-lingshou-004",
-      icon: Phone,
+      iconKey: "phone",
       goal: "回访投诉处理结果，确认客户满意度并记录闭环。",
       dispatchTarget: "CRM · 投诉工单",
       terminalFeedback: "已分发 48h，终端无反馈",
@@ -271,7 +264,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assigneeId: "zhangmin",
       estimateMins: 5,
       workOrderKey: "demo:yf-shiye-003",
-      icon: ClipboardCheck,
+      iconKey: "clipboard-check",
       goal: "确认签约材料签署进度，推动本周完成盖章。",
       dispatchTarget: "CRM · 签约任务",
       contextFacts: [
@@ -294,7 +287,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "陈浩",
       assigneeId: "chenhao",
       estimateMins: 5,
-      icon: RefreshCw,
+      iconKey: "refresh-cw",
       goal: "报价后 48 小时触达，确认客户决策节奏。",
       dispatchTarget: "企微 · 跟进提醒",
       contextFacts: [{ label: "报价发出", value: "46 小时前" }],
@@ -314,7 +307,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "李伟",
       assigneeId: "liwei",
       estimateMins: 15,
-      icon: FileSearch,
+      iconKey: "file-search",
       goal: "确认客户对修订条款的反馈并同步法务。",
       dispatchTarget: "FSM · 合同任务",
       contextFacts: [{ label: "修订版本", value: "Rev.B" }],
@@ -334,7 +327,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "张敏",
       assigneeId: "zhangmin",
       estimateMins: 20,
-      icon: Phone,
+      iconKey: "phone",
       goal: "完成本月例行回访，更新客户健康度评分。",
       dispatchTarget: "CRM · 回访计划",
       contextFacts: [{ label: "健康度", value: "良好" }],
@@ -354,7 +347,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "王芳",
       assigneeId: "wangfang",
       estimateMins: 4,
-      icon: ClipboardCheck,
+      iconKey: "clipboard-check",
       goal: "复核出库明细与签收信息，确保物流节点可追溯。",
       dispatchTarget: "WMS · 复核任务",
       contextFacts: [{ label: "出库仓", value: "SZ-02" }],
@@ -374,7 +367,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "王芳",
       assigneeId: "wangfang",
       estimateMins: 7,
-      icon: FileSearch,
+      iconKey: "file-search",
       goal: "核查到货差异原因并同步采购与供应商。",
       dispatchTarget: "WMS · 异常处理",
       terminalFeedback: "仓管员已接单，凭证调取中",
@@ -396,7 +389,7 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       assignee: "李伟",
       assigneeId: "liwei",
       estimateMins: 30,
-      icon: FileSearch,
+      iconKey: "file-search",
       goal: "汇总本周跟进数据，准备周例会汇报材料。",
       dispatchTarget: "内部 · 运营看板",
       terminalFeedback: "材料已提交，例会已使用",

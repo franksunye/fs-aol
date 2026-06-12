@@ -26,7 +26,6 @@ import { mapAction } from "./mappers";
 import { getSuggestion } from "./inbox";
 import { listTracesLite } from "./traces";
 import { parseJson, str } from "./parse";
-import { ClipboardCheck } from "lucide-react";
 import type { ExecutionStatus } from "../execution-status";
 
 const PENDING_STATUSES: ActionStatus[] = ["pending_dispatch", "in_progress"];
@@ -245,7 +244,7 @@ export async function mapActionToExecution(
     assigneeId: action.assigneeId,
     estimateMins: 15,
     workOrderKey: action.dedupeKey,
-    icon: ClipboardCheck,
+    iconKey: "clipboard-check",
     goal:
       suggestion.原因摘要 ||
       suggestion.跟进方案?.主行动 ||

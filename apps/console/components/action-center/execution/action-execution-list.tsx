@@ -16,6 +16,7 @@ import {
   executionActionHref,
   type ExecutionAction,
 } from "@/lib/action-execution-mock";
+import { resolveExecutionActionIcon } from "@/lib/execution-action-icons";
 import { EXECUTION_STATUS_LABELS } from "@/lib/execution-status";
 import {
   parseExecutionSortKey,
@@ -242,7 +243,7 @@ function buildColumns({
       ),
       cell: ({ row }) => {
         const item = row.original;
-        const Icon = item.icon;
+        const Icon = resolveExecutionActionIcon(item.iconKey);
         const active = item.id === selectedId;
         const href = executionActionHref(item.id, hk);
         const sourceAgent = executionSourceAgent(item);
