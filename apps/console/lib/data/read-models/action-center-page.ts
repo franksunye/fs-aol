@@ -12,6 +12,12 @@ import {
   listSuggestions,
   listSuggestionsPage,
 } from "@/lib/tracking/inbox";
+import {
+  loadActiveInboxPriorityCounts,
+  loadActiveInboxReviewMetrics,
+  type ActiveInboxPriorityCounts,
+} from "@/lib/tracking/inbox-review-metrics";
+import type { ActionReviewMetricCards } from "@/lib/action-review-metric-cards";
 import type { InboxBucket } from "@/lib/labels";
 import type { InboxBucketCounts, SuggestionRow } from "@/lib/tracking/types";
 import { loadWorkbenchShellSnapshot } from "./workbench-shell";
@@ -35,6 +41,8 @@ export type ActionCenterPageData = {
   executionActions: ExecutionAction[];
   inboxPageResult: Awaited<ReturnType<typeof listSuggestionsPage>> | null;
   metricsRawRows: SuggestionRow[];
+  activeReviewMetrics: ActionReviewMetricCards | null;
+  priorityFilterCounts: ActiveInboxPriorityCounts | null;
   runtimeConfig: Awaited<ReturnType<typeof getRuntimeConfigForUi>>;
 };
 
@@ -51,31 +59,40 @@ async function loadActionCenterPageDataUncached(
   );
 
   const hkOpts = hk ? { housekeeperId: hk } : {};
-  const needsMetricsRows =
-    query.isInboxData && (!query.canDbPaginate || query.isActiveInbox);
+  const useSqlActiveMetrics =
+    query.isActiveInbox && query.canDbPaginate && query.isInboxData;
+  const needsMetricsRows = query.isInboxData && !useSqlActiveMetrics && !query.canDbPaginate;
 
-  const [inboxPageResult, metricsRawRows, runtimeConfig, executionActions] =
-    await Promise.all([
-      query.canDbPaginate
-        ? listSuggestionsPage({
-            inboxBucket: query.inboxTab,
-            ...hkOpts,
-            page: query.listPage,
-            pageSize: query.listPageSize,
-          })
-        : Promise.resolve(null),
-      needsMetricsRows
-        ? listSuggestions({
-            inboxBucket: query.inboxTab,
-            ...hkOpts,
-            limit: 500,
-          })
-        : Promise.resolve([]),
-      getRuntimeConfigForUi(),
-      query.isExecution
-        ? listExecutionActions(hkOpts)
-        : Promise.resolve([] as ExecutionAction[]),
-    ]);
+  const [
+    inboxPageResult,
+    metricsRawRows,
+    activeReviewMetrics,
+    priorityFilterCounts,
+    runtimeConfig,
+    executionActions,
+  ] = await Promise.all([
+    query.canDbPaginate
+      ? listSuggestionsPage({
+          inboxBucket: query.inboxTab,
+          ...hkOpts,
+          page: query.listPage,
+          pageSize: query.listPageSize,
+        })
+      : Promise.resolve(null),
+    needsMetricsRows
+      ? listSuggestions({
+          inboxBucket: query.inboxTab,
+          ...hkOpts,
+          limit: 500,
+        })
+      : Promise.resolve([]),
+    useSqlActiveMetrics ? loadActiveInboxReviewMetrics(hk) : Promise.resolve(null),
+    useSqlActiveMetrics ? loadActiveInboxPriorityCounts(hk) : Promise.resolve(null),
+    getRuntimeConfigForUi(),
+    query.isExecution
+      ? listExecutionActions(hkOpts)
+      : Promise.resolve([] as ExecutionAction[]),
+  ]);
 
   return {
     primaryKpis,
@@ -85,6 +102,8 @@ async function loadActionCenterPageDataUncached(
     executionActions,
     inboxPageResult,
     metricsRawRows,
+    activeReviewMetrics,
+    priorityFilterCounts,
     runtimeConfig,
   };
 }

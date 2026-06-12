@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import type { PriorityFilter } from "@/lib/priority-filter";
+import type {
+  PriorityFilter,
+} from "@/lib/priority-filter";
+import type { ActiveInboxPriorityCounts } from "@/lib/tracking/inbox-review-metrics";
 import { stripPaneSelectionParams } from "@/lib/action-center-nav";
 
 const PRIORITY_TABS: {
@@ -35,12 +38,15 @@ function buildPriorityHref(
 export function ActionReviewFilters({
   hk,
   rows,
+  priorityCounts: priorityCountsProp,
   currentPriority,
   compact = false,
   embedded = false,
 }: {
   hk?: string;
-  rows: { suggestion: { 优先级?: string }; outcome: unknown }[];
+  rows?: { suggestion: { 优先级?: string }; outcome: unknown }[];
+  /** SQL 聚合计数；提供时不再依赖 rows 全量扫描 */
+  priorityCounts?: ActiveInboxPriorityCounts;
   currentPriority: PriorityFilter;
   compact?: boolean;
   /** Inline inside DataListToolbar — no outer margin or bordered tray */
@@ -48,12 +54,12 @@ export function ActionReviewFilters({
 }) {
   const sp = useSearchParams();
 
-  const priorityCounts: Record<PriorityFilter, number> = {
-    all: rows.length,
-    高: rows.filter((r) => r.suggestion.优先级 === "高").length,
-    中: rows.filter((r) => r.suggestion.优先级 === "中").length,
-    低: rows.filter((r) => r.suggestion.优先级 === "低").length,
-    pending: rows.filter((r) => !r.outcome).length,
+  const priorityCounts: Record<PriorityFilter, number> = priorityCountsProp ?? {
+    all: rows?.length ?? 0,
+    高: rows?.filter((r) => r.suggestion.优先级 === "高").length ?? 0,
+    中: rows?.filter((r) => r.suggestion.优先级 === "中").length ?? 0,
+    低: rows?.filter((r) => r.suggestion.优先级 === "低").length ?? 0,
+    pending: rows?.filter((r) => !r.outcome).length ?? 0,
   };
 
   return (

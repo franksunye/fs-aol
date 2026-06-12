@@ -38,7 +38,6 @@ import {
 } from "@/lib/action-center-tabs";
 import { calendarHref } from "@/lib/calendar-nav";
 import { ActionExecutionView } from "@/components/action-center/execution/action-execution-view";
-import type { ExecutionAction } from "@/lib/action-execution-mock";
 import type { SuggestionRow } from "@/lib/suggestions";
 import type { ClosedLoopFilter } from "@/lib/execution-status";
 import {
@@ -143,6 +142,8 @@ export default async function ActionCenterPage({
     executionActions,
     inboxPageResult,
     metricsRawRows,
+    activeReviewMetrics,
+    priorityFilterCounts,
     runtimeConfig,
   } = await loadActionCenterPageData({
     housekeeperId: hkFilter,
@@ -186,9 +187,12 @@ export default async function ActionCenterPage({
     bindingOverrides: runtimeConfig?.runtime.config.binding_overrides,
   };
   const workItems = pageRows.map((row) => mapFollowUpRow(row, followUpCtx));
-  const metrics = isActiveInbox
-    ? computeActionReviewMetricCards(beforePriority)
-    : null;
+  const metrics =
+    isActiveInbox && activeReviewMetrics
+      ? activeReviewMetrics
+      : isActiveInbox
+        ? computeActionReviewMetricCards(beforePriority)
+        : null;
   const displayName = hkFilter
     ? housekeeperName(pilots, hkFilter)
     : "管家";
@@ -268,7 +272,8 @@ export default async function ActionCenterPage({
               <Suspense fallback={null}>
                 <ActionReviewFilters
                   hk={hkFilter}
-                  rows={beforePriority}
+                  rows={priorityFilterCounts ? undefined : beforePriority}
+                  priorityCounts={priorityFilterCounts ?? undefined}
                   currentPriority={priorityFilter}
                   compact
                   embedded
@@ -302,7 +307,8 @@ export default async function ActionCenterPage({
           <Suspense fallback={null}>
             <ActionReviewFilters
               hk={hkFilter}
-              rows={beforePriority}
+              rows={priorityFilterCounts ? undefined : beforePriority}
+              priorityCounts={priorityFilterCounts ?? undefined}
               currentPriority={priorityFilter}
               compact
             />
