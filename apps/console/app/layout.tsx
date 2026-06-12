@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agent Console · Follow-up",
-  description: "FS-AOL · 看见并反馈 Agent 跟进建议",
+  title: "Agent Console",
+  description: "Agent Ops · 看见并反馈 Agent 跟进建议",
 };
 
 export default function RootLayout({

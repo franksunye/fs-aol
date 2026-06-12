@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
+import { BrandMark } from "@/components/brand-mark";
 import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
 
 export function LoginForm() {
@@ -44,11 +45,17 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm p-6">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-lg font-semibold">Agent Console</h1>
-          <p className="text-muted-foreground text-sm">
-            登录后进入 AOL 运营驾驶舱
-          </p>
+        <div className="flex flex-col gap-3">
+          <BrandMark className="size-10" letterClassName="text-lg" />
+          <div>
+            <h1 className="text-lg font-semibold">Agent Console</h1>
+            <p className="text-muted-foreground text-sm">
+              登录后进入 Agent 运营驾驶舱
+            </p>
+            <p className="text-muted-foreground/80 mt-0.5 text-xs">
+              Agent Ops · Agent Operations Layer
+            </p>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="username">用户名</Label>
