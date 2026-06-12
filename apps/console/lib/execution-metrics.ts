@@ -1,6 +1,9 @@
 import type { ExecutionStatus } from "./execution-status";
 import { type ExecutionSummary } from "./action-execution-mock";
-import { summarizeActionFlow } from "./tracking/action-flow-summary";
+import {
+  summarizeActionFlow,
+  type ActionFlowSummary,
+} from "./tracking/action-flow-summary";
 
 export type ExecutionDataSource = "execution" | "fallback";
 
@@ -21,9 +24,25 @@ const EMPTY_SUMMARY: ExecutionSummary = {
   timeoutAnomalyDelta: 0,
 };
 
-function flowToSummary(
-  flow: Awaited<ReturnType<typeof summarizeActionFlow>>
-): ExecutionSummary {
+export function executionMetricsFromFlow(
+  flow: ActionFlowSummary
+): ExecutionMetricsResult {
+  const total =
+    flow.pendingDispatch +
+    flow.dispatched +
+    flow.inProgress +
+    flow.withFeedback +
+    flow.timeoutAnomaly;
+  if (total > 0) {
+    return {
+      ...flowToSummary(flow),
+      dataSource: "execution",
+    };
+  }
+  return { ...EMPTY_SUMMARY, dataSource: "execution" };
+}
+
+function flowToSummary(flow: ActionFlowSummary): ExecutionSummary {
   return {
     pendingDispatch: flow.pendingDispatch,
     pendingDispatchDelta: 0,
@@ -42,20 +61,7 @@ export async function loadExecutionMetrics(
   hk?: string
 ): Promise<ExecutionMetricsResult> {
   try {
-    const flow = await summarizeActionFlow(hk);
-    const total =
-      flow.pendingDispatch +
-      flow.dispatched +
-      flow.inProgress +
-      flow.withFeedback +
-      flow.timeoutAnomaly;
-    if (total > 0) {
-      return {
-        ...flowToSummary(flow),
-        dataSource: "execution",
-      };
-    }
-    return { ...EMPTY_SUMMARY, dataSource: "execution" };
+    return executionMetricsFromFlow(await summarizeActionFlow(hk));
   } catch {
     return { ...EMPTY_SUMMARY, dataSource: "fallback" };
   }

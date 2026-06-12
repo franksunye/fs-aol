@@ -1,6 +1,5 @@
-import { countInboxBuckets } from "./suggestions";
-import { loadExecutionMetrics } from "./execution-metrics";
-import { countPendingActions } from "./tracking/actions";
+import { executionMetricsFromFlow, loadExecutionMetrics } from "./execution-metrics";
+import { loadWorkbenchShellSnapshot } from "./data/read-models/workbench-shell";
 import type { InboxBucketCounts } from "./tracking/types";
 import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 
@@ -76,29 +75,37 @@ function buildPrimaryFromSources(
   ];
 }
 
+export function resolveActionCenterPrimaryKpis(
+  inbox: InboxBucketCounts,
+  pendingExecution: number,
+  flow: Awaited<ReturnType<typeof loadExecutionMetrics>>
+): ActionCenterPrimaryKpi[] {
+  const actionsTotal = pendingExecution + inbox.execution;
+  const hasSignal =
+    inbox.active > 0 ||
+    inbox.execution > 0 ||
+    inbox.closed > 0 ||
+    flow.dataSource !== "fallback" ||
+    actionsTotal > 0;
+
+  if (hasSignal) {
+    return buildPrimaryFromSources(inbox, actionsTotal, flow);
+  }
+  return FALLBACK_PRIMARY;
+}
+
 export async function loadActionCenterPrimaryKpis(
   hk?: string
 ): Promise<ActionCenterPrimaryKpi[]> {
   try {
-    const [inbox, flow, pendingActions] = await Promise.all([
-      countInboxBuckets(hk),
-      loadExecutionMetrics(hk),
-      countPendingActions(hk),
-    ]);
-    const actionsTotal = pendingActions + inbox.execution;
-    const hasSignal =
-      inbox.active > 0 ||
-      inbox.execution > 0 ||
-      inbox.closed > 0 ||
-      flow.dataSource !== "fallback" ||
-      actionsTotal > 0;
-
-    if (hasSignal) {
-      return buildPrimaryFromSources(inbox, actionsTotal, flow);
-    }
+    const shell = await loadWorkbenchShellSnapshot(hk);
+    const flow = executionMetricsFromFlow(shell.flow);
+    return resolveActionCenterPrimaryKpis(
+      shell.buckets,
+      shell.pendingExecution,
+      flow
+    );
   } catch {
-    // Turso 不可用时回退演示数据
+    return FALLBACK_PRIMARY;
   }
-
-  return FALLBACK_PRIMARY;
 }

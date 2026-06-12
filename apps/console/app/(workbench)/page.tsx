@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  listSuggestions,
-  listSuggestionsPage,
-  countInboxBuckets,
-} from "@/lib/suggestions";
+import { loadActionCenterPageData } from "@/lib/data";
 import {
   parseDataListPage,
   parseDataListPageSize,
@@ -13,7 +9,6 @@ import {
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
 import { ActionReviewFilters } from "@/components/action-center/action-review-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
-import { getRuntimeConfigForUi } from "@/lib/runtime-config/store";
 import { ActionReviewList } from "@/components/action-center/action-review-list";
 import { filterActionReviewsByQuery } from "@/lib/action-review-search";
 import { EmptyState } from "@/components/action-center/empty-state";
@@ -46,12 +41,6 @@ import { ActionExecutionView } from "@/components/action-center/execution/action
 import type { ExecutionAction } from "@/lib/action-execution-mock";
 import type { SuggestionRow } from "@/lib/suggestions";
 import type { ClosedLoopFilter } from "@/lib/execution-status";
-import {
-  countPendingActions,
-  listExecutionActions,
-} from "@/lib/tracking/actions";
-import { loadActionCenterPrimaryKpis } from "@/lib/action-center-metrics";
-import { loadExecutionMetrics } from "@/lib/execution-metrics";
 import {
   buildFlowSecondaryMetrics,
   buildReviewSecondaryMetrics,
@@ -137,12 +126,6 @@ export default async function ActionCenterPage({
   const priorityFilter = parsePriorityFilter(sp.priority);
   const selectedKey = parseActionReviewPaneKey(sp.key);
   const pilots = loadPilotHousekeepers();
-  const [executionCount, executionActions] = await Promise.all([
-    countPendingActions(hkFilter),
-    isExecution
-      ? listExecutionActions(hkFilter ? { housekeeperId: hkFilter } : {})
-      : Promise.resolve([] as ExecutionAction[]),
-  ]);
   const sortKey = parseActionReviewSortKey(sp.sort);
   const listPage = parseDataListPage(sp.page);
   const listPageSize = parseDataListPageSize(sp.pageSize);
@@ -152,34 +135,25 @@ export default async function ActionCenterPage({
     !sp.q?.trim() &&
     !priorityFilter;
 
-  const [
+  const {
     primaryKpis,
     flowSummary,
     tabCounts,
+    executionCount,
+    executionActions,
     inboxPageResult,
     metricsRawRows,
     runtimeConfig,
-  ] = await Promise.all([
-    loadActionCenterPrimaryKpis(hkFilter),
-    loadExecutionMetrics(hkFilter),
-    countInboxBuckets(hkFilter),
-    canDbPaginate
-      ? listSuggestionsPage({
-          inboxBucket: inboxTab,
-          housekeeperId: hkFilter,
-          page: listPage,
-          pageSize: listPageSize,
-        })
-      : Promise.resolve(null),
-    isInboxData && (!canDbPaginate || isActiveInbox)
-      ? listSuggestions({
-          inboxBucket: inboxTab,
-          housekeeperId: hkFilter,
-          limit: 500,
-        })
-      : Promise.resolve([]),
-    getRuntimeConfigForUi(),
-  ]);
+  } = await loadActionCenterPageData({
+    housekeeperId: hkFilter,
+    isExecution,
+    inboxTab,
+    isInboxData,
+    isActiveInbox,
+    canDbPaginate,
+    listPage,
+    listPageSize,
+  });
 
   const rawRows =
     canDbPaginate && inboxPageResult

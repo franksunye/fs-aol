@@ -1,4 +1,9 @@
 import { db, ensureSchema, TABLE_ACTIONS, TABLE_LOGS, TABLE_TRACES } from "../db";
+import {
+  aggregateRunsSummary,
+  countTracesForRuns,
+  traceListFromClause,
+} from "./runs-read";
 import { mapTraceToRun, parseTraceRunId } from "../adapters/run";
 import type { MockRun, RunQuickFilter } from "../runs-mock";
 import { mapTraceRow } from "./mappers";
@@ -32,21 +37,11 @@ async function loadTraceListRows(options: {
   offset: number;
 }): Promise<TraceListRow[]> {
   await ensureSchema();
-  const hk = options.housekeeperId?.trim();
-  const where: string[] = [];
-  const args: (string | number)[] = [];
-  if (hk) {
-    where.push("l.housekeeper_id = ?");
-    args.push(hk);
-  }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const { sql: fromSql, args } = traceListFromClause(options.housekeeperId);
   const res = await db.execute({
     sql: `SELECT t.*, l.dedupe_key, l.order_num, l.event_type, l.housekeeper_id, l.suggestion,
-                 (SELECT COUNT(*) FROM ${TABLE_TRACES} t2
-                  WHERE t2.work_order_id = t.work_order_id AND t2.id <= t.id) AS analysis_round
-          FROM ${TABLE_TRACES} t
-          LEFT JOIN ${TABLE_LOGS} l ON l.work_order_id = t.work_order_id
-          ${whereSql}
+                 ROW_NUMBER() OVER (PARTITION BY t.work_order_id ORDER BY t.id) AS analysis_round
+          ${fromSql}
           ORDER BY t.created_at DESC
           LIMIT ? OFFSET ?`,
     args: [...args, options.limit, options.offset],
@@ -129,23 +124,7 @@ export async function listRunsPage(
     };
   }
 
-  await ensureSchema();
-  const hk = options.housekeeperId?.trim();
-  const where: string[] = [];
-  const args: (string | number)[] = [];
-  if (hk) {
-    where.push("l.housekeeper_id = ?");
-    args.push(hk);
-  }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-  const countRes = await db.execute({
-    sql: `SELECT COUNT(*) AS c FROM ${TABLE_TRACES} t
-          LEFT JOIN ${TABLE_LOGS} l ON l.work_order_id = t.work_order_id
-          ${whereSql}`,
-    args: [...args],
-  });
-  const total = Number((countRes.rows as { c?: number }[])[0]?.c ?? 0);
+  const total = await countTracesForRuns(options.housekeeperId);
   const offset = (page - 1) * pageSize;
   const rows = await loadTraceListRows({
     housekeeperId: options.housekeeperId,
@@ -171,8 +150,7 @@ export async function getRunById(runId: string): Promise<MockRun | null> {
   await ensureSchema();
   const res = await db.execute({
     sql: `SELECT t.*, l.dedupe_key, l.order_num, l.event_type, l.suggestion,
-                 (SELECT COUNT(*) FROM ${TABLE_TRACES} t2
-                  WHERE t2.work_order_id = t.work_order_id AND t2.id <= t.id) AS analysis_round
+                 ROW_NUMBER() OVER (PARTITION BY t.work_order_id ORDER BY t.id) AS analysis_round
           FROM ${TABLE_TRACES} t
           LEFT JOIN ${TABLE_LOGS} l ON l.work_order_id = t.work_order_id
           WHERE t.id = ?
@@ -218,31 +196,15 @@ export async function computeRunsSummaryFromDb(options?: {
   avgDurationSec: number;
   avgDurationDelta: number;
 }> {
-  const { runs, total } = await listRunsPage({
-    housekeeperId: options?.housekeeperId,
-    page: 1,
-    pageSize: 200,
-  });
-  const success = runs.filter((r) => r.status === "success").length;
-  const anomaly = runs.filter((r) => r.status === "anomaly").length;
-  const avg =
-    runs.length > 0
-      ? runs.reduce((s, r) => s + r.durationSec, 0) / runs.length
-      : 0;
-  const today = new Date().toISOString().slice(0, 10);
-  const todayRuns = runs.filter((r) => {
-    const d = r.startedAt;
-    return d.includes(today.slice(5).replace("-", "/"));
-  }).length;
-
+  const agg = await aggregateRunsSummary(options?.housekeeperId);
   return {
-    todayRuns: todayRuns || total,
+    todayRuns: agg.todayRuns || agg.total,
     todayRunsDelta: 0,
-    success,
+    success: agg.success,
     successDelta: 0,
-    anomaly,
+    anomaly: agg.anomaly,
     anomalyDelta: 0,
-    avgDurationSec: Math.round(avg * 10) / 10,
+    avgDurationSec: agg.avgDurationSec,
     avgDurationDelta: 0,
   };
 }
