@@ -15,6 +15,33 @@ export type BindingField = {
   description?: string;
 };
 
+export type WorkbenchFacetResolver =
+  | { kind: "quote_amount_yuan" }
+  | { kind: "suggestion_path"; path: string; format?: "text" | "currency_cny" }
+  | { kind: "row_field"; field: string };
+
+export type WorkbenchFacetSpec = {
+  id: string;
+  label: string;
+  resolver: WorkbenchFacetResolver;
+};
+
+export type WorkbenchDisplaySpec = {
+  related_object?: {
+    id_fields?: string[];
+    type_label?: string;
+  };
+  source_system?: { id: string; label: string };
+  facet_catalog?: WorkbenchFacetSpec[];
+  default_enabled?: string[];
+};
+
+export type BindingWorkbenchOverrides = {
+  workbench_display?: {
+    enabled_facets?: string[];
+  };
+};
+
 export type IntegrationBinding = {
   id: string;
   version: string;
@@ -38,6 +65,7 @@ export type IntegrationBinding = {
       via: string;
       phase: string;
     }[];
+    workbench_display?: WorkbenchDisplaySpec;
   }[];
   code_tables: Record<string, Record<string, string>>;
   event_rules?: {
@@ -85,6 +113,17 @@ export type FsmSyncHealth = {
   mongoConfigured: boolean;
 };
 
+export type MergedWorkbenchDisplay = {
+  bindingKey: string;
+  relatedObject: {
+    idFields: string[];
+    typeLabel: string;
+  };
+  sourceSystem: { id: string; label: string };
+  facetCatalog: WorkbenchFacetSpec[];
+  enabledFacetIds: string[];
+};
+
 export type FsmIntegrationView = {
   binding: IntegrationBinding;
   bindingId: string;
@@ -92,4 +131,5 @@ export type FsmIntegrationView = {
   activeEventStatuses: string[];
   syncHealth: FsmSyncHealth;
   humanSummary: string;
+  workbenchDisplay: MergedWorkbenchDisplay | null;
 };

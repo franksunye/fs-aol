@@ -2,6 +2,7 @@ import type { RuntimeConfigPublic } from "@/lib/runtime-config/types";
 import type { EngineRuntimeSnapshot } from "@/lib/tracking/engine-runtime";
 import { loadBinding } from "./load";
 import type { FsmIntegrationView, FsmSyncHealth } from "./types";
+import { mergeWorkbenchDisplay } from "./workbench-display";
 
 function num(v: unknown): number | null {
   if (v == null || v === "") return null;
@@ -77,5 +78,9 @@ export function mergeFsmLiveView(
     activeEventStatuses: statuses,
     syncHealth: loadFsmSyncHealth(runtime, snapshot),
     humanSummary: buildHumanSummary(binding, statuses, runtime?.config ?? null),
+    workbenchDisplay: mergeWorkbenchDisplay(
+      binding,
+      runtime?.config.binding_overrides
+    ),
   };
 }

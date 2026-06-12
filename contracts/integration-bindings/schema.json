@@ -78,6 +78,53 @@
                 "phase": { "type": "string" }
               }
             }
+          },
+          "workbench_display": {
+            "type": "object",
+            "properties": {
+              "related_object": {
+                "type": "object",
+                "properties": {
+                  "id_fields": { "type": "array", "items": { "type": "string" } },
+                  "type_label": { "type": "string" }
+                }
+              },
+              "source_system": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" }
+                }
+              },
+              "facet_catalog": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label", "resolver"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "label": { "type": "string" },
+                    "resolver": {
+                      "type": "object",
+                      "required": ["kind"],
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["quote_amount_yuan", "suggestion_path", "row_field"]
+                        },
+                        "path": { "type": "string" },
+                        "format": { "type": "string" },
+                        "field": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "default_enabled": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
           }
         }
       }

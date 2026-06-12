@@ -122,13 +122,13 @@ Agent 产出
 | 级 | 优先级 |
 | Action 标题 | 主行动；空则 fallback 原因摘要 |
 | 来源 Agent | `{ id, label }`，未来多 Agent 动态 |
-| 关联对象 | `{ id, type }`，如工单 ID +「工单」 |
+| 关联对象 | `{ id, type, facets? }`；主行工单号，副行 `类型 · facet 值`（如 `工单 · ¥4.1万`）。楔子字段（金额等）作 **facets**，禁止独立主列 |
 | 来源系统 | `{ id, label }`，如 XLink |
 | 执行人 | 当前=管家 |
 | 状态 | Tab 内语义：审核态 / 流转态 / 终态 |
 | 时间 | 生成时间或截止时间 |
 
-**禁止在 Work 列表主列出现**（沉入详情 / `metadata`）：商机阶段、金额、停滞天数、维修部位等**单一业务对象**字段。
+**禁止在 Work 列表主列出现**（沉入详情 / `metadata` 或 `relatedObject.facets`）：商机阶段、停滞天数、维修部位等**独立主列**字段。金额等楔子字段仅允许作为关联对象 **facets**（见 [PUB-25](PUB-25-v045-workbench-display-facets.md)）。
 
 **列表控件实现**（Frame 布局、分页、列设置、URL scope）见 [PUB-19](PUB-19-console-data-list.md)。
 

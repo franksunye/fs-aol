@@ -14,7 +14,9 @@ export function followUpListBadges(item: WorkItem): ListBadge[] {
     },
     {
       key: "related",
-      label: `${d.relatedObject.type} ${d.relatedObject.id}`,
+      label: d.relatedObject.facets?.length
+        ? `${d.relatedObject.type} ${d.relatedObject.id} · ${d.relatedObject.facets.map((f) => f.value).join(" · ")}`
+        : `${d.relatedObject.type} ${d.relatedObject.id}`,
       variant: "outline",
     },
     {

@@ -15,7 +15,22 @@ import {
   XLINK_SOURCE_SYSTEM,
 } from "../action-list-display";
 import { formatListTimestamp, actionReviewSummaryPreview } from "../action-review-display";
+import { loadBinding } from "../integration-bindings/load";
+import {
+  mergeWorkbenchDisplay,
+  resolveRelatedObject,
+} from "../integration-bindings/workbench-display";
+import type { BindingOverridesJson } from "../runtime-config/types";
 import type { SuggestionDoc, SuggestionRow } from "../tracking";
+
+export type FollowUpMapperContext = {
+  bindingOverrides?: BindingOverridesJson | null;
+};
+
+function xlinkWorkbenchMerged(ctx?: FollowUpMapperContext) {
+  if (!ctx) return null;
+  return mergeWorkbenchDisplay(loadBinding("xlink-fsm"), ctx.bindingOverrides);
+}
 
 function mapPriority(raw?: string): WorkItemPriority | undefined {
   if (raw === "高") return "high";
@@ -49,19 +64,35 @@ function buildRecommendation(s: SuggestionDoc) {
   };
 }
 
-function buildListDisplay(row: SuggestionRow): WorkItemListDisplay {
+function buildListDisplay(
+  row: SuggestionRow,
+  ctx?: FollowUpMapperContext
+): WorkItemListDisplay {
   const s = row.suggestion;
   const priority = mapPriority(s.优先级);
   const pilots = loadPilotHousekeepers();
+  const merged = xlinkWorkbenchMerged(ctx);
+  const related = merged
+    ? resolveRelatedObject(merged, row)
+    : {
+        id: row.orderNum || row.workOrderId,
+        type: WORK_ORDER_OBJECT_TYPE,
+        facets: [] as { label: string; value: string }[],
+      };
+  const sourceSystem = merged
+    ? { id: merged.sourceSystem.id, label: merged.sourceSystem.label }
+    : XLINK_SOURCE_SYSTEM;
+
   return {
     title: actionTitle(s),
     priorityLabel: priorityDisplayLabel(priority, s.优先级),
     sourceAgent: FOLLOW_UP_SOURCE_AGENT,
     relatedObject: {
-      id: row.orderNum || row.workOrderId,
-      type: WORK_ORDER_OBJECT_TYPE,
+      id: related.id,
+      type: related.type,
+      facets: related.facets.length ? related.facets : undefined,
     },
-    sourceSystem: XLINK_SOURCE_SYSTEM,
+    sourceSystem,
     executorLabel: housekeeperName(pilots, row.housekeeperId),
     statusLabel: actionInboxStatusLabel(row),
     timestamp: formatListTimestamp(row.processedAt),
@@ -69,7 +100,10 @@ function buildListDisplay(row: SuggestionRow): WorkItemListDisplay {
 }
 
 /** Follow-up wedge：SuggestionRow → 平台 WorkItem */
-export function mapFollowUpRow(row: SuggestionRow): WorkItem {
+export function mapFollowUpRow(
+  row: SuggestionRow,
+  ctx?: FollowUpMapperContext
+): WorkItem {
   const s = row.suggestion;
   const priority = mapPriority(s.优先级);
 
@@ -105,10 +139,13 @@ export function mapFollowUpRow(row: SuggestionRow): WorkItem {
       analyzedStaleDays: row.analyzedStaleDays,
       blockerType: row.blocker?.blockerType ?? null,
     },
-    listDisplay: buildListDisplay(row),
+    listDisplay: buildListDisplay(row, ctx),
   };
 }
 
-export function mapFollowUpRows(rows: SuggestionRow[]): WorkItem[] {
-  return rows.map(mapFollowUpRow);
+export function mapFollowUpRows(
+  rows: SuggestionRow[],
+  ctx?: FollowUpMapperContext
+): WorkItem[] {
+  return rows.map((row) => mapFollowUpRow(row, ctx));
 }

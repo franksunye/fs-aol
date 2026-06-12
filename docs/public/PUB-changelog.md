@@ -39,6 +39,7 @@
 | 2026-06-04 | **v0.3.4** ui-industrial | 空态/错态/骨架、a11y、md 以下侧栏 Sheet；生产可演示抛光。 | `v0.3.4` |
 | 2026-06-04 | **v0.3.5** pilot-cap | **`run_summary`** JSON 日志、`pilot-cron` runbook、真发切换清单；**v0.3 线封版**。 | `v0.3.5` |
 | 2026-06-11 | **v0.4.2** runtime-config-plane | **Console 控制面**：Turso `runtime_config` + AES 加密密钥；LLM/FSM/集成/Agent 设置可保存；`/api/runtime/*` + 连接测试；引擎 `Config.load()`；`migrate-env` + `e2e-v042` + PUB-22。 | `v0.4.2` |
+| 2026-06-11 | **v0.4.5** workbench-display-facets | **关联对象 facets**：binding `workbench_display` + Turso `binding_overrides`；Action 列展示合同金额；集成协议 Tab 可勾选保存；`workbench-display.ts` + PUB-25。 | — |
 | 2026-06-11 | **v0.4.4** product-shell-live | **产品壳装入真实数据**：Agent/模型策略/集成三页 mock 布局 live 化；`lib/adapters/*`；`GET /api/runtime/config/revisions`；集成三栏注册表 + FSM 深链；PUB-24。 | — |
 | 2026-06-11 | **v0.4.3** integration-protocol-surface | **集成协议面**：`xlink-fsm` Binding + mapper；FSM 工作台四 Tab（连接/摄取/协议/健康）；样例转换 API；Agent FSM 只读镜像；PUB-23。 | — |
 | 2026-06-11 | **v0.4.1** follow-up-live-surface | **真实数据接活**：日历/评估/总览 Follow-up 主路径 live；引擎脱敏配置快照 `aol_engine_runtime_snapshots`；集成三连接器 + Agent 设置/模型策略只读镜像；治理审批审计 feed；`v041-live-surface-audit` + `e2e-v041-local.sh`。 | `v0.4.1` |

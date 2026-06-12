@@ -6,9 +6,15 @@ export type ActionEntityRef = {
   label: string;
 };
 
+export type ActionRelatedFacet = {
+  label: string;
+  value: string;
+};
+
 export type ActionRelatedObject = {
   id: string;
   type: string;
+  facets?: ActionRelatedFacet[];
 };
 
 export type ActionListDisplay = {

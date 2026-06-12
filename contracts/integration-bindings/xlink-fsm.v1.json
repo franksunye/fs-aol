@@ -96,7 +96,22 @@
           "via": "completed_at",
           "phase": "post_fetch"
         }
-      ]
+      ],
+      "workbench_display": {
+        "related_object": {
+          "id_fields": ["order_num", "work_order_id"],
+          "type_label": "工单"
+        },
+        "source_system": { "id": "xlink", "label": "XLink" },
+        "facet_catalog": [
+          {
+            "id": "quote_amount",
+            "label": "合同金额",
+            "resolver": { "kind": "quote_amount_yuan" }
+          }
+        ],
+        "default_enabled": ["quote_amount"]
+      }
     }
   ],
   "code_tables": {

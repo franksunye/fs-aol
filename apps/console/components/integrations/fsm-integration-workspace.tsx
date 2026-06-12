@@ -379,6 +379,9 @@ export function FsmIntegrationWorkspace({
             <IntegrationProtocolPanel
               binding={view.binding}
               activeEventStatuses={view.activeEventStatuses}
+              workbenchDisplay={view.workbenchDisplay}
+              runtime={runtime}
+              onRuntimeSaved={setRuntime}
             />
           </TabsContent>
 

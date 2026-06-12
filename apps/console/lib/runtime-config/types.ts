@@ -13,7 +13,16 @@ export const SECRET_KEYS = [
 export type SecretKey = (typeof SECRET_KEYS)[number];
 export type RuntimeSecrets = Record<SecretKey, string>;
 
+export type BindingOverridesJson = {
+  [bindingKey: string]: {
+    workbench_display?: {
+      enabled_facets?: string[];
+    };
+  };
+};
+
 export type RuntimeConfigJson = {
+  binding_overrides?: BindingOverridesJson;
   dry_run: boolean;
   fsm_source: string;
   fsm_mongo_db: string;

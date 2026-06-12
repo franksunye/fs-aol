@@ -1,12 +1,23 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, Play } from "lucide-react";
+import { Loader2, Play, RotateCcw, Save } from "lucide-react";
+import { toast } from "sonner";
 import type {
   IntegrationBinding,
   MappedWorkOrder,
+  MergedWorkbenchDisplay,
 } from "@/lib/integration-bindings/types";
+import {
+  mergeWorkbenchDisplay,
+  resolveRelatedObject,
+  resolverKindLabel,
+  WORKBENCH_FACET_SAMPLE_ROW,
+} from "@/lib/integration-bindings/workbench-display";
+import type { RuntimeConfigPublic } from "@/lib/runtime-config/client";
+import { saveRuntimeConfig } from "@/lib/runtime-config/client";
+import { RelatedObjectCell } from "@/components/action-center/related-object-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,12 +63,167 @@ function JsonBlock({
   );
 }
 
+function WorkbenchDisplayCard({
+  binding,
+  workbenchDisplay,
+  runtime,
+  onRuntimeSaved,
+}: {
+  binding: IntegrationBinding;
+  workbenchDisplay: MergedWorkbenchDisplay | null;
+  runtime: RuntimeConfigPublic;
+  onRuntimeSaved: (next: RuntimeConfigPublic) => void;
+}) {
+  const catalog = workbenchDisplay?.facetCatalog ?? [];
+  const bindingKey = workbenchDisplay?.bindingKey ?? `${binding.id}@${binding.version}`;
+  const defaultEnabled = useMemo(() => {
+    const spec = binding.objects.find((o) => o.workbench_display)?.workbench_display;
+    return spec?.default_enabled ?? catalog.map((f) => f.id);
+  }, [binding.objects, catalog]);
+
+  const [enabledIds, setEnabledIds] = useState<string[]>(
+    workbenchDisplay?.enabledFacetIds ?? defaultEnabled
+  );
+  const [facetBusy, setFacetBusy] = useState(false);
+
+  useEffect(() => {
+    setEnabledIds(workbenchDisplay?.enabledFacetIds ?? defaultEnabled);
+  }, [workbenchDisplay?.enabledFacetIds, defaultEnabled]);
+
+  const previewRelated = useMemo(() => {
+    const merged =
+      workbenchDisplay ??
+      mergeWorkbenchDisplay(binding, runtime.config.binding_overrides);
+    if (!merged) return null;
+    const previewMerged = { ...merged, enabledFacetIds: enabledIds };
+    return resolveRelatedObject(previewMerged, WORKBENCH_FACET_SAMPLE_ROW);
+  }, [workbenchDisplay, binding, runtime.config.binding_overrides, enabledIds]);
+
+  const facetsDirty = useMemo(() => {
+    const current = workbenchDisplay?.enabledFacetIds ?? defaultEnabled;
+    if (current.length !== enabledIds.length) return true;
+    return current.some((id, i) => id !== enabledIds[i]);
+  }, [workbenchDisplay?.enabledFacetIds, defaultEnabled, enabledIds]);
+
+  const toggleFacet = (id: string) => {
+    setEnabledIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const saveFacets = async () => {
+    setFacetBusy(true);
+    try {
+      const nextOverrides = {
+        ...(runtime.config.binding_overrides ?? {}),
+        [bindingKey]: {
+          ...(runtime.config.binding_overrides?.[bindingKey] ?? {}),
+          workbench_display: { enabled_facets: enabledIds },
+        },
+      };
+      const next = await saveRuntimeConfig(
+        { binding_overrides: nextOverrides },
+        "Workbench display facets updated"
+      );
+      onRuntimeSaved(next);
+      toast.success("工作台展示已保存", {
+        description: "Action 列表关联对象列将按勾选字段展示",
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "保存失败");
+    } finally {
+      setFacetBusy(false);
+    }
+  };
+
+  const resetFacets = () => setEnabledIds(defaultEnabled);
+
+  if (!catalog.length) return null;
+
+  return (
+    <Card className="gap-0 py-0">
+      <CardContent className="space-y-4 px-4 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold">工作台展示</h3>
+          <DataStateBadge state="live" label="Turso overrides" />
+        </div>
+        <p className="text-muted-foreground text-xs">
+          配置 Action 中心「关联对象」列在工单号与类型下方展示的附加字段（facets）。
+          保存至 runtime_config.binding_overrides，无需发版。
+        </p>
+        <ul className="space-y-2">
+          {catalog.map((facet) => (
+            <li
+              key={facet.id}
+              className="flex items-start gap-2 rounded-md border px-3 py-2"
+            >
+              <input
+                type="checkbox"
+                id={`facet-${facet.id}`}
+                checked={enabledIds.includes(facet.id)}
+                onChange={() => toggleFacet(facet.id)}
+                className="mt-0.5"
+              />
+              <label htmlFor={`facet-${facet.id}`} className="min-w-0 flex-1 cursor-pointer">
+                <span className="text-sm font-medium">{facet.label}</span>
+                <span className="text-muted-foreground ml-2 font-mono text-[10px]">
+                  {facet.id}
+                </span>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {resolverKindLabel(facet.resolver.kind)}
+                </p>
+              </label>
+            </li>
+          ))}
+        </ul>
+        {previewRelated ? (
+          <div className="bg-muted/40 rounded-md border p-3">
+            <p className="text-muted-foreground mb-2 text-xs font-medium">列表预览</p>
+            <RelatedObjectCell related={previewRelated} />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            disabled={facetBusy || !facetsDirty}
+            onClick={saveFacets}
+          >
+            {facetBusy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
+            <span className="ml-1">保存展示字段</span>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={facetBusy}
+            onClick={resetFacets}
+          >
+            <RotateCcw className="size-3.5" />
+            <span className="ml-1">恢复默认</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function IntegrationProtocolPanel({
   binding,
   activeEventStatuses,
+  workbenchDisplay,
+  runtime,
+  onRuntimeSaved,
 }: {
   binding: IntegrationBinding;
   activeEventStatuses: string[];
+  workbenchDisplay?: MergedWorkbenchDisplay | null;
+  runtime?: RuntimeConfigPublic;
+  onRuntimeSaved?: (next: RuntimeConfigPublic) => void;
 }) {
   const [codeSearch, setCodeSearch] = useState("");
   const [sampleBusy, setSampleBusy] = useState(false);
@@ -102,8 +268,17 @@ export function IntegrationProtocolPanel({
     <div className="space-y-4">
       <p className="text-muted-foreground text-sm">
         集成协议由代码契约定义（binding {binding.id}@{binding.version}）。
-        字段映射与码表变更将在后续版本支持 override 编辑。
+        工作台关联对象展示字段可在下方配置；字段映射与码表仍由契约版本管理。
       </p>
+
+      {runtime && onRuntimeSaved ? (
+        <WorkbenchDisplayCard
+          binding={binding}
+          workbenchDisplay={workbenchDisplay ?? null}
+          runtime={runtime}
+          onRuntimeSaved={onRuntimeSaved}
+        />
+      ) : null}
 
       <Card className="gap-0 py-0">
         <CardContent className="space-y-3 px-4 py-4">

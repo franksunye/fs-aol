@@ -13,6 +13,7 @@ import {
 import { loadPilotHousekeepers, housekeeperName } from "@/lib/pilot-housekeepers";
 import { ActionReviewFilters } from "@/components/action-center/action-review-filters";
 import { mapFollowUpRow } from "@/lib/adapters/follow-up";
+import { getRuntimeConfigForUi } from "@/lib/runtime-config/store";
 import { ActionReviewList } from "@/components/action-center/action-review-list";
 import { filterActionReviewsByQuery } from "@/lib/action-review-search";
 import { EmptyState } from "@/components/action-center/empty-state";
@@ -150,23 +151,30 @@ export default async function ActionCenterPage({
     !sp.q?.trim() &&
     !priorityFilter;
 
-  const [primaryKpis, flowSummary, tabCounts, inboxPageResult, metricsRawRows] =
-    await Promise.all([
-      loadActionCenterPrimaryKpis(hkFilter),
-      loadExecutionMetrics(hkFilter),
-      countInboxBuckets(hkOpts),
-      canDbPaginate
-        ? listSuggestionsPage({
-            inboxBucket: inboxTab,
-            ...hkOpts,
-            page: listPage,
-            pageSize: listPageSize,
-          })
-        : Promise.resolve(null),
-      isInboxData
-        ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts, limit: 500 })
-        : Promise.resolve([]),
-    ]);
+  const [
+    primaryKpis,
+    flowSummary,
+    tabCounts,
+    inboxPageResult,
+    metricsRawRows,
+    runtimeConfig,
+  ] = await Promise.all([
+    loadActionCenterPrimaryKpis(hkFilter),
+    loadExecutionMetrics(hkFilter),
+    countInboxBuckets(hkOpts),
+    canDbPaginate
+      ? listSuggestionsPage({
+          inboxBucket: inboxTab,
+          ...hkOpts,
+          page: listPage,
+          pageSize: listPageSize,
+        })
+      : Promise.resolve(null),
+    isInboxData
+      ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts, limit: 500 })
+      : Promise.resolve([]),
+    getRuntimeConfigForUi(),
+  ]);
 
   const rawRows =
     canDbPaginate && inboxPageResult
@@ -195,7 +203,10 @@ export default async function ActionCenterPage({
           listPage * listPageSize
         );
 
-  const workItems = pageRows.map(mapFollowUpRow);
+  const followUpCtx = {
+    bindingOverrides: runtimeConfig?.runtime.config.binding_overrides,
+  };
+  const workItems = pageRows.map((row) => mapFollowUpRow(row, followUpCtx));
   const metrics = isActiveInbox
     ? computeActionReviewMetricCards(beforePriority)
     : null;
