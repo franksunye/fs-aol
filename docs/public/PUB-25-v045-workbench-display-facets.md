@@ -35,7 +35,8 @@ runtime_config.binding_overrides
 
 | kind | 数据源 |
 |------|--------|
-| `quote_amount_yuan` | `suggestion.情况判断.金额与方案` |
+| `quote_amount_yuan` | `suggestion.情况判断.金额与方案`（Agent 认知） |
+| `stale_days_state_at` | `follow_up_logs.state_at` 现算（Mongo `updateTime` 锚点） |
 | `suggestion_path` | JSON path（预留 v0.5） |
 | `row_field` | `SuggestionRow` 顶层/metadata（预留） |
 

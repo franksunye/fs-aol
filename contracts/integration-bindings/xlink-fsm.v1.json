@@ -109,9 +109,14 @@
               "id": "quote_amount",
               "label": "合同金额",
               "resolver": { "kind": "quote_amount_yuan" }
+            },
+            {
+              "id": "stale_days",
+              "label": "滞留",
+              "resolver": { "kind": "stale_days_state_at" }
             }
           ],
-          "default_enabled": ["quote_amount"]
+          "default_enabled": ["quote_amount", "stale_days"]
         }
       }
     }

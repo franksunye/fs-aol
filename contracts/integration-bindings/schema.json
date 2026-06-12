@@ -113,7 +113,12 @@
                           "properties": {
                             "kind": {
                               "type": "string",
-                              "enum": ["quote_amount_yuan", "suggestion_path", "row_field"]
+                              "enum": [
+                                "quote_amount_yuan",
+                                "stale_days_state_at",
+                                "suggestion_path",
+                                "row_field"
+                              ]
                             },
                             "path": { "type": "string" },
                             "format": { "type": "string" },

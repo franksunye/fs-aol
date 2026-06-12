@@ -1,3 +1,4 @@
+import { resolveStaleDays } from "@/lib/compute-stale-days";
 import { parseQuoteAmountYuan } from "@/lib/parse-quote-amount";
 import { formatYuanCompact } from "@/lib/format-yuan";
 import type { BindingOverridesJson } from "@/lib/runtime-config/types";
@@ -95,6 +96,10 @@ function resolveFacetValue(
       const n = parseQuoteAmountYuan(row.suggestion);
       return n != null ? formatYuanCompact(n) : null;
     }
+    case "stale_days_state_at": {
+      const days = resolveStaleDays(row);
+      return days != null && days > 0 ? `${days} 天` : null;
+    }
     case "suggestion_path": {
       const raw = getByPath(row.suggestion, resolver.path);
       if (raw == null || raw === "") return null;
@@ -179,7 +184,7 @@ export const WORKBENCH_FACET_SAMPLE_ROW: SuggestionRow = {
   city: "深圳",
   status: "206",
   processedAt: new Date().toISOString(),
-  stateAt: null,
+  stateAt: new Date(Date.now() - 12 * 86_400_000).toISOString().slice(0, 19),
   inboxBucket: "active",
   outcome: null,
   blocker: null,
@@ -203,6 +208,8 @@ export function resolverKindLabel(kind: WorkbenchFacetSpec["resolver"]["kind"]):
   switch (kind) {
     case "quote_amount_yuan":
       return "从建议 JSON 解析报价金额";
+    case "stale_days_state_at":
+      return "由工单 state_at（Mongo updateTime）现算滞留天数";
     case "suggestion_path":
       return "建议 JSON 字段路径";
     case "row_field":

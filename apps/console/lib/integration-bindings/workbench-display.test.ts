@@ -12,6 +12,7 @@ function testMergeDefaults() {
   const merged = mergeWorkbenchDisplay(binding, {});
   assert.ok(merged);
   assert.ok(merged!.contextColumn.enabledFacetIds.includes("quote_amount"));
+  assert.ok(merged!.contextColumn.enabledFacetIds.includes("stale_days"));
 }
 
 function testResolveQuoteAmountInContext() {
@@ -23,6 +24,9 @@ function testResolveQuoteAmountInContext() {
   const context = resolveContextColumn(merged, WORKBENCH_FACET_SAMPLE_ROW);
   assert.ok(
     context.some((f) => f.label === "合同金额" && f.value.includes("¥"))
+  );
+  assert.ok(
+    context.some((f) => f.label === "滞留" && f.value.includes("天"))
   );
 }
 

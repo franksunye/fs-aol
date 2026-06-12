@@ -17,6 +17,7 @@ export type BindingField = {
 
 export type WorkbenchFacetResolver =
   | { kind: "quote_amount_yuan" }
+  | { kind: "stale_days_state_at" }
   | { kind: "suggestion_path"; path: string; format?: "text" | "currency_cny" }
   | { kind: "row_field"; field: string };
 
