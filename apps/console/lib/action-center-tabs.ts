@@ -5,7 +5,7 @@ import { parseInboxBucket } from "./labels";
 /** Action 中心顶栏视图 */
 export type ActionCenterView = InboxBucket | "execution";
 
-export const ACTION_CENTER_TITLE = "Action中心";
+export const ACTION_CENTER_TITLE = "Actions";
 
 export const ACTION_CENTER_VIEW_LABELS: Record<ActionCenterView, string> = {
   active: "待审核",

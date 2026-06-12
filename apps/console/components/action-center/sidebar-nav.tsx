@@ -127,7 +127,7 @@ export function SidebarNav({
       badge: overviewBadge && overviewBadge > 0 ? overviewBadge : undefined,
     },
     {
-      label: "Action 中心",
+      label: "Actions",
       icon: ListTodo,
       href: actionCenterHref(hk),
       active: onActionCenter,
