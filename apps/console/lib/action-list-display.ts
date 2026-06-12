@@ -1,5 +1,6 @@
 import type { SuggestionDoc, SuggestionRow } from "./tracking";
 import { archiveReasonLabel, decisionLabel } from "./labels";
+import { FOLLOW_UP_SKILL_ID, skillSourceAgent } from "./skills";
 
 export type ActionEntityRef = {
   id: string;
@@ -34,8 +35,7 @@ export type ActionListDisplay = {
 };
 
 export const FOLLOW_UP_SOURCE_AGENT: ActionEntityRef = {
-  id: "follow-up",
-  label: "Follow-up Agent",
+  ...skillSourceAgent(FOLLOW_UP_SKILL_ID),
 };
 
 export const XLINK_SOURCE_SYSTEM: ActionEntityRef = {

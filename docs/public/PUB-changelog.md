@@ -15,6 +15,7 @@
 | [17-console-information-architecture.md](./PUB-17-console-information-architecture.md) | **Console 三层 IA**（Work / Agents / Systems、Action 生命周期、模块路由 SSOT） |
 | [18-aol-industrialization-plan.md](./PUB-18-aol-industrialization-plan.md) | **AOL 工业化计划**（楔子 + 场景样例混合态执行路线） |
 | [19-console-data-list.md](./PUB-19-console-data-list.md) | **Console DataList**（Frame 布局、URL scope、分页、列设置 SSOT） |
+| [26-v046-skill-registry.md](./PUB-26-v046-skill-registry.md) | **v0.4.6 Skill Registry**（多 Agent 前的插件化边界：Agent 是产品表达，Skill 是架构单元） |
 | 私有文档 `docs/private/PRIV-09-business-decisions.md` | 业务口径 ADR（为何 206 only、14 天等） |
 | Git tag | 已封版快照（`v0.1.0` …） |
 
@@ -108,7 +109,8 @@
 
 | 目标版本 | 主题 | 摘要（一句话） | 依赖 |
 | --- | --- | --- | --- |
-| **v0.5.0** | two-real-agents | 新增 2 个真实 Agent，并把 `proof-metrics` 从 Follow-up 证明包升级为多 Agent proof | `v0.4.0` |
+| **v0.4.6** | skill-registry | `[arch]` 多 Agent 前的插件化边界：Follow-up 迁为首个 `SkillDefinition`；新增 Agent 差异落在 prompt/context/tools/schema/policy/adapter/eval。 | `v0.4.5` |
+| **v0.5.0** | two-real-agents | 新增 2 个真实 Agent，并把 `proof-metrics` 从 Follow-up 证明包升级为多 Agent proof | `v0.4.6` |
 | **v0.6.0** | engineering-hardening | 前端 / 后端 / 数据契约 / 性能 / 测试 / CI 工程硬化，达到产品与开源质量门槛 | `v0.5.0` |
 | **v0.7.0** | bilingual-i18n | 支持中文和英文：Console 文案、枚举、日期数字格式、英文 Quickstart 与 sample 数据 | `v0.6.0` |
 | **v0.8.0** | configurable-oss-core | 解耦、产品化、配置化，形成可开源的 AOL Core / Console alpha | `v0.7.0` |

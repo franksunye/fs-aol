@@ -4,8 +4,9 @@
  */
 
 import type { ActionListDisplay } from "./action-list-display";
+import { FOLLOW_UP_SKILL_ID } from "./skills";
 
-export const SKILL_FOLLOW_UP = "follow-up" as const;
+export const SKILL_FOLLOW_UP = FOLLOW_UP_SKILL_ID;
 
 export type SkillId = typeof SKILL_FOLLOW_UP | (string & {});
 

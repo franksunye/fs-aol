@@ -6,8 +6,13 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
+import {
+  FOLLOW_UP_SKILL,
+  QUOTE_REVIEW_SKILL,
+  type SkillStatus,
+} from "./skills";
 
-export type AgentStatus = "enabled" | "draft" | "disabled";
+export type AgentStatus = SkillStatus;
 export type AgentFilterTab = "all" | AgentStatus;
 export type AgentBusinessLine = "all" | "Revenue" | "Operations";
 export type AgentSortKey = "runsToday" | "adoptionRate" | "name";
@@ -53,14 +58,14 @@ export const AGENT_SUMMARY_STATS = {
 
 export const MOCK_AGENTS: MockAgent[] = [
   {
-    id: "follow-up",
-    name: "Follow-up Agent",
-    status: "enabled",
-    businessLine: "Revenue",
+    id: FOLLOW_UP_SKILL.id,
+    name: FOLLOW_UP_SKILL.productName,
+    status: FOLLOW_UP_SKILL.status,
+    businessLine: FOLLOW_UP_SKILL.businessLine,
     icon: Sparkles,
     iconClassName: "bg-primary/10 text-primary",
-    responsibleStage: "待签约",
-    supportedSystems: "CRM · FSM · 通话",
+    responsibleStage: FOLLOW_UP_SKILL.ui.responsibleStage,
+    supportedSystems: FOLLOW_UP_SKILL.ui.supportedSystems,
     runsToday: 42,
     adoptionRate: 68,
     description:
@@ -199,14 +204,14 @@ export const MOCK_AGENTS: MockAgent[] = [
     humanApproval: ["强制结案", "豁免 SLA"],
   },
   {
-    id: "quote-review",
-    name: "Quote Review Agent",
+    id: QUOTE_REVIEW_SKILL.id,
+    name: QUOTE_REVIEW_SKILL.productName,
     status: "disabled",
-    businessLine: "Revenue",
+    businessLine: QUOTE_REVIEW_SKILL.businessLine,
     icon: FileSearch,
     iconClassName: "bg-muted text-muted-foreground",
-    responsibleStage: "报价",
-    supportedSystems: "CRM · 报价",
+    responsibleStage: QUOTE_REVIEW_SKILL.ui.responsibleStage,
+    supportedSystems: QUOTE_REVIEW_SKILL.ui.supportedSystems,
     runsToday: 0,
     adoptionRate: 41,
     description: "复核报价完整性与毛利边界（已停用，仅保留历史配置）。",

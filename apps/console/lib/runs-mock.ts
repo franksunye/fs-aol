@@ -1,3 +1,8 @@
+import { FOLLOW_UP_SKILL, skillSourceAgent } from "./skills";
+
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
+
 export type RunStatus = "success" | "anomaly" | "retried";
 
 export type RunQuickFilter = "all" | RunStatus;
@@ -80,7 +85,7 @@ export const RUNS_TODAY_MOCK_COUNT = 126;
 
 export const RUN_AGENT_OPTIONS = [
   { id: "all", label: "全部 Agent" },
-  { id: "follow-up", label: "Follow-up Agent" },
+  skillSourceAgent(FOLLOW_UP_SKILL.id),
   { id: "estimate", label: "Estimate Agent" },
   { id: "customer-follow", label: "客户跟进 Agent" },
   { id: "contract", label: "合同管理 Agent" },
@@ -114,8 +119,8 @@ export function getRunsMockData(): MockRun[] {
   return [
     run({
       id: "RUN-20250609-1287",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "定时扫描",
       relatedObjectId: "GD2025060764",
       relatedObjectType: "商机",
@@ -303,8 +308,8 @@ export function getRunsMockData(): MockRun[] {
     }),
     run({
       id: "RUN-20250609-1285",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "手动触发",
       relatedObjectId: "WO-88421",
       relatedObjectType: "工单",
@@ -459,8 +464,8 @@ export function getRunsMockData(): MockRun[] {
     }),
     run({
       id: "RUN-20250609-1283",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "定时扫描",
       relatedObjectId: "GD2025060888",
       relatedObjectType: "合同",
@@ -609,8 +614,8 @@ export function getRunsMockData(): MockRun[] {
     }),
     run({
       id: "RUN-20250609-1281",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "定时扫描",
       relatedObjectId: "GD2025060555",
       relatedObjectType: "商机",
@@ -676,8 +681,8 @@ export function getRunsMockData(): MockRun[] {
     }),
     run({
       id: "RUN-20250609-1280",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "定时扫描",
       relatedObjectId: "GD2025060333",
       relatedObjectType: "客户",
@@ -812,8 +817,8 @@ export function getRunsMockData(): MockRun[] {
     }),
     run({
       id: "RUN-20250609-1278",
-      agentId: "follow-up",
-      agentName: "Follow-up Agent",
+      agentId: FOLLOW_UP_AGENT_ID,
+      agentName: FOLLOW_UP_AGENT_NAME,
       triggerSource: "定时扫描",
       relatedObjectId: "GD2025060120",
       relatedObjectType: "商机",

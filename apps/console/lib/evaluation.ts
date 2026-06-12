@@ -16,6 +16,9 @@ import {
   type EvaluationSnapshot,
   type EvaluationTrendPoint,
 } from "./evaluation-mock";
+import { FOLLOW_UP_SKILL } from "./skills";
+
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 
 export type EvaluationDataSource = "live" | "mock" | "mixed";
 
@@ -243,7 +246,7 @@ async function loadQualitySamplesFromDb(
         : ("needs_edit" as const);
     return {
       time: String(row.created_at ?? "").slice(0, 16).replace("T", " "),
-      agentName: "Follow-up Agent",
+      agentName: FOLLOW_UP_AGENT_NAME,
       actionLabel: String(row.order_num ?? "工单"),
       issue: decision === "rejected" ? "管家拒绝建议" : "管家修改后采纳",
       suggestion: String(row.note ?? "—"),

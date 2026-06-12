@@ -4,6 +4,10 @@ import {
   overviewAnomalyHref,
   overviewPendingReviewHref,
 } from "./overview-nav";
+import { FOLLOW_UP_SKILL } from "./skills";
+
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 
 export const OVERVIEW_SIDEBAR_BADGE = 9;
 
@@ -141,13 +145,13 @@ export const OVERVIEW_RATES: OverviewRateMetrics = {
 
 export const OVERVIEW_AGENT_FLEET: OverviewAgentFleetItem[] = [
   {
-    id: "follow-up",
-    name: "Follow-up Agent",
+    id: FOLLOW_UP_AGENT_ID,
+    name: FOLLOW_UP_AGENT_NAME,
     runState: "healthy",
     statusLabel: "运行正常",
     runsToday: 42,
     lastRunLabel: "今天 10:24",
-    agentHrefId: "follow-up",
+    agentHrefId: FOLLOW_UP_AGENT_ID,
   },
   {
     id: "estimate",
@@ -242,7 +246,7 @@ export const OVERVIEW_ACTION_STATUS: OverviewSnapshot["actionStatus"] = {
 };
 
 export const OVERVIEW_TOP_AGENTS: OverviewTopAgent[] = [
-  { id: "follow-up", name: "Follow-up Agent", closedActions: 24, adoptionRate: 82 },
+  { id: FOLLOW_UP_AGENT_ID, name: FOLLOW_UP_AGENT_NAME, closedActions: 24, adoptionRate: 82 },
   { id: "estimate", name: "Estimate Agent", closedActions: 15, adoptionRate: 78 },
   { id: "inspection", name: "Inspection Agent", closedActions: 10, adoptionRate: 75 },
   { id: "collection", name: "Collection Agent", closedActions: 8, adoptionRate: 71 },

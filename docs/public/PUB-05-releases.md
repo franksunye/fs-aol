@@ -627,6 +627,44 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ---
 
+## v0.4.6 · skill-registry
+
+**目标**：在 v0.5 新增真实 Agent 前，把 Follow-up 从平台默认分支收缩为第一个注册的 Skill，防止 Quote Review / Qualification 等后续能力继续增加主流程硬编码。
+
+### 产品判断
+
+产品上继续叫 **Follow-up Agent**、**Quote Review Agent**；工程上统一视为 **Skill Definition**。
+平台只认识 Trigger、Context、Run、WorkItem/Action、Approval、Execution、Outcome、Evaluation，不认识 `FollowUpAgent.run()` / `QuoteReviewAgent.run()` 这类专属执行流。
+
+### 交付
+
+| 区域 | 内容 |
+|------|------|
+| 纪律 | [PUB-26](PUB-26-v046-skill-registry.md) Skill Registry + Manifest 边界 |
+| Registry | `skillRegistry` 最小模块：注册、按 ID 查询、列 enabled/draft |
+| Manifest | Follow-up 作为第一个 `SkillDefinition` |
+| Adapter 绑定 | Follow-up adapter 由 registry 引用，平台层不散落 Follow-up 常量 |
+| Console | Agents 列表 / Action 筛选 / sourceAgent 元信息逐步读 registry |
+| Guardrail | 新增 draft `quote-review` manifest 不允许改 Work 列表列定义 |
+
+### 明确不做
+
+- 不上线第二个真实 Agent。
+- 不做 Agent Studio / 在线编辑任意 prompt。
+- 不重命名所有 Follow-up 文件或改 `follow_up_logs` 表名。
+- 不引入重型 workflow runtime 替换当前闭环。
+
+### 验收清单
+
+- [ ] Follow-up Agent 页面仍正常展示，但页面元信息来自 registry
+- [ ] Action / Execution / Calendar / Runs 至少一个入口可从 registry 获取 Agent 选项
+- [ ] `mapFollowUpRow` 输出的 `skillId` 与 `sourceAgent` 不再依赖平台层硬编码常量
+- [ ] 新增 `quote-review` draft manifest 不需要改 Work 列表列定义
+- [ ] 不新增 `if (agentId === "...")` 主流程分支
+- [ ] `pnpm build`
+
+---
+
 ## v0.5 · two-real-agents（建议 3–4 周）
 
 **目标**：新增 2 个真实 Agent，验证 AOL 不是 Follow-up 专用实现，而是可复制的运营层。
@@ -647,7 +685,7 @@ v0.5 继续消费 `proof-metrics`，但口径从单一 Follow-up 证明包升级
 | 能力 | 本版要求 |
 |------|----------|
 | Agent 选择 | 从场景样例中选 2 个具备真实数据源和真实使用人的 Agent |
-| Definition | 每个 Agent 有业务对象、触发条件、上下文、输出 Action、审批规则 |
+| Definition | 每个 Agent 必须先有 `SkillDefinition`：业务对象、触发条件、上下文、输出 Action、审批规则 |
 | Reuse | 复用 v0.4 的 Action 生命周期、Run trace、Evaluation、Governance |
 | Data | 真实数据优先；缺口字段允许 `估算` / `未接入`，但必须标注 |
 | UX | Agents / Overview / Action / Runs / Evaluation 可按 Agent 过滤和下钻 |
@@ -660,6 +698,7 @@ v0.5 继续消费 `proof-metrics`，但口径从单一 Follow-up 证明包升级
 3. 为新增 Agent 接入真实数据读取、上下文快照、Run trace 与 Action 生成。
 4. Evaluation 支持按 Agent 对比：准确率、采纳率、完成率、成本、延迟。
 5. Governance 支持 Agent 级审批策略与动作权限。
+6. 新增 Agent 只能通过 v0.4.6 Skill Registry 接入 Console；若需改 Runtime / Action 生命周期，写 ADR-lite 说明平台能力缺口。
 
 ### 明确不做
 

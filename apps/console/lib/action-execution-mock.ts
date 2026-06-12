@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import type { ActionEntityRef } from "./action-list-display";
 import { XLINK_SOURCE_SYSTEM } from "./action-list-display";
+import { FOLLOW_UP_SKILL, skillSourceAgent } from "./skills";
 import type { ExecutionStatus } from "./execution-status";
 import {
   addDays,
@@ -15,6 +16,9 @@ import {
   resolveCalendarAssigneeFromHk,
   type CalendarPriority,
 } from "./calendar-mock";
+
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 
 export type ExecutionQuickFilter =
   | "all"
@@ -71,7 +75,7 @@ export type ExecutionSummary = {
 
 export const MY_ACTIONS_AGENT_OPTIONS = [
   { id: "all", label: "全部来源" },
-  { id: "follow-up", label: "Follow-up Agent" },
+  skillSourceAgent(FOLLOW_UP_SKILL.id),
   { id: "customer-follow", label: "客户跟进 Agent" },
   { id: "contract", label: "合同管理 Agent" },
 ] as const;
@@ -109,8 +113,8 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       id: "ma-1",
       title: "电话回访客户，确认报价接受情况",
       opportunityId: "GD2025060764",
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       target: { name: "深圳智造科技有限公司", type: "客户" },
       dueDate: today,
       dueTime: "09:30",
@@ -199,8 +203,8 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       id: "ma-4",
       title: "停滞工单唤醒",
       opportunityId: "WO-88421",
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       target: { name: "光合能源", type: "商机" },
       dueDate: yesterday,
       dueTime: "10:00",
@@ -256,8 +260,8 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       id: "ma-6",
       title: "签约催办",
       opportunityId: "GD2025060888",
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       target: { name: "云帆实业", type: "合同" },
       dueDate: tomorrow,
       dueTime: "09:30",
@@ -280,8 +284,8 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       id: "ma-7",
       title: "报价后 48h 跟进",
       opportunityId: "GD2025060555",
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       target: { name: "德信机电", type: "商机" },
       dueDate: tomorrow,
       dueTime: "10:00",
@@ -382,8 +386,8 @@ export function getExecutionActionsMockData(): ExecutionAction[] {
       id: "ma-12",
       title: "周例会准备",
       opportunityId: "INT-202506-W24",
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       target: { name: "团队周会", type: "内部" },
       dueDate: formatDateKey(addDays(new Date(), -3)),
       dueTime: "16:00",

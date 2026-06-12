@@ -188,6 +188,7 @@ type ActivityEvent = {
 
 | 微调项 | 交付物 |
 |--------|--------|
+| Skill Registry | `SkillDefinition` + `skillRegistry`；Follow-up 作为首个注册 Skill，详见 [PUB-26](PUB-26-v046-skill-registry.md) |
 | 契约生成 TS | `suggestion.schema.json` → 生成类型，消灭手写 `SuggestionDoc` 漂移 |
 | `skill_id` 列（可空，默认 `follow-up`） | migration + 引擎写入 |
 | 侧栏 Skill 槽 | 配置驱动导航项 |
@@ -260,7 +261,7 @@ type ActivityEvent = {
 | `OpportunityRow` | `WorkItemRow`（props: WorkItem） | 重命名可延后 |
 | `housekeeper-filter` | `assignee-filter` + 配置标签 | v1.0 前 |
 | `contracts/` copy to `.contracts` | + 生成 TS 类型 | v0.4 |
-| 单 Skill 假设 | `skill_id` + 侧栏槽 | v0.4 |
+| 单 Skill 假设 | `SkillDefinition` + `skillRegistry` + `skill_id` + 侧栏槽 | v0.4.6 |
 
 ---
 

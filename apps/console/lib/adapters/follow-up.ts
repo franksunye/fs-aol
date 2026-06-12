@@ -6,7 +6,6 @@ import type {
   WorkItemListDisplay,
   WorkItemPriority,
 } from "../operator-model";
-import { SKILL_FOLLOW_UP } from "../operator-model";
 import {
   actionInboxStatusLabel,
   actionTitle,
@@ -14,6 +13,7 @@ import {
   WORK_ORDER_OBJECT_TYPE,
   XLINK_SOURCE_SYSTEM,
 } from "../action-list-display";
+import { FOLLOW_UP_SKILL_ID } from "../skills";
 import { formatListTimestamp, actionReviewSummaryPreview } from "../action-review-display";
 import { loadBinding } from "../integration-bindings/load";
 import {
@@ -113,7 +113,7 @@ export function mapFollowUpRow(
   return {
     id: row.dedupeKey,
     subjectId: row.workOrderId,
-    skillId: SKILL_FOLLOW_UP as SkillId,
+    skillId: FOLLOW_UP_SKILL_ID as SkillId,
     assigneeId: row.housekeeperId.trim() || undefined,
     inbox: row.inboxBucket,
     priority,

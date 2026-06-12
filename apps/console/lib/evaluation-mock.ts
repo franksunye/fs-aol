@@ -158,6 +158,10 @@ export type EvaluationSnapshot = {
   qualitySamples: EvaluationQualitySample[];
 };
 
+import { FOLLOW_UP_SKILL, skillSourceAgent } from "./skills";
+
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
+
 export const EVALUATION_RANGE_OPTIONS = [
   { id: "last_7", label: "近 7 天" },
   { id: "last_30", label: "近 30 天" },
@@ -174,7 +178,7 @@ export const EVALUATION_SITE_OPTIONS = [
 
 export const EVALUATION_AGENT_OPTIONS = [
   { id: "all", label: "全部 Agent" },
-  { id: "follow-up", label: "Follow-up Agent" },
+  skillSourceAgent(FOLLOW_UP_SKILL.id),
   { id: "estimate", label: "Estimate Agent" },
   { id: "inspection", label: "Inspection Agent" },
   { id: "collection", label: "Collection Agent" },
@@ -414,7 +418,7 @@ const AGENT_ROWS: EvaluationAgentRow[] = [
 const VERSION_ROWS: EvaluationVersionRow[] = [
   {
     id: "follow-up-v2.4",
-    agentName: "Follow-up Agent",
+    agentName: FOLLOW_UP_AGENT_NAME,
     version: "v2.4",
     suggestions: 52,
     accuracyRate: 90,
@@ -424,7 +428,7 @@ const VERSION_ROWS: EvaluationVersionRow[] = [
   },
   {
     id: "follow-up-v2.3",
-    agentName: "Follow-up Agent",
+    agentName: FOLLOW_UP_AGENT_NAME,
     version: "v2.3",
     suggestions: 40,
     accuracyRate: 85,
@@ -458,7 +462,7 @@ const RULE_ROWS: EvaluationRuleRow[] = [
   {
     id: "rule-stale-7d",
     ruleName: "停滞 7 天唤醒",
-    agentName: "Follow-up Agent",
+    agentName: FOLLOW_UP_AGENT_NAME,
     triggerCount: 34,
     accuracyRate: 91,
     falsePositiveRate: 3,
@@ -562,7 +566,7 @@ const MODULE_INSIGHTS: EvaluationModuleInsight[] = [
 const QUALITY_SAMPLES: EvaluationQualitySample[] = [
   {
     time: "06/05 10:23",
-    agentName: "Follow-up Agent",
+    agentName: FOLLOW_UP_AGENT_NAME,
     agentVersion: "v2.4",
     actionLabel: "电话回访",
     issue: "客户已成交仍建议回访，触发条件未识别最新状态",
@@ -613,7 +617,7 @@ const QUALITY_SAMPLES: EvaluationQualitySample[] = [
   },
   {
     time: "06/03 15:40",
-    agentName: "Follow-up Agent",
+    agentName: FOLLOW_UP_AGENT_NAME,
     agentVersion: "v2.3",
     actionLabel: "停滞唤醒",
     issue: "建议话术与客户行业不匹配，采纳后被修改",

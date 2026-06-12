@@ -6,6 +6,10 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
+import { FOLLOW_UP_SKILL, skillSourceAgent } from "./skills";
+
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 
 export type CalendarPriority = "high" | "medium" | "low";
 export type CalendarActionStatus =
@@ -46,7 +50,7 @@ export type CalendarSummary = {
 
 export const CALENDAR_AGENT_OPTIONS = [
   { id: "all", label: "全部 Agent" },
-  { id: "follow-up", label: "Follow-up Agent" },
+  skillSourceAgent(FOLLOW_UP_SKILL.id),
   { id: "customer-follow", label: "客户跟进 Agent" },
   { id: "contract", label: "合同管理 Agent" },
   { id: "warehouse", label: "仓储物流 Agent" },
@@ -195,8 +199,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "14:30",
       endTime: "15:00",
       relatedObject: { name: "星河物业服务中心", type: "商机" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "high",
       assignee: "张敏",
       assigneeId: "zhangmin",
@@ -211,8 +215,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "15:30",
       endTime: "16:00",
       relatedObject: { name: "WO-88421", type: "工单" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "medium",
       assignee: "陈浩",
       assigneeId: "chenhao",
@@ -241,8 +245,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "09:30",
       endTime: "10:00",
       relatedObject: { name: "云帆实业", type: "合同" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "high",
       assignee: "张敏",
       assigneeId: "zhangmin",
@@ -272,8 +276,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "10:00",
       endTime: "10:30",
       relatedObject: { name: "德信机电", type: "商机" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "high",
       assignee: "陈浩",
       assigneeId: "chenhao",
@@ -347,8 +351,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "10:00",
       endTime: "10:30",
       relatedObject: { name: "光合能源", type: "商机" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "high",
       assignee: "陈浩",
       assigneeId: "chenhao",
@@ -378,8 +382,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "16:00",
       endTime: "16:30",
       relatedObject: { name: "团队周会", type: "内部" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "low",
       assignee: "李伟",
       assigneeId: "liwei",
@@ -393,8 +397,8 @@ export function getCalendarMockActions(): CalendarAction[] {
       startTime: "11:30",
       endTime: "12:00",
       relatedObject: { name: "报价池", type: "巡检" },
-      sourceAgent: "Follow-up Agent",
-      agentId: "follow-up",
+      sourceAgent: FOLLOW_UP_AGENT_NAME,
+      agentId: FOLLOW_UP_AGENT_ID,
       priority: "medium",
       assignee: "王芳",
       assigneeId: "wangfang",

@@ -17,7 +17,11 @@ import {
   housekeeperName,
   loadPilotHousekeepers,
 } from "../pilot-housekeepers";
+import { FOLLOW_UP_SKILL } from "../skills";
 import type { ActionRow, ActionStatus, Decision, SuggestionDoc } from "./types";
+
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 import { mapAction } from "./mappers";
 import { getSuggestion } from "./inbox";
 import { listTracesLite } from "./traces";
@@ -228,8 +232,8 @@ export async function mapActionToExecution(
     id: String(action.id),
     title: action.title,
     opportunityId: row?.orderNum || action.workOrderId,
-    sourceAgent: "Follow-up Agent",
-    agentId: "follow-up",
+    sourceAgent: FOLLOW_UP_AGENT_NAME,
+    agentId: FOLLOW_UP_AGENT_ID,
     sourceSystem: XLINK_SOURCE_SYSTEM,
     target: { name: row?.orderNum || "工单", type: "工单" },
     dueDate: due,

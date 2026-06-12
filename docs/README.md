@@ -49,6 +49,7 @@ Agent 是执行器，认知与决策才是核心资产。工程仓库名仍为 *
 | [PUB-17-console-information-architecture.md](public/PUB-17-console-information-architecture.md) | **Console 三层信息架构**：Work / Agents / Systems 导航、Action 生命周期、列表与 KPI 纪律 |
 | [PUB-18-aol-industrialization-plan.md](public/PUB-18-aol-industrialization-plan.md) | **AOL 工业化打磨计划**：真实 Follow-up 楔子 + 场景样例层，小闭环迭代到 v1.0 |
 | [PUB-19-console-data-list.md](public/PUB-19-console-data-list.md) | **Console 企业级列表控件**：DataList 布局、URL scope、分页与列设置纪律 |
+| [PUB-26-v046-skill-registry.md](public/PUB-26-v046-skill-registry.md) | **v0.4.6 Skill Registry**：多 Agent 前的插件化边界，Agent 是产品表达，Skill 是架构单元 |
 | [sops/](../sops/README.md) | **L2 SOP**（v0.4 启用，当前为大纲） |
 | [PUB-private-docs-template.md](public/PUB-private-docs-template.md) | 私有文档管理模板与边界 |
 
@@ -79,6 +80,6 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 ## 状态
 
-- 版本：**v0.3.5** 工业级 Agentic UI / pilot-cap 已进入收官口径；近端里程碑为 **v0.4 打穿 Follow-up 真实闭环 → v0.5 新增 2 个真实 Agent → v0.6 工程硬化 → v0.7 中英文 → v0.8 开源 alpha**，见 [PUB-05](public/PUB-05-releases.md)。
+- 版本：**v0.4.x** Follow-up 真实闭环与产品壳 live 化推进中；新增 **v0.4.6 Skill Registry** 作为 v0.5 多 Agent 前置架构闸门。近端里程碑为 **v0.4 打穿 Follow-up 真实闭环 + Skill Registry → v0.5 新增 2 个真实 Agent → v0.6 工程硬化 → v0.7 中英文 → v0.8 开源 alpha**，见 [PUB-05](public/PUB-05-releases.md)。
 - 阶段：Phase 1 → **真实 Follow-up 楔子打穿**，随后验证多 Agent 复用、工程质量、国际化与 AOL Core 抽象。
-- 最近更新：2026-06-10（`PUB-05` v0.4-v0.8 里程碑；`PUB-19` DataList；`PUB-18` 工业化计划；`PUB-17` Console 三层 IA）
+- 最近更新：2026-06-12（`PUB-26` Skill Registry；`PUB-05` v0.4.6；`PUB-16` 第二 Skill 前架构闸门）

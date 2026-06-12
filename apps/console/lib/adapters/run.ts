@@ -1,4 +1,5 @@
 import { eventTypeLabel } from "../labels";
+import { FOLLOW_UP_SKILL } from "../skills";
 import type {
   MockRun,
   PipelineStage,
@@ -8,8 +9,8 @@ import type {
 import { actionTitle } from "../action-list-display";
 import type { SuggestionDoc, TraceRow } from "../tracking/types";
 
-const FOLLOW_UP_AGENT_ID = "follow-up";
-const FOLLOW_UP_AGENT_NAME = "Follow-up Agent";
+const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
+const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 const TOKEN_COST_YUAN_PER_1K = 0.002;
 
 export function formatTraceRunId(traceId: number): string {
