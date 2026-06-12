@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { countInboxBuckets } from "@/lib/suggestions";
+import { loadOverviewSidebarBadge } from "@/lib/overview";
 import { AppShell } from "@/components/action-center/app-shell";
 import { HOUSEKEEPER_FILTER_COOKIE } from "@/components/housekeeper-filter";
 import {
@@ -17,13 +18,15 @@ export default async function ActionCenterLayout({
   const sidebarCollapsed = isSidebarCollapsed(
     cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value
   );
-  const counts = await countInboxBuckets(
-    hk ? { housekeeperId: hk } : {}
-  );
+  const [counts, overviewBadge] = await Promise.all([
+    countInboxBuckets(hk || undefined),
+    loadOverviewSidebarBadge(hk || undefined),
+  ]);
 
   return (
     <AppShell
       activeCount={counts.active}
+      overviewBadge={overviewBadge}
       closedCount={counts.closed}
       hk={hk || undefined}
       sidebarCollapsed={sidebarCollapsed}

@@ -25,7 +25,6 @@ import { GOVERNANCE_HOME_PATH } from "@/lib/governance-nav";
 import { calendarHref } from "@/lib/calendar-nav";
 import { actionCenterHref } from "@/lib/action-center-nav";
 import { OVERVIEW_HOME_PATH } from "@/lib/overview-nav";
-import { OVERVIEW_SIDEBAR_BADGE } from "@/lib/overview-mock";
 import { AI_INFRASTRUCTURE_PATH } from "@/lib/settings-nav";
 import { stripPaneSelectionParams } from "@/lib/action-center-nav";
 import { Button } from "@/components/ui/button";
@@ -86,6 +85,7 @@ const navItemClass = (opts: {
 
 export function SidebarNav({
   activeCount,
+  overviewBadge,
   closedCount,
   hk,
   collapsed = false,
@@ -94,6 +94,7 @@ export function SidebarNav({
   onNavigate,
 }: {
   activeCount: number;
+  overviewBadge?: number;
   closedCount?: number;
   hk?: string;
   collapsed?: boolean;
@@ -123,13 +124,14 @@ export function SidebarNav({
       icon: LayoutDashboard,
       href: overviewNavHref,
       active: onOverview,
-      badge: OVERVIEW_SIDEBAR_BADGE,
+      badge: overviewBadge && overviewBadge > 0 ? overviewBadge : undefined,
     },
     {
       label: "Action 中心",
       icon: ListTodo,
       href: actionCenterHref(hk),
       active: onActionCenter,
+      badge: activeCount > 0 ? activeCount : undefined,
     },
     {
       label: "日历",

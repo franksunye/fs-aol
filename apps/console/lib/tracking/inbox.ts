@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db, ensureSchema, TABLE_LOGS, TABLE_OUTCOMES, TABLE_BLOCKERS } from "../db";
 import type { InboxBucket } from "../labels";
 import { logsHasInboxColumns } from "../logs-schema";
@@ -48,18 +49,25 @@ async function latestBlockersForKeys(
   return map;
 }
 
+let inboxColumnsReady: boolean | null = null;
+
 async function ensureInboxColumnsReady(): Promise<boolean> {
+  if (inboxColumnsReady !== null) return inboxColumnsReady;
   await ensureSchema();
-  if (await logsHasInboxColumns()) return true;
+  if (await logsHasInboxColumns()) {
+    inboxColumnsReady = true;
+    return true;
+  }
   await migrateInboxColumns();
-  return logsHasInboxColumns();
+  inboxColumnsReady = await logsHasInboxColumns();
+  return inboxColumnsReady;
 }
 
-export async function countInboxBuckets(options?: {
-  housekeeperId?: string;
-}): Promise<InboxBucketCounts> {
+async function countInboxBucketsUncached(
+  housekeeperId?: string
+): Promise<InboxBucketCounts> {
   const hasInbox = await ensureInboxColumnsReady();
-  const hk = options?.housekeeperId?.trim();
+  const hk = housekeeperId?.trim();
   if (!hasInbox) {
     const sql = hk
       ? `SELECT COUNT(*) AS c FROM ${TABLE_LOGS} WHERE housekeeper_id = ?`
@@ -97,6 +105,9 @@ export async function countInboxBuckets(options?: {
     archived: Number(row?.archived ?? 0),
   };
 }
+
+/** 单次 RSC 请求内按管家 ID 去重。 */
+export const countInboxBuckets = cache(countInboxBucketsUncached);
 
 type InboxListQuery = {
   housekeeperId?: string;
@@ -255,4 +266,24 @@ export async function getSuggestion(
     if (k.startsWith("o_") || k.startsWith("b_")) delete logRow[k];
   }
   return mapSuggestion(logRow, outcomes, blockers);
+}
+
+export async function getSuggestionsByDedupeKeys(
+  dedupeKeys: string[]
+): Promise<Map<string, SuggestionRow>> {
+  const keys = [...new Set(dedupeKeys.map((k) => k.trim()).filter(Boolean))];
+  const map = new Map<string, SuggestionRow>();
+  if (keys.length === 0) return map;
+  await ensureSchema();
+  const ph = keys.map(() => "?").join(",");
+  const res = await db.execute({
+    sql: `SELECT * FROM ${TABLE_LOGS} WHERE dedupe_key IN (${ph})`,
+    args: keys,
+  });
+  const logRows = res.rows as unknown as Record<string, unknown>[];
+  const rows = await hydrateSuggestionRows(logRows);
+  for (const row of rows) {
+    map.set(row.dedupeKey, row);
+  }
+  return map;
 }

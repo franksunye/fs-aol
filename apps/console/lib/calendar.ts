@@ -1,5 +1,5 @@
 import { Phone } from "lucide-react";
-import { listActions, mapActionToExecution } from "./tracking/actions";
+import { listActions, mapActionsToExecution } from "./tracking/actions";
 import { loadPilotHousekeepers } from "./pilot-housekeepers";
 import { resolveExecutionAssigneeFromHk } from "./action-execution-mock";
 import type { ExecutionAction } from "./action-execution-mock";
@@ -73,7 +73,7 @@ export async function loadCalendarActions(hk?: string): Promise<{
     housekeeperId: hk,
     limit: 200,
   });
-  const mapped = await Promise.all(rows.map(mapActionToExecution));
+  const mapped = await mapActionsToExecution(rows);
   const scoped = assigneeId
     ? mapped.filter((a) => a.assigneeId === assigneeId)
     : mapped;

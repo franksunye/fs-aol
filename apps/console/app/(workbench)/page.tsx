@@ -137,10 +137,11 @@ export default async function ActionCenterPage({
   const priorityFilter = parsePriorityFilter(sp.priority);
   const selectedKey = parseActionReviewPaneKey(sp.key);
   const pilots = loadPilotHousekeepers();
-  const hkOpts = hkFilter ? { housekeeperId: hkFilter } : {};
   const [executionCount, executionActions] = await Promise.all([
-    countPendingActions(hkOpts),
-    isExecution ? listExecutionActions(hkOpts) : Promise.resolve([] as ExecutionAction[]),
+    countPendingActions(hkFilter),
+    isExecution
+      ? listExecutionActions(hkFilter ? { housekeeperId: hkFilter } : {})
+      : Promise.resolve([] as ExecutionAction[]),
   ]);
   const sortKey = parseActionReviewSortKey(sp.sort);
   const listPage = parseDataListPage(sp.page);
@@ -161,17 +162,21 @@ export default async function ActionCenterPage({
   ] = await Promise.all([
     loadActionCenterPrimaryKpis(hkFilter),
     loadExecutionMetrics(hkFilter),
-    countInboxBuckets(hkOpts),
+    countInboxBuckets(hkFilter),
     canDbPaginate
       ? listSuggestionsPage({
           inboxBucket: inboxTab,
-          ...hkOpts,
+          housekeeperId: hkFilter,
           page: listPage,
           pageSize: listPageSize,
         })
       : Promise.resolve(null),
-    isInboxData
-      ? listSuggestions({ inboxBucket: inboxTab, ...hkOpts, limit: 500 })
+    isInboxData && (!canDbPaginate || isActiveInbox)
+      ? listSuggestions({
+          inboxBucket: inboxTab,
+          housekeeperId: hkFilter,
+          limit: 500,
+        })
       : Promise.resolve([]),
     getRuntimeConfigForUi(),
   ]);

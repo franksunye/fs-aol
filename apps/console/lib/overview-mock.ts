@@ -9,8 +9,6 @@ import { FOLLOW_UP_SKILL } from "./skills";
 const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
 const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 
-export const OVERVIEW_SIDEBAR_BADGE = 9;
-
 export type OverviewKpiKey =
   | "pendingReview"
   | "actionsGenerated"

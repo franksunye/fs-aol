@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listActions, mapActionToExecution } from "@/lib/tracking/actions";
+import { listActions, mapActionsToExecution } from "@/lib/tracking/actions";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -9,6 +9,6 @@ export async function GET(req: Request) {
     status: ["pending_dispatch", "in_progress"],
     limit: 200,
   });
-  const items = await Promise.all(actions.map(mapActionToExecution));
+  const items = await mapActionsToExecution(actions);
   return NextResponse.json({ items });
 }

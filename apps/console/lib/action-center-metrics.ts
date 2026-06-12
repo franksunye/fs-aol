@@ -79,13 +79,11 @@ function buildPrimaryFromSources(
 export async function loadActionCenterPrimaryKpis(
   hk?: string
 ): Promise<ActionCenterPrimaryKpi[]> {
-  const hkOpts = hk ? { housekeeperId: hk } : {};
-
   try {
     const [inbox, flow, pendingActions] = await Promise.all([
-      countInboxBuckets(hkOpts),
+      countInboxBuckets(hk),
       loadExecutionMetrics(hk),
-      countPendingActions(hkOpts),
+      countPendingActions(hk),
     ]);
     const actionsTotal = pendingActions + inbox.execution;
     const hasSignal =

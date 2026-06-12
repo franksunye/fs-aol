@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   db,
   ensureSchema,
@@ -18,12 +19,18 @@ import {
   loadPilotHousekeepers,
 } from "../pilot-housekeepers";
 import { FOLLOW_UP_SKILL } from "../skills";
-import type { ActionRow, ActionStatus, Decision, SuggestionDoc } from "./types";
+import type {
+  ActionRow,
+  ActionStatus,
+  Decision,
+  SuggestionDoc,
+  SuggestionRow,
+} from "./types";
 
 const FOLLOW_UP_AGENT_ID = FOLLOW_UP_SKILL.id;
 const FOLLOW_UP_AGENT_NAME = FOLLOW_UP_SKILL.productName;
 import { mapAction } from "./mappers";
-import { getSuggestion } from "./inbox";
+import { getSuggestion, getSuggestionsByDedupeKeys } from "./inbox";
 import { listTracesLite } from "./traces";
 import { parseJson, str } from "./parse";
 import type { ExecutionStatus } from "../execution-status";
@@ -150,15 +157,15 @@ export async function listActions(options?: {
   return (res.rows as unknown as Record<string, unknown>[]).map(mapAction);
 }
 
-export async function countPendingActions(options?: {
-  housekeeperId?: string;
-}): Promise<number> {
+async function countPendingActionsUncached(
+  housekeeperId?: string
+): Promise<number> {
   await ensureSchema();
   const where: string[] = [
     `status IN (${PENDING_STATUSES.map(() => "?").join(",")})`,
   ];
   const args: string[] = [...PENDING_STATUSES];
-  const hk = options?.housekeeperId?.trim();
+  const hk = housekeeperId?.trim();
   if (hk) {
     where.push("assignee_id = ?");
     args.push(hk);
@@ -169,6 +176,9 @@ export async function countPendingActions(options?: {
   });
   return Number((res.rows as { c?: number }[])[0]?.c ?? 0);
 }
+
+/** 单次 RSC 请求内按管家 ID 去重。 */
+export const countPendingActions = cache(countPendingActionsUncached);
 
 export async function completeAction(input: {
   actionId: number;
@@ -220,11 +230,11 @@ export async function transitionAction(input: {
   });
 }
 
-export async function mapActionToExecution(
-  action: ActionRow
-): Promise<ExecutionAction> {
-  const pilots = loadPilotHousekeepers();
-  const row = await getSuggestion(action.dedupeKey);
+export function mapActionToExecutionSync(
+  action: ActionRow,
+  row: SuggestionRow | null,
+  pilots = loadPilotHousekeepers()
+): ExecutionAction {
   const suggestion = row?.suggestion ?? {};
   const due = formatDateKey(addDays(new Date(action.createdAt), 1));
   return {
@@ -283,6 +293,34 @@ export async function mapActionToExecution(
   };
 }
 
+export async function mapActionToExecution(
+  action: ActionRow,
+  suggestionRow?: SuggestionRow | null
+): Promise<ExecutionAction> {
+  const row =
+    suggestionRow !== undefined
+      ? suggestionRow
+      : await getSuggestion(action.dedupeKey);
+  return mapActionToExecutionSync(action, row);
+}
+
+export async function mapActionsToExecution(
+  actions: ActionRow[]
+): Promise<ExecutionAction[]> {
+  if (actions.length === 0) return [];
+  const pilots = loadPilotHousekeepers();
+  const suggestions = await getSuggestionsByDedupeKeys(
+    actions.map((a) => a.dedupeKey)
+  );
+  return actions.map((action) =>
+    mapActionToExecutionSync(
+      action,
+      suggestions.get(action.dedupeKey) ?? null,
+      pilots
+    )
+  );
+}
+
 export async function listExecutionActions(options?: {
   housekeeperId?: string;
 }): Promise<ExecutionAction[]> {
@@ -291,7 +329,7 @@ export async function listExecutionActions(options?: {
     status: ["pending_dispatch", "in_progress"],
     limit: 200,
   });
-  return Promise.all(actions.map(mapActionToExecution));
+  return mapActionsToExecution(actions);
 }
 
 export async function resolveTraceIdForDedupe(
