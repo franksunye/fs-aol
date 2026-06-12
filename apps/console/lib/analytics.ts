@@ -1,6 +1,8 @@
-import { db, ensureSchema, TABLE_ACTIONS, TABLE_LOGS, TABLE_OUTCOMES, TABLE_TRACES } from "./db";
-import type { Decision, SuggestionDoc, SuggestionRow } from "./suggestions";
-import { parseQuoteAmountYuan } from "./action-review-metric-cards";
+import { db, ensureSchema, TABLE_ACTIONS, TABLE_LOGS, TABLE_TRACES } from "./db";
+import {
+  aggregateLogsPeriod,
+  aggregateOutcomesPeriod,
+} from "./tracking/analytics-read";
 
 export type AnalyticsRangeKey =
   | "week"
@@ -8,8 +10,6 @@ export type AnalyticsRangeKey =
   | "month"
   | "last_7"
   | "last_30";
-
-const ACTION_DECISIONS: Decision[] = ["approved", "modified", "followed_up"];
 
 const PRIORITY_ORDER = ["高", "中", "低"] as const;
 const PRIORITY_COLORS: Record<string, string> = {
@@ -220,122 +220,8 @@ function toIso(d: Date): string {
   return d.toISOString();
 }
 
-function parseJson<T>(value: unknown, fallback: T): T {
-  if (typeof value !== "string" || !value.trim()) return fallback;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return fallback;
-  }
-}
-
 function str(value: unknown): string {
   return value == null ? "" : String(value);
-}
-
-function needsFollow(s: SuggestionDoc): boolean {
-  return s.需要跟进 !== false;
-}
-
-function staleAtAnalysis(row: {
-  analyzedStaleDays: number | null;
-}): number | null {
-  if (
-    row.analyzedStaleDays != null &&
-    Number.isFinite(row.analyzedStaleDays) &&
-    row.analyzedStaleDays >= 0
-  ) {
-    return row.analyzedStaleDays;
-  }
-  return null;
-}
-
-async function fetchLogsBetween(
-  start: Date,
-  end: Date,
-  housekeeperId?: string
-): Promise<SuggestionRow[]> {
-  await ensureSchema();
-  const where = ["processed_at >= ?", "processed_at < ?"];
-  const args: (string | number)[] = [toIso(start), toIso(end)];
-  if (housekeeperId?.trim()) {
-    where.push("housekeeper_id = ?");
-    args.push(housekeeperId.trim());
-  }
-  const res = await db.execute({
-    sql: `SELECT * FROM ${TABLE_LOGS} WHERE ${where.join(
-      " AND "
-    )} ORDER BY processed_at ASC LIMIT 5000`,
-    args,
-  });
-  return (res.rows as unknown as Record<string, unknown>[]).map((row) => ({
-    dedupeKey: str(row.dedupe_key),
-    workOrderId: str(row.work_order_id),
-    eventType: str(row.event_type),
-    orderNum: str(row.order_num),
-    city: str(row.city),
-    housekeeperId: str(row.housekeeper_id),
-    status: str(row.status),
-    processedAt: str(row.processed_at),
-    stateAt: str(row.state_at).trim() || null,
-    suggestion: parseJson<SuggestionDoc>(row.suggestion, {}),
-    outcome: null,
-    blocker: null,
-    inboxBucket: "active" as const,
-    archiveReason: str(row.archive_reason),
-    reconciledAt: str(row.reconciled_at).trim() || null,
-    mongoStatus: str(row.mongo_status),
-    liveVerdict: str(row.live_verdict),
-    analyzedStaleDays:
-      row.analyzed_stale_days != null &&
-      String(row.analyzed_stale_days).trim() !== ""
-        ? Number(row.analyzed_stale_days)
-        : null,
-  }));
-}
-
-interface OutcomeInRange {
-  decision: Decision;
-  createdAt: string;
-  suggestion: SuggestionDoc;
-}
-
-async function fetchOutcomesBetween(
-  start: Date,
-  end: Date,
-  housekeeperId?: string
-): Promise<OutcomeInRange[]> {
-  await ensureSchema();
-  const where = ["o.created_at >= ?", "o.created_at < ?"];
-  const args: (string | number)[] = [toIso(start), toIso(end)];
-  if (housekeeperId?.trim()) {
-    where.push("l.housekeeper_id = ?");
-    args.push(housekeeperId.trim());
-  }
-  const res = await db.execute({
-    sql: `SELECT o.decision, o.created_at, l.suggestion
-          FROM ${TABLE_OUTCOMES} o
-          INNER JOIN ${TABLE_LOGS} l ON l.dedupe_key = o.dedupe_key
-          WHERE ${where.join(" AND ")}
-          ORDER BY o.created_at ASC
-          LIMIT 5000`,
-    args,
-  });
-  return (res.rows as unknown as Record<string, unknown>[]).map((row) => ({
-    decision: str(row.decision) as Decision,
-    createdAt: str(row.created_at),
-    suggestion: parseJson<SuggestionDoc>(row.suggestion, {}),
-  }));
-}
-
-function dayKey(iso: string): string | null {
-  if (!iso?.trim()) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 function buildDayBuckets(start: Date, end: Date): AnalyticsTrendPoint[] {
@@ -358,77 +244,16 @@ function buildDayBuckets(start: Date, end: Date): AnalyticsTrendPoint[] {
   return buckets;
 }
 
-interface PeriodMetrics {
-  discovered: number;
-  actions: number;
-  drivenAmount: number;
-  avgStaleDays: number | null;
-  byPriority: Record<string, number>;
-  trendDiscovered: Map<string, number>;
-  trendActions: Map<string, number>;
-}
-
-function computePeriodMetrics(
-  logs: SuggestionRow[],
-  outcomes: OutcomeInRange[],
-  rangeStart: Date,
-  rangeEnd: Date
-): PeriodMetrics {
-  const followLogs = logs.filter((r) => needsFollow(r.suggestion));
-  const byPriority: Record<string, number> = {};
-  const staleValues: number[] = [];
-  const trendDiscovered = new Map<string, number>();
-  const trendActions = new Map<string, number>();
-
-  for (const row of followLogs) {
-    const p = row.suggestion.优先级 || "未定";
-    byPriority[p] = (byPriority[p] ?? 0) + 1;
-    const stale = staleAtAnalysis(row);
-    if (stale != null) staleValues.push(stale);
-    const dk = dayKey(row.processedAt);
-    if (dk) trendDiscovered.set(dk, (trendDiscovered.get(dk) ?? 0) + 1);
-  }
-
-  let actions = 0;
-  let drivenAmount = 0;
-  for (const o of outcomes) {
-    if (!ACTION_DECISIONS.includes(o.decision)) continue;
-    actions += 1;
-    const amt = parseQuoteAmountYuan(o.suggestion);
-    if (amt != null) drivenAmount += amt;
-    const dk = dayKey(o.createdAt);
-    if (dk) trendActions.set(dk, (trendActions.get(dk) ?? 0) + 1);
-  }
-
-  const avgStaleDays =
-    staleValues.length > 0
-      ? Math.round((staleValues.reduce((a, b) => a + b, 0) / staleValues.length) * 10) /
-        10
-      : null;
-
-  void rangeStart;
-  void rangeEnd;
-
-  return {
-    discovered: followLogs.length,
-    actions,
-    drivenAmount,
-    avgStaleDays,
-    byPriority,
-    trendDiscovered,
-    trendActions,
-  };
-}
-
 function buildTrend(
   range: DateRangeWindow,
-  metrics: PeriodMetrics
+  logs: Awaited<ReturnType<typeof aggregateLogsPeriod>>,
+  outcomes: Awaited<ReturnType<typeof aggregateOutcomesPeriod>>
 ): AnalyticsTrendPoint[] {
   const buckets = buildDayBuckets(range.start, range.end);
   return buckets.map((b) => ({
     ...b,
-    discovered: metrics.trendDiscovered.get(b.date) ?? 0,
-    actions: metrics.trendActions.get(b.date) ?? 0,
+    discovered: logs.trendDiscovered.get(b.date) ?? 0,
+    actions: outcomes.trendActions.get(b.date) ?? 0,
   }));
 }
 
@@ -465,65 +290,46 @@ export async function loadAnalyticsSnapshot(options?: {
 
   const [currentLogs, prevLogs, currentOutcomes, prevOutcomes] =
     await Promise.all([
-      fetchLogsBetween(range.start, range.end, hk),
-      fetchLogsBetween(range.prevStart, range.prevEnd, hk),
-      fetchOutcomesBetween(range.start, range.end, hk),
-      fetchOutcomesBetween(range.prevStart, range.prevEnd, hk),
+      aggregateLogsPeriod(range.start, range.end, hk),
+      aggregateLogsPeriod(range.prevStart, range.prevEnd, hk),
+      aggregateOutcomesPeriod(range.start, range.end, hk),
+      aggregateOutcomesPeriod(range.prevStart, range.prevEnd, hk),
     ]);
 
-  const current = computePeriodMetrics(
-    currentLogs,
-    currentOutcomes,
-    range.start,
-    range.end
-  );
-  const prev = computePeriodMetrics(
-    prevLogs,
-    prevOutcomes,
-    range.prevStart,
-    range.prevEnd
-  );
-
-  const [outcomeBreakdown, actionCompletion, traceCost] = await Promise.all([
-    loadOutcomeBreakdown(range, hk),
+  const [actionCompletion, traceCost] = await Promise.all([
     loadActionCompletionMetrics(range, hk),
     loadTraceCostAggregate(range, hk),
   ]);
 
+  const outcomeBreakdown: OutcomeBreakdown = {
+    approved: currentOutcomes.breakdown.approved,
+    modified: currentOutcomes.breakdown.modified,
+    rejected: currentOutcomes.breakdown.rejected,
+    followed_up: currentOutcomes.breakdown.followed_up,
+    prevApproved: prevOutcomes.breakdown.approved,
+    prevModified: prevOutcomes.breakdown.modified,
+    prevRejected: prevOutcomes.breakdown.rejected,
+    prevFollowedUp: prevOutcomes.breakdown.followed_up,
+  };
+
   return {
     range,
-    discovered: current.discovered,
-    actions: current.actions,
-    successRate: current.discovered
-      ? Math.round((current.actions / current.discovered) * 100)
+    discovered: currentLogs.discovered,
+    actions: currentOutcomes.actions,
+    successRate: currentLogs.discovered
+      ? Math.round((currentOutcomes.actions / currentLogs.discovered) * 100)
       : 0,
-    drivenAmount: current.drivenAmount,
-    avgStaleDays: current.avgStaleDays,
-    prevDiscovered: prev.discovered,
-    prevActions: prev.actions,
-    prevDrivenAmount: prev.drivenAmount,
-    prevAvgStaleDays: prev.avgStaleDays,
-    trend: buildTrend(range, current),
-    priorityDistribution: buildPriorityDistribution(current.byPriority),
+    drivenAmount: currentOutcomes.drivenAmount,
+    avgStaleDays: currentLogs.avgStaleDays,
+    prevDiscovered: prevLogs.discovered,
+    prevActions: prevOutcomes.actions,
+    prevDrivenAmount: prevOutcomes.drivenAmount,
+    prevAvgStaleDays: prevLogs.avgStaleDays,
+    trend: buildTrend(range, currentLogs, currentOutcomes),
+    priorityDistribution: buildPriorityDistribution(currentLogs.byPriority),
     outcomeBreakdown,
     actionCompletion,
     traceCost,
-  };
-}
-
-function countDecisions(outcomes: OutcomeInRange[]): OutcomeBreakdown {
-  const counts = { approved: 0, modified: 0, rejected: 0, followed_up: 0 };
-  for (const o of outcomes) {
-    if (o.decision in counts) {
-      counts[o.decision as keyof typeof counts] += 1;
-    }
-  }
-  return {
-    ...counts,
-    prevApproved: 0,
-    prevModified: 0,
-    prevRejected: 0,
-    prevFollowedUp: 0,
   };
 }
 
@@ -532,20 +338,18 @@ export async function loadOutcomeBreakdown(
   housekeeperId?: string
 ): Promise<OutcomeBreakdown> {
   const [current, prev] = await Promise.all([
-    fetchOutcomesBetween(range.start, range.end, housekeeperId),
-    fetchOutcomesBetween(range.prevStart, range.prevEnd, housekeeperId),
+    aggregateOutcomesPeriod(range.start, range.end, housekeeperId),
+    aggregateOutcomesPeriod(range.prevStart, range.prevEnd, housekeeperId),
   ]);
-  const cur = countDecisions(current);
-  const previous = countDecisions(prev);
   return {
-    approved: cur.approved,
-    modified: cur.modified,
-    rejected: cur.rejected,
-    followed_up: cur.followed_up,
-    prevApproved: previous.approved,
-    prevModified: previous.modified,
-    prevRejected: previous.rejected,
-    prevFollowedUp: previous.followed_up,
+    approved: current.breakdown.approved,
+    modified: current.breakdown.modified,
+    rejected: current.breakdown.rejected,
+    followed_up: current.breakdown.followed_up,
+    prevApproved: prev.breakdown.approved,
+    prevModified: prev.breakdown.modified,
+    prevRejected: prev.breakdown.rejected,
+    prevFollowedUp: prev.breakdown.followed_up,
   };
 }
 

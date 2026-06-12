@@ -6,6 +6,7 @@ import {
   TABLE_LOGS,
   TABLE_OUTCOMES,
 } from "../db";
+import { writeBatch } from "../data/client";
 import { actionTitleFromSuggestion } from "../adapters/run";
 import type { ExecutionAction } from "../action-execution-mock";
 import { XLINK_SOURCE_SYSTEM } from "../action-list-display";
@@ -190,24 +191,25 @@ export async function completeAction(input: {
   const action = await getActionById(input.actionId);
   if (!action) throw new Error("Action not found");
 
-  await db.execute({
-    sql: `UPDATE ${TABLE_ACTIONS}
-      SET status = 'completed', terminal_feedback = ?, operator = ?, completed_at = ?
-      WHERE id = ?`,
-    args: [
-      input.terminalFeedback,
-      input.operator ?? "console",
-      now,
-      input.actionId,
-    ],
-  });
-
-  await db.execute({
-    sql: `UPDATE ${TABLE_LOGS}
-      SET inbox_bucket = 'closed', archive_reason = 'action_completed', reconciled_at = ?
-      WHERE dedupe_key = ?`,
-    args: [now, action.dedupeKey],
-  });
+  await writeBatch([
+    {
+      sql: `UPDATE ${TABLE_ACTIONS}
+        SET status = 'completed', terminal_feedback = ?, operator = ?, completed_at = ?
+        WHERE id = ?`,
+      args: [
+        input.terminalFeedback,
+        input.operator ?? "console",
+        now,
+        input.actionId,
+      ],
+    },
+    {
+      sql: `UPDATE ${TABLE_LOGS}
+        SET inbox_bucket = 'closed', archive_reason = 'action_completed', reconciled_at = ?
+        WHERE dedupe_key = ?`,
+      args: [now, action.dedupeKey],
+    },
+  ]);
 }
 
 export async function transitionAction(input: {

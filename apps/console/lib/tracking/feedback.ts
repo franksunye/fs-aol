@@ -1,13 +1,7 @@
-import {
-  db,
-  ensureSchema,
-  TABLE_BLOCKERS,
-  TABLE_LOGS,
-  TABLE_OUTCOMES,
-} from "../db";
+import { db, ensureSchema, TABLE_BLOCKERS, TABLE_LOGS, TABLE_OUTCOMES } from "../db";
+import { ensureInboxColumnsReady } from "../data/inbox-schema";
+import { writeBatch } from "../data/client";
 import type { BlockerType } from "../blockers";
-import { logsHasInboxColumns } from "../logs-schema";
-import { migrateInboxColumns } from "../migrate-inbox-columns";
 import type { BlockerRow, Decision, SuggestionDoc } from "./types";
 import { mapBlocker } from "./mappers";
 import {
@@ -17,13 +11,6 @@ import {
 } from "./actions";
 import { previewExecutionNotify } from "../execution-notify";
 import { getSuggestion } from "./inbox";
-
-async function ensureInboxColumnsReady(): Promise<boolean> {
-  await ensureSchema();
-  if (await logsHasInboxColumns()) return true;
-  await migrateInboxColumns();
-  return logsHasInboxColumns();
-}
 
 export async function getLatestBlocker(
   dedupeKey: string
@@ -82,31 +69,32 @@ export async function recordOutcome(input: {
 }): Promise<void> {
   await ensureInboxColumnsReady();
   const now = new Date().toISOString();
-  await db.execute({
-    sql: `INSERT INTO ${TABLE_OUTCOMES}
-      (dedupe_key, work_order_id, decision, note, operator, modified_suggestion, created_at)
-      VALUES (?,?,?,?,?,?,?)`,
-    args: [
-      input.dedupeKey,
-      input.workOrderId,
-      input.decision,
-      input.note ?? "",
-      input.operator ?? "console",
-      input.modifiedSuggestion
-        ? JSON.stringify(input.modifiedSuggestion)
-        : null,
-      now,
-    ],
-  });
-
   const bucket = inboxBucketForDecision(input.decision);
   const archiveReason = archiveReasonForDecision(input.decision);
-  await db.execute({
-    sql: `UPDATE ${TABLE_LOGS}
-      SET inbox_bucket = ?, archive_reason = ?, reconciled_at = ?
-      WHERE dedupe_key = ?`,
-    args: [bucket, archiveReason, now, input.dedupeKey],
-  });
+  await writeBatch([
+    {
+      sql: `INSERT INTO ${TABLE_OUTCOMES}
+        (dedupe_key, work_order_id, decision, note, operator, modified_suggestion, created_at)
+        VALUES (?,?,?,?,?,?,?)`,
+      args: [
+        input.dedupeKey,
+        input.workOrderId,
+        input.decision,
+        input.note ?? "",
+        input.operator ?? "console",
+        input.modifiedSuggestion
+          ? JSON.stringify(input.modifiedSuggestion)
+          : null,
+        now,
+      ],
+    },
+    {
+      sql: `UPDATE ${TABLE_LOGS}
+        SET inbox_bucket = ?, archive_reason = ?, reconciled_at = ?
+        WHERE dedupe_key = ?`,
+      args: [bucket, archiveReason, now, input.dedupeKey],
+    },
+  ]);
 
   if (input.decision === "approved" || input.decision === "modified") {
     const row = await getSuggestion(input.dedupeKey);

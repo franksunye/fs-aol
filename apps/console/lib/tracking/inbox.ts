@@ -1,8 +1,7 @@
 import { cache } from "react";
 import { db, ensureSchema, TABLE_LOGS, TABLE_OUTCOMES, TABLE_BLOCKERS } from "../db";
 import type { InboxBucket } from "../labels";
-import { logsHasInboxColumns } from "../logs-schema";
-import { migrateInboxColumns } from "../migrate-inbox-columns";
+import { ensureInboxColumnsReady } from "../data/inbox-schema";
 import type { BlockerRow, InboxBucketCounts, OutcomeRow, SuggestionRow } from "./types";
 import { mapBlocker, mapOutcome, mapSuggestion } from "./mappers";
 import { str } from "./parse";
@@ -47,20 +46,6 @@ async function latestBlockersForKeys(
     map.set(b.dedupeKey, b);
   }
   return map;
-}
-
-let inboxColumnsReady: boolean | null = null;
-
-async function ensureInboxColumnsReady(): Promise<boolean> {
-  if (inboxColumnsReady !== null) return inboxColumnsReady;
-  await ensureSchema();
-  if (await logsHasInboxColumns()) {
-    inboxColumnsReady = true;
-    return true;
-  }
-  await migrateInboxColumns();
-  inboxColumnsReady = await logsHasInboxColumns();
-  return inboxColumnsReady;
 }
 
 async function countInboxBucketsUncached(

@@ -18,7 +18,9 @@ export async function loadFollowUpAuditFeed(
     sql: `SELECT o.id, o.dedupe_key, o.work_order_id, o.decision, o.operator, o.created_at,
                  a.status AS action_status
           FROM ${TABLE_OUTCOMES} o
-          LEFT JOIN ${TABLE_ACTIONS} a ON a.dedupe_key = o.dedupe_key
+          LEFT JOIN ${TABLE_ACTIONS} a ON a.id = (
+            SELECT MAX(a2.id) FROM ${TABLE_ACTIONS} a2 WHERE a2.dedupe_key = o.dedupe_key
+          )
           ORDER BY o.created_at DESC
           LIMIT ?`,
     args: [limit],
