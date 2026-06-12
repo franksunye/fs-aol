@@ -21,8 +21,7 @@ export const ACTION_CENTER_TAB_ORDER: ActionCenterView[] = [
   "archived",
 ];
 
-export const ACTION_CENTER_SUBTITLE =
-  "统一查看 Agent 生成的建议、Action 分发状态与业务反馈。";
+export const ACTION_CENTER_SUBTITLE = "审核建议、分发执行与闭环";
 
 export function actionCenterViewFromSearchParams(sp: {
   tab?: string;
