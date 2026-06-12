@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -16,10 +16,7 @@ import { Button } from "@/components/ui/button";
 import { DataStateBadge } from "@/components/data-state-badge";
 import { IntegrationsSummaryCards } from "./integrations-summary-cards";
 import { IntegrationListPanel } from "./integration-list-panel";
-import {
-  IntegrationRegistryDetail,
-  IntegrationRegistryInsight,
-} from "./integration-registry-panels";
+import { IntegrationRegistryDetail } from "./integration-registry-panels";
 import { RuntimeSyncStatusCard } from "@/components/runtime/runtime-sync-status-card";
 import type { RuntimeConfigPublic } from "@/lib/runtime-config/store";
 
@@ -68,11 +65,7 @@ export function IntegrationsPage({
     return DEFAULT_SELECTION;
   }, [sp, registry]);
 
-  const [selectedId, setSelectedId] = useState(initialSelection);
-
-  useEffect(() => {
-    setSelectedId(initialSelection);
-  }, [initialSelection]);
+  const selectedId = initialSelection;
 
   const selectedItem = useMemo(
     () =>
@@ -95,7 +88,6 @@ export function IntegrationsPage({
   );
 
   function handleSelect(id: string) {
-    setSelectedId(id);
     syncUrl(id, id === FSM_INTEGRATION_ID ? fsmTab : undefined);
   }
 
@@ -199,7 +191,7 @@ export function IntegrationsPage({
             pendingConfig={registry.filter((r) => r.status === "pending").length}
           />
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(0,15rem)] xl:items-start">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] xl:items-start">
             <div className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-12rem)]">
               <IntegrationListPanel
                 registryItems={registry}
@@ -216,15 +208,6 @@ export function IntegrationsPage({
                   fsmTab={fsmTab}
                   tursoOk={tursoOk}
                   onFsmTabChange={handleFsmTabChange}
-                />
-              ) : null}
-            </div>
-            <div>
-              {selectedItem ? (
-                <IntegrationRegistryInsight
-                  item={selectedItem}
-                  fsmView={fsmView}
-                  tursoOk={tursoOk}
                 />
               ) : null}
             </div>
