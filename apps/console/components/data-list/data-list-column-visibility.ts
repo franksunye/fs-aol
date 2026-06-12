@@ -6,6 +6,7 @@ export const NARROW_HIDDEN_COLUMN_IDS = new Set([
   "sourceSystem",
   "executor",
   "related",
+  "context",
   "status",
   "time",
   "due",

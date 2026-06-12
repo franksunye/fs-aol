@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { loadBinding } from "./load";
 import {
   mergeWorkbenchDisplay,
-  resolveFacets,
+  resolveContextColumn,
   resolveRelatedObject,
   WORKBENCH_FACET_SAMPLE_ROW,
 } from "./workbench-display";
@@ -11,16 +11,19 @@ function testMergeDefaults() {
   const binding = loadBinding("xlink-fsm");
   const merged = mergeWorkbenchDisplay(binding, {});
   assert.ok(merged);
-  assert.ok(merged!.enabledFacetIds.includes("quote_amount"));
+  assert.ok(merged!.contextColumn.enabledFacetIds.includes("quote_amount"));
 }
 
-function testResolveQuoteAmount() {
+function testResolveQuoteAmountInContext() {
   const binding = loadBinding("xlink-fsm");
   const merged = mergeWorkbenchDisplay(binding, null)!;
   const related = resolveRelatedObject(merged, WORKBENCH_FACET_SAMPLE_ROW);
   assert.equal(related.id, "GD2026064004");
   assert.equal(related.type, "工单");
-  assert.ok(related.facets.some((f) => f.label === "合同金额" && f.value.includes("¥")));
+  const context = resolveContextColumn(merged, WORKBENCH_FACET_SAMPLE_ROW);
+  assert.ok(
+    context.some((f) => f.label === "合同金额" && f.value.includes("¥"))
+  );
 }
 
 function testOverridesDisable() {
@@ -29,11 +32,11 @@ function testOverridesDisable() {
   const merged = mergeWorkbenchDisplay(binding, {
     [key]: { workbench_display: { enabled_facets: [] } },
   })!;
-  const facets = resolveFacets(merged, WORKBENCH_FACET_SAMPLE_ROW);
+  const facets = resolveContextColumn(merged, WORKBENCH_FACET_SAMPLE_ROW);
   assert.equal(facets.length, 0);
 }
 
 testMergeDefaults();
-testResolveQuoteAmount();
+testResolveQuoteAmountInContext();
 testOverridesDisable();
 console.log("workbench-display.test.ts OK");

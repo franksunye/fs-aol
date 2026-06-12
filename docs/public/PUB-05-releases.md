@@ -605,23 +605,24 @@ v0.4 不是继续铺页面，而是证明一个真实 Agent 能在企业业务�
 
 ## v0.4.5 · workbench-display-facets
 
-**目标**：Action 列表「关联对象」列展示 binding 驱动的 facets（合同金额）；集成页可配置 `enabled_facets` 并保存至 Turso。
+**目标**：Action 列表增加 **「上下文」** 列展示 binding 驱动字段（合同金额）；关联对象列仅保留身份；集成页可配置并保存至 Turso。
 
 ### 交付
 
 | 区域 | 内容 |
 |------|------|
-| 纪律 | [PUB-25](PUB-25-v045-workbench-display-facets.md) facets + overrides |
-| Binding | `xlink-fsm` `workbench_display.facet_catalog` |
+| 纪律 | [PUB-25](PUB-25-v045-workbench-display-facets.md) 上下文列 + overrides |
+| Binding | `xlink-fsm` `workbench_display.context_column` |
 | Runtime | `RuntimeConfigJson.binding_overrides` |
-| Console | `workbench-display.ts` merge/resolve；`RelatedObjectCell`；协议 Tab 勾选保存 |
-| Adapter | `mapFollowUpRow` 注入 overrides |
+| Console | `workbench-display.ts`；`ContextColumnCell`；协议 Tab「上下文列」勾选保存 |
+| Adapter | `mapFollowUpRow` → `contextColumn` |
 
 ### 验收清单
 
-- [ ] 待审核列表关联对象列显示 `工单 · ¥x`（有报价行）
-- [ ] 集成 → xlink-fsm → 协议 Tab 勾选/保存 facets；刷新 Action 列表生效
-- [ ] 取消「合同金额」后列表不再显示金额
+- [ ] 待审核列表「上下文」列显示 `合同金额 · ¥x`（有报价行）
+- [ ] 关联对象列仅工单号 + 类型
+- [ ] 集成 → xlink-fsm → 协议 Tab 勾选/保存；刷新 Action 列表生效
+- [ ] 取消「合同金额」后上下文列不再显示金额
 - [ ] `e2e-v045-workbench-facets.sh` + `pnpm build`
 
 ---

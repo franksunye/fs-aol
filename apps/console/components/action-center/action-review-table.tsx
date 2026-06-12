@@ -7,10 +7,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { WorkItem } from "@/lib/operator-model";
 import type { ActionReviewSortKey } from "@/lib/action-review-sorting";
 import { followUpListBadges } from "@/lib/adapters/follow-up-list-badges";
-import {
-  RelatedObjectCell,
-  relatedObjectNarrowSubtitle,
-} from "@/components/action-center/related-object-cell";
+import { ContextColumnCell, contextColumnNarrowSubtitle } from "@/components/action-center/context-column-cell";
+import { RelatedObjectCell } from "@/components/action-center/related-object-cell";
 import { cn } from "@/lib/utils";
 import { BadgeStack } from "./badge-stack";
 import type { ActionReviewListContext } from "@/lib/action-center-nav";
@@ -93,8 +91,11 @@ export function ActionReviewTable({
               </Link>
               {layout === "narrow" ? (
                 <p className="text-muted-foreground mt-0.5 truncate text-[10px] leading-tight">
-                  {relatedObjectNarrowSubtitle(display.relatedObject)} ·{" "}
-                  {display.statusLabel} ·{" "}
+                  {display.relatedObject.id}
+                  {contextColumnNarrowSubtitle(display.contextColumn)
+                    ? ` · ${contextColumnNarrowSubtitle(display.contextColumn)}`
+                    : ""}{" "}
+                  · {display.statusLabel} ·{" "}
                   {display.timestamp.replace(/^建议\s*/, "")}
                 </p>
               ) : (
@@ -137,6 +138,15 @@ export function ActionReviewTable({
           if (!related) return null;
           return <RelatedObjectCell related={related} />;
         },
+      },
+      {
+        id: "context",
+        header: () => <DataListStaticHead label="上下文" />,
+        cell: ({ row }) => (
+          <ContextColumnCell
+            context={row.original.listDisplay?.contextColumn}
+          />
+        ),
       },
       {
         id: "sourceSystem",
@@ -222,7 +232,7 @@ export function ActionReviewTable({
         layout={layout}
         density={density}
         userHiddenColumnIds={userHiddenColumnIds}
-        minWidth={layout === "narrow" ? 0 : 880}
+        minWidth={layout === "narrow" ? 0 : 960}
         stickyTitleColumn={layout !== "narrow"}
         getRowId={(row) => row.id}
         getRowProps={(row) => {

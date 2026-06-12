@@ -4,6 +4,7 @@ export { mergeFsmLiveView, loadFsmSyncHealth } from "./fsm-live-view";
 export {
   mergeWorkbenchDisplay,
   resolveRelatedObject,
+  resolveContextColumn,
   bindingOverrideKey,
   WORKBENCH_FACET_SAMPLE_ROW,
   resolverKindLabel,

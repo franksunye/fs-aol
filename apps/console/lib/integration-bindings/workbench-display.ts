@@ -26,6 +26,20 @@ export function getWorkbenchDisplayFromBinding(
   return obj?.workbench_display ?? null;
 }
 
+function contextColumnFromSpec(spec: WorkbenchDisplaySpec): {
+  catalog: WorkbenchFacetSpec[];
+  defaultEnabled: string[];
+} {
+  const ctx = spec.context_column;
+  const catalog =
+    ctx?.facet_catalog ?? spec.facet_catalog ?? [];
+  const defaultEnabled =
+    ctx?.default_enabled ??
+    spec.default_enabled ??
+    catalog.map((f) => f.id);
+  return { catalog, defaultEnabled };
+}
+
 export function mergeWorkbenchDisplay(
   binding: IntegrationBinding,
   overrides?: BindingOverridesJson | null
@@ -36,8 +50,7 @@ export function mergeWorkbenchDisplay(
   const key = bindingOverrideKey(binding);
   const enabledFromOverride =
     overrides?.[key]?.workbench_display?.enabled_facets;
-  const catalog = spec.facet_catalog ?? [];
-  const defaultEnabled = spec.default_enabled ?? catalog.map((f) => f.id);
+  const { catalog, defaultEnabled } = contextColumnFromSpec(spec);
   const enabledFacetIds = (
     enabledFromOverride !== undefined ? enabledFromOverride : defaultEnabled
   ).filter((id) => catalog.some((f) => f.id === id));
@@ -55,8 +68,10 @@ export function mergeWorkbenchDisplay(
       id: binding.ingestion.system_name,
       label: binding.display_name,
     },
-    facetCatalog: catalog,
-    enabledFacetIds,
+    contextColumn: {
+      facetCatalog: catalog,
+      enabledFacetIds,
+    },
   };
 }
 
@@ -103,13 +118,14 @@ function resolveFacetValue(
   }
 }
 
-export function resolveFacets(
+export function resolveContextFacets(
   merged: MergedWorkbenchDisplay,
   row: SuggestionRow
 ): ResolvedFacet[] {
-  const byId = new Map(merged.facetCatalog.map((f) => [f.id, f]));
+  const { facetCatalog, enabledFacetIds } = merged.contextColumn;
+  const byId = new Map(facetCatalog.map((f) => [f.id, f]));
   const out: ResolvedFacet[] = [];
-  for (const id of merged.enabledFacetIds) {
+  for (const id of enabledFacetIds) {
     const facet = byId.get(id);
     if (!facet) continue;
     const value = resolveFacetValue(facet, row);
@@ -118,6 +134,9 @@ export function resolveFacets(
   }
   return out;
 }
+
+/** @deprecated 使用 resolveContextFacets */
+export const resolveFacets = resolveContextFacets;
 
 export function resolveRelatedObjectId(
   merged: MergedWorkbenchDisplay,
@@ -137,12 +156,18 @@ export function resolveRelatedObjectId(
 export function resolveRelatedObject(
   merged: MergedWorkbenchDisplay,
   row: SuggestionRow
-): { id: string; type: string; facets: ResolvedFacet[] } {
+): { id: string; type: string } {
   return {
     id: resolveRelatedObjectId(merged, row),
     type: merged.relatedObject.typeLabel,
-    facets: resolveFacets(merged, row),
   };
+}
+
+export function resolveContextColumn(
+  merged: MergedWorkbenchDisplay,
+  row: SuggestionRow
+): ResolvedFacet[] {
+  return resolveContextFacets(merged, row);
 }
 
 export const WORKBENCH_FACET_SAMPLE_ROW: SuggestionRow = {

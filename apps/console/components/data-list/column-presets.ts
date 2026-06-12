@@ -12,6 +12,7 @@ export const ACTION_REVIEW_COLUMN_PREFS: DataListColumnPreference[] = [
   { id: "title", label: "Action 标题", defaultVisible: true },
   { id: "sourceAgent", label: "来源 Agent", defaultVisible: true },
   { id: "related", label: "关联对象", defaultVisible: true },
+  { id: "context", label: "上下文", defaultVisible: true },
   { id: "sourceSystem", label: "来源系统", defaultVisible: true },
   { id: "executor", label: "执行人", defaultVisible: true },
   { id: "status", label: "状态", defaultVisible: true },

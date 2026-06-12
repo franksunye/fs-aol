@@ -11,13 +11,13 @@ import type {
 } from "@/lib/integration-bindings/types";
 import {
   mergeWorkbenchDisplay,
-  resolveRelatedObject,
+  resolveContextColumn,
   resolverKindLabel,
   WORKBENCH_FACET_SAMPLE_ROW,
 } from "@/lib/integration-bindings/workbench-display";
 import type { RuntimeConfigPublic } from "@/lib/runtime-config/client";
 import { saveRuntimeConfig } from "@/lib/runtime-config/client";
-import { RelatedObjectCell } from "@/components/action-center/related-object-cell";
+import { ContextColumnCell } from "@/components/action-center/context-column-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,36 +74,51 @@ function WorkbenchDisplayCard({
   runtime: RuntimeConfigPublic;
   onRuntimeSaved: (next: RuntimeConfigPublic) => void;
 }) {
-  const catalog = workbenchDisplay?.facetCatalog ?? [];
+  const catalog = workbenchDisplay?.contextColumn.facetCatalog ?? [];
   const bindingKey = workbenchDisplay?.bindingKey ?? `${binding.id}@${binding.version}`;
   const defaultEnabled = useMemo(() => {
     const spec = binding.objects.find((o) => o.workbench_display)?.workbench_display;
-    return spec?.default_enabled ?? catalog.map((f) => f.id);
+    const ctx = spec?.context_column;
+    return (
+      ctx?.default_enabled ??
+      spec?.default_enabled ??
+      catalog.map((f) => f.id)
+    );
   }, [binding.objects, catalog]);
 
   const [enabledIds, setEnabledIds] = useState<string[]>(
-    workbenchDisplay?.enabledFacetIds ?? defaultEnabled
+    workbenchDisplay?.contextColumn.enabledFacetIds ?? defaultEnabled
   );
   const [facetBusy, setFacetBusy] = useState(false);
 
   useEffect(() => {
-    setEnabledIds(workbenchDisplay?.enabledFacetIds ?? defaultEnabled);
-  }, [workbenchDisplay?.enabledFacetIds, defaultEnabled]);
+    setEnabledIds(
+      workbenchDisplay?.contextColumn.enabledFacetIds ?? defaultEnabled
+    );
+  }, [workbenchDisplay?.contextColumn.enabledFacetIds, defaultEnabled]);
 
-  const previewRelated = useMemo(() => {
+  const previewContext = useMemo(() => {
     const merged =
       workbenchDisplay ??
       mergeWorkbenchDisplay(binding, runtime.config.binding_overrides);
     if (!merged) return null;
-    const previewMerged = { ...merged, enabledFacetIds: enabledIds };
-    return resolveRelatedObject(previewMerged, WORKBENCH_FACET_SAMPLE_ROW);
+    const previewMerged: MergedWorkbenchDisplay = {
+      ...merged,
+      contextColumn: {
+        ...merged.contextColumn,
+        enabledFacetIds: enabledIds,
+      },
+    };
+    const facets = resolveContextColumn(previewMerged, WORKBENCH_FACET_SAMPLE_ROW);
+    return facets.length ? { facets } : { facets: [] };
   }, [workbenchDisplay, binding, runtime.config.binding_overrides, enabledIds]);
 
   const facetsDirty = useMemo(() => {
-    const current = workbenchDisplay?.enabledFacetIds ?? defaultEnabled;
+    const current =
+      workbenchDisplay?.contextColumn.enabledFacetIds ?? defaultEnabled;
     if (current.length !== enabledIds.length) return true;
     return current.some((id, i) => id !== enabledIds[i]);
-  }, [workbenchDisplay?.enabledFacetIds, defaultEnabled, enabledIds]);
+  }, [workbenchDisplay?.contextColumn.enabledFacetIds, defaultEnabled, enabledIds]);
 
   const toggleFacet = (id: string) => {
     setEnabledIds((prev) =>
@@ -123,11 +138,11 @@ function WorkbenchDisplayCard({
       };
       const next = await saveRuntimeConfig(
         { binding_overrides: nextOverrides },
-        "Workbench display facets updated"
+        "Action context column facets updated"
       );
       onRuntimeSaved(next);
-      toast.success("工作台展示已保存", {
-        description: "Action 列表关联对象列将按勾选字段展示",
+      toast.success("上下文列已保存", {
+        description: "Action 列表「上下文」列将按勾选字段展示",
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "保存失败");
@@ -144,12 +159,12 @@ function WorkbenchDisplayCard({
     <Card className="gap-0 py-0">
       <CardContent className="space-y-4 px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold">工作台展示</h3>
+          <h3 className="text-sm font-semibold">上下文列</h3>
           <DataStateBadge state="live" label="Turso overrides" />
         </div>
         <p className="text-muted-foreground text-xs">
-          配置 Action 中心「关联对象」列在工单号与类型下方展示的附加字段（facets）。
-          保存至 runtime_config.binding_overrides，无需发版。
+          配置 Action 中心「上下文」列展示的字段（如合同金额）。数据来自 Agent
+          建议上下文，非关联对象身份。保存至 runtime_config.binding_overrides，无需发版。
         </p>
         <ul className="space-y-2">
           {catalog.map((facet) => (
@@ -176,12 +191,10 @@ function WorkbenchDisplayCard({
             </li>
           ))}
         </ul>
-        {previewRelated ? (
-          <div className="bg-muted/40 rounded-md border p-3">
-            <p className="text-muted-foreground mb-2 text-xs font-medium">列表预览</p>
-            <RelatedObjectCell related={previewRelated} />
-          </div>
-        ) : null}
+        <div className="bg-muted/40 rounded-md border p-3">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">上下文列预览</p>
+          <ContextColumnCell context={previewContext ?? undefined} />
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -194,7 +207,7 @@ function WorkbenchDisplayCard({
             ) : (
               <Save className="size-3.5" />
             )}
-            <span className="ml-1">保存展示字段</span>
+            <span className="ml-1">保存上下文字段</span>
           </Button>
           <Button
             type="button"
@@ -268,7 +281,7 @@ export function IntegrationProtocolPanel({
     <div className="space-y-4">
       <p className="text-muted-foreground text-sm">
         集成协议由代码契约定义（binding {binding.id}@{binding.version}）。
-        工作台关联对象展示字段可在下方配置；字段映射与码表仍由契约版本管理。
+        Action 列表「上下文」列展示字段可在下方配置；字段映射与码表仍由契约版本管理。
       </p>
 
       {runtime && onRuntimeSaved ? (

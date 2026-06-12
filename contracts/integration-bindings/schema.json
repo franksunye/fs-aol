@@ -96,6 +96,39 @@
                   "label": { "type": "string" }
                 }
               },
+              "context_column": {
+                "type": "object",
+                "properties": {
+                  "facet_catalog": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id", "label", "resolver"],
+                      "properties": {
+                        "id": { "type": "string" },
+                        "label": { "type": "string" },
+                        "resolver": {
+                          "type": "object",
+                          "required": ["kind"],
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["quote_amount_yuan", "suggestion_path", "row_field"]
+                            },
+                            "path": { "type": "string" },
+                            "format": { "type": "string" },
+                            "field": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "default_enabled": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              },
               "facet_catalog": {
                 "type": "array",
                 "items": {

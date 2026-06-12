@@ -6,7 +6,7 @@ export type ActionEntityRef = {
   label: string;
 };
 
-export type ActionRelatedFacet = {
+export type ActionContextFacet = {
   label: string;
   value: string;
 };
@@ -14,7 +14,10 @@ export type ActionRelatedFacet = {
 export type ActionRelatedObject = {
   id: string;
   type: string;
-  facets?: ActionRelatedFacet[];
+};
+
+export type ActionContextColumn = {
+  facets: ActionContextFacet[];
 };
 
 export type ActionListDisplay = {
@@ -22,6 +25,8 @@ export type ActionListDisplay = {
   priorityLabel: string;
   sourceAgent: ActionEntityRef;
   relatedObject: ActionRelatedObject;
+  /** Action 列表「上下文」列：Agent/业务上下文的可扫视字段 */
+  contextColumn?: ActionContextColumn;
   sourceSystem: ActionEntityRef;
   executorLabel: string;
   statusLabel: string;

@@ -26,13 +26,22 @@ export type WorkbenchFacetSpec = {
   resolver: WorkbenchFacetResolver;
 };
 
+export type WorkbenchContextColumnSpec = {
+  facet_catalog?: WorkbenchFacetSpec[];
+  default_enabled?: string[];
+};
+
 export type WorkbenchDisplaySpec = {
   related_object?: {
     id_fields?: string[];
     type_label?: string;
   };
   source_system?: { id: string; label: string };
+  /** Action 列表「上下文」列字段目录 */
+  context_column?: WorkbenchContextColumnSpec;
+  /** @deprecated 使用 context_column */
   facet_catalog?: WorkbenchFacetSpec[];
+  /** @deprecated 使用 context_column.default_enabled */
   default_enabled?: string[];
 };
 
@@ -120,8 +129,11 @@ export type MergedWorkbenchDisplay = {
     typeLabel: string;
   };
   sourceSystem: { id: string; label: string };
-  facetCatalog: WorkbenchFacetSpec[];
-  enabledFacetIds: string[];
+  /** 上下文列 facet 目录与生效勾选 */
+  contextColumn: {
+    facetCatalog: WorkbenchFacetSpec[];
+    enabledFacetIds: string[];
+  };
 };
 
 export type FsmIntegrationView = {

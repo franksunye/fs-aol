@@ -103,14 +103,16 @@
           "type_label": "工单"
         },
         "source_system": { "id": "xlink", "label": "XLink" },
-        "facet_catalog": [
-          {
-            "id": "quote_amount",
-            "label": "合同金额",
-            "resolver": { "kind": "quote_amount_yuan" }
-          }
-        ],
-        "default_enabled": ["quote_amount"]
+        "context_column": {
+          "facet_catalog": [
+            {
+              "id": "quote_amount",
+              "label": "合同金额",
+              "resolver": { "kind": "quote_amount_yuan" }
+            }
+          ],
+          "default_enabled": ["quote_amount"]
+        }
       }
     }
   ],

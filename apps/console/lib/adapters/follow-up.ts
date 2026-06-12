@@ -18,6 +18,7 @@ import { formatListTimestamp, actionReviewSummaryPreview } from "../action-revie
 import { loadBinding } from "../integration-bindings/load";
 import {
   mergeWorkbenchDisplay,
+  resolveContextColumn,
   resolveRelatedObject,
 } from "../integration-bindings/workbench-display";
 import type { BindingOverridesJson } from "../runtime-config/types";
@@ -77,8 +78,8 @@ function buildListDisplay(
     : {
         id: row.orderNum || row.workOrderId,
         type: WORK_ORDER_OBJECT_TYPE,
-        facets: [] as { label: string; value: string }[],
       };
+  const contextFacets = merged ? resolveContextColumn(merged, row) : [];
   const sourceSystem = merged
     ? { id: merged.sourceSystem.id, label: merged.sourceSystem.label }
     : XLINK_SOURCE_SYSTEM;
@@ -90,8 +91,10 @@ function buildListDisplay(
     relatedObject: {
       id: related.id,
       type: related.type,
-      facets: related.facets.length ? related.facets : undefined,
     },
+    contextColumn: contextFacets.length
+      ? { facets: contextFacets }
+      : undefined,
     sourceSystem,
     executorLabel: housekeeperName(pilots, row.housekeeperId),
     statusLabel: actionInboxStatusLabel(row),

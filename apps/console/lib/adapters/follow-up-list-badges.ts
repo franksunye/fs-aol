@@ -14,9 +14,7 @@ export function followUpListBadges(item: WorkItem): ListBadge[] {
     },
     {
       key: "related",
-      label: d.relatedObject.facets?.length
-        ? `${d.relatedObject.type} ${d.relatedObject.id} · ${d.relatedObject.facets.map((f) => f.value).join(" · ")}`
-        : `${d.relatedObject.type} ${d.relatedObject.id}`,
+      label: `${d.relatedObject.type} ${d.relatedObject.id}`,
       variant: "outline",
     },
     {
@@ -25,6 +23,15 @@ export function followUpListBadges(item: WorkItem): ListBadge[] {
       variant: "secondary",
     },
   ];
+
+  const ctx = d.contextColumn?.facets?.[0];
+  if (ctx) {
+    badges.splice(2, 0, {
+      key: "context",
+      label: `${ctx.label} ${ctx.value}`,
+      variant: "outline",
+    });
+  }
 
   if (d.executorLabel && d.executorLabel !== "—") {
     badges.push({

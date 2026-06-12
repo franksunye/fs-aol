@@ -24,6 +24,8 @@ echo "[e2e-v045] doc + code anchors..."
 test -f docs/public/PUB-25-v045-workbench-display-facets.md
 test -f apps/console/lib/integration-bindings/workbench-display.ts
 test -f apps/console/components/action-center/related-object-cell.tsx
+test -f apps/console/components/action-center/context-column-cell.tsx
+grep -q context_column contracts/integration-bindings/xlink-fsm.v1.json
 grep -q workbench_display contracts/integration-bindings/xlink-fsm.v1.json
 grep -q binding_overrides apps/console/lib/runtime-config/types.ts
 
