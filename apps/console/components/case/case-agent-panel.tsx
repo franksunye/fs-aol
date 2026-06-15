@@ -223,7 +223,7 @@ export function CaseAgentPanel({
           />
         </CaseSection>
 
-        <CaseSection title="本次分析变化">
+        <CaseSection title="与上轮对比">
           {prevSuggestion && round > 1 ? (
             <AnalysisDiffCard
               prev={prevSuggestion}
@@ -244,7 +244,7 @@ export function CaseAgentPanel({
         </CaseSection>
       </div>
 
-      <CaseSection title="Agent Run · 工具步骤">
+      <CaseSection title="分析过程" className="border-dashed">
         {error && sortedTraces.length === 0 ? (
           <p className="text-muted-foreground text-sm">{error}</p>
         ) : activeTrace && activeTrace.steps.length > 0 ? (

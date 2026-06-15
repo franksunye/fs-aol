@@ -369,7 +369,7 @@ export function PlanTimelineSection({
     <>
       {!compact ? (
         <p className="text-muted-foreground mb-4 text-xs">
-          Activity Feed：业务里程碑与 Agent 工作记录合并展示（含多次分析、归档、管家反馈）。
+          业务里程碑与 Agent 工作记录按时间合并展示。
         </p>
       ) : null}
 

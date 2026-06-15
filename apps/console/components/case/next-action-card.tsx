@@ -17,7 +17,7 @@ export function NextActionCard({ suggestion }: { suggestion: SuggestionDoc }) {
 
   return (
     <CaseSection
-      title="Next Best Action"
+      title="建议行动"
       className="border-emerald-200"
       bodyClassName="bg-emerald-50/50"
     >

@@ -4,6 +4,8 @@ import type { TimelineEvent } from "@/lib/timeline";
 import { Card } from "@/components/ui/card";
 import { DispositionBar } from "@/components/case/disposition-bar";
 import { CaseWorkspace } from "@/components/case/case-workspace";
+import { AgentSummaryCard } from "@/components/case/agent-summary-card";
+import { NextActionCard } from "@/components/case/next-action-card";
 import { OpportunitySnapshotCard } from "@/components/case/opportunity-snapshot-card";
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
 import { CaseSection } from "@/components/case/case-section";
@@ -61,6 +63,11 @@ export function CaseDetailView({
         </Card>
       ) : null}
 
+      <div className="mt-4 grid gap-4 md:grid-cols-2 md:items-stretch">
+        <NextActionCard suggestion={s} />
+        <AgentSummaryCard suggestion={s} />
+      </div>
+
       <div className="mt-4">
         <DispositionBar
           dedupeKey={row.dedupeKey}
@@ -79,7 +86,7 @@ export function CaseDetailView({
       <CaseDetailTabs active={panel} />
 
       {isActivity ? (
-        <CaseSection title="Activity · 业务与 Agent 事件" bodyClassName="p-3">
+        <CaseSection title="活动时间线" bodyClassName="p-3">
           <PlanTimelineSection
             events={timelineEvents}
             roundLinks={roundLinks}

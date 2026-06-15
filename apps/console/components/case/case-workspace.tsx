@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { AgentSummaryCard } from "./agent-summary-card";
-import { NextActionCard } from "./next-action-card";
 import { CaseAgentPanel } from "./case-agent-panel";
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
 import { CaseSection } from "./case-section";
@@ -50,11 +48,6 @@ export function CaseWorkspace({
   if (embedded) {
     return (
       <div className="flex w-full min-w-0 flex-col gap-5">
-        <div className="grid gap-4 md:grid-cols-2 md:items-stretch xl:grid-cols-2">
-          <AgentSummaryCard suggestion={suggestion} />
-          <NextActionCard suggestion={suggestion} />
-        </div>
-
         <Suspense
           fallback={
             <p className="text-muted-foreground animate-pulse text-sm">
@@ -75,13 +68,13 @@ export function CaseWorkspace({
 
         {!hideTimeline ? (
           <CaseSection
-            title="Agent 时间轴"
+            title="近期动态"
             action={
               <Link
                 href={activityHref}
                 className="text-primary text-xs font-medium hover:underline"
               >
-                查看活动时间线
+                查看全部时间线
               </Link>
             }
             bodyClassName="p-3"
@@ -101,11 +94,6 @@ export function CaseWorkspace({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex min-w-0 flex-col gap-5">
-        <div className="grid gap-4 md:grid-cols-2 md:items-stretch">
-          <AgentSummaryCard suggestion={suggestion} />
-          <NextActionCard suggestion={suggestion} />
-        </div>
-
         <Suspense
           fallback={
             <p className="text-muted-foreground animate-pulse text-sm">
@@ -127,13 +115,13 @@ export function CaseWorkspace({
 
       <aside className="lg:sticky lg:top-6 lg:self-start">
         <CaseSection
-          title="Agent 时间轴"
+          title="近期动态"
           action={
             <Link
               href={activityHref}
               className="text-primary text-xs font-medium hover:underline"
             >
-              查看活动时间线
+              查看全部时间线
             </Link>
           }
           bodyClassName="max-h-[calc(100vh-8rem)] overflow-y-auto p-3"

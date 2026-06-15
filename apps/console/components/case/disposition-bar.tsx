@@ -20,9 +20,9 @@ export function DispositionBar({
   blockerNote: string | null;
 }) {
   return (
-    <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
       <CaseSection
-        title="人在回路 · 审批 Agent 建议"
+        title="我的处置"
         className="h-full"
         bodyClassName="p-3"
         action={
