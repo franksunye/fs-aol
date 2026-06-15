@@ -22,7 +22,6 @@ export default async function ActionCenterLayout({
   return (
     <AppShell
       activeCount={shell.buckets.active}
-      overviewBadge={shell.overviewBadge}
       closedCount={shell.buckets.closed}
       hk={hk || undefined}
       sidebarCollapsed={sidebarCollapsed}

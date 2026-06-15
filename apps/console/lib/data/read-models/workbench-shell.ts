@@ -11,8 +11,6 @@ export type WorkbenchShellSnapshot = {
   buckets: InboxBucketCounts;
   pendingExecution: number;
   flow: ActionFlowSummary;
-  /** 侧栏「总览」角标：待审核 + 待执行 + 超时异常 */
-  overviewBadge: number;
 };
 
 async function loadWorkbenchShellSnapshotUncached(
@@ -27,7 +25,6 @@ async function loadWorkbenchShellSnapshotUncached(
     buckets,
     pendingExecution,
     flow,
-    overviewBadge: buckets.active + pendingExecution + flow.timeoutAnomaly,
   };
 }
 

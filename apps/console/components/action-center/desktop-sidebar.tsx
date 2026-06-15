@@ -11,13 +11,11 @@ import { SidebarNav } from "./sidebar-nav";
 
 export function DesktopSidebar({
   activeCount,
-  overviewBadge,
   closedCount,
   hk,
   initialCollapsed = false,
 }: {
   activeCount: number;
-  overviewBadge?: number;
   closedCount?: number;
   hk?: string;
   initialCollapsed?: boolean;
@@ -67,7 +65,6 @@ export function DesktopSidebar({
     >
       <SidebarNav
         activeCount={activeCount}
-        overviewBadge={overviewBadge}
         closedCount={closedCount}
         hk={hk}
         collapsed={collapsed}

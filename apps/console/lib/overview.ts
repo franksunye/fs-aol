@@ -2,7 +2,6 @@ import { loadActionCenterPrimaryKpis } from "./action-center-metrics";
 import type { ActionCenterPrimaryKpi } from "./action-center-kpi";
 import { loadAnalyticsSnapshot } from "./analytics";
 import { loadExecutionMetrics } from "./execution-metrics";
-import { loadWorkbenchShellSnapshot } from "./data";
 import { actionCenterTabHref } from "./action-center-nav";
 import {
   overviewActionsHref,
@@ -29,12 +28,6 @@ import { formatYuanCompact } from "./action-review-metric-cards";
 export type OverviewPageSnapshot = OverviewSnapshot;
 
 export { formatYuanCompact };
-
-/** 侧栏「总览」角标：待审核 + 待执行 + 超时异常（与驾驶舱 attention 口径一致） */
-export async function loadOverviewSidebarBadge(hk?: string): Promise<number> {
-  const shell = await loadWorkbenchShellSnapshot(hk);
-  return shell.overviewBadge;
-}
 
 function mapPrimaryToOverviewKpis(
   primary: ActionCenterPrimaryKpi[]

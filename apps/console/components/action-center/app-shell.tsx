@@ -10,14 +10,12 @@ import { ShellTopBar } from "./shell-top-bar";
 export function AppShell({
   children,
   activeCount,
-  overviewBadge,
   closedCount,
   hk,
   sidebarCollapsed = false,
 }: {
   children: React.ReactNode;
   activeCount: number;
-  overviewBadge?: number;
   closedCount?: number;
   hk?: string;
   sidebarCollapsed?: boolean;
@@ -36,7 +34,6 @@ export function AppShell({
         >
           <DesktopSidebar
             activeCount={activeCount}
-            overviewBadge={overviewBadge}
             closedCount={closedCount}
             hk={hk}
             initialCollapsed={sidebarCollapsed}
@@ -46,7 +43,6 @@ export function AppShell({
           <div className="bg-background z-30 flex shrink-0 items-center gap-3 border-b border-border px-4 py-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
             <MobileSidebar
               activeCount={activeCount}
-              overviewBadge={overviewBadge}
               closedCount={closedCount}
               hk={hk}
             />

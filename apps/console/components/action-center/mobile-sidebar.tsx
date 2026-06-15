@@ -14,12 +14,10 @@ import { SidebarNav } from "./sidebar-nav";
 
 export function MobileSidebar({
   activeCount,
-  overviewBadge,
   closedCount,
   hk,
 }: {
   activeCount: number;
-  overviewBadge?: number;
   closedCount?: number;
   hk?: string;
 }) {
@@ -54,7 +52,6 @@ export function MobileSidebar({
         <SheetTitle className="sr-only">导航菜单</SheetTitle>
         <SidebarNav
           activeCount={activeCount}
-          overviewBadge={overviewBadge}
           closedCount={closedCount}
           hk={hk}
           collapsed={false}

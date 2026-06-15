@@ -85,7 +85,6 @@ const navItemClass = (opts: {
 
 export function SidebarNav({
   activeCount,
-  overviewBadge,
   closedCount,
   hk,
   collapsed = false,
@@ -94,7 +93,6 @@ export function SidebarNav({
   onNavigate,
 }: {
   activeCount: number;
-  overviewBadge?: number;
   closedCount?: number;
   hk?: string;
   collapsed?: boolean;
@@ -124,7 +122,6 @@ export function SidebarNav({
       icon: LayoutDashboard,
       href: overviewNavHref,
       active: onOverview,
-      badge: overviewBadge && overviewBadge > 0 ? overviewBadge : undefined,
     },
     {
       label: "Actions",
