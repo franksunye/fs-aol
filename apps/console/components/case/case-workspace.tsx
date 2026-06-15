@@ -7,6 +7,46 @@ import type { SuggestionDoc } from "@/lib/suggestions";
 import type { TimelineEvent } from "@/lib/timeline";
 import type { AgentLogMeta } from "@/components/agent-analysis-panel";
 
+function TimelineRail({
+  events,
+  roundLinks,
+  detailBase,
+  activityHref,
+  compactAside = false,
+}: {
+  events: TimelineEvent[];
+  roundLinks: Record<number, number>;
+  detailBase: string;
+  activityHref: string;
+  compactAside?: boolean;
+}) {
+  return (
+    <CaseSection
+      title="近期动态"
+      action={
+        <Link
+          href={activityHref}
+          className="text-primary text-xs font-medium hover:underline"
+        >
+          查看全部
+        </Link>
+      }
+      bodyClassName={
+        compactAside
+          ? "max-h-[min(420px,calc(100vh-12rem))] overflow-y-auto p-3"
+          : "max-h-[calc(100vh-8rem)] overflow-y-auto p-3"
+      }
+    >
+      <PlanTimelineSection
+        events={events}
+        roundLinks={roundLinks}
+        suggestionBaseHref={detailBase}
+        compact
+      />
+    </CaseSection>
+  );
+}
+
 export function CaseWorkspace({
   workOrderId,
   dedupeKey,
@@ -29,9 +69,7 @@ export function CaseWorkspace({
   timelineEvents: TimelineEvent[];
   roundLinks: Record<number, number>;
   detailBase: string;
-  /** 详情侧栏内：单列流式布局，由侧栏统一滚动 */
   embedded?: boolean;
-  /** Activity Tab 已展示时间轴时隐藏内嵌副本 */
   hideTimeline?: boolean;
 }) {
   const activityHref = (() => {
@@ -45,95 +83,61 @@ export function CaseWorkspace({
     return s ? `${base}?${s}` : base;
   })();
 
-  if (embedded) {
-    return (
-      <div className="flex w-full min-w-0 flex-col gap-5">
-        <Suspense
-          fallback={
-            <p className="text-muted-foreground animate-pulse text-sm">
-              加载 Agent 分析…
-            </p>
-          }
-        >
-          <CaseAgentPanel
-            workOrderId={workOrderId}
-            dedupeKey={dedupeKey}
-            fallbackSuggestion={suggestion}
-            modifiedSuggestion={modifiedSuggestion}
-            initialRound={initialRound}
-            logMeta={logMeta}
-            timelineCount={timelineEvents.length}
-          />
-        </Suspense>
+  const agentPanel = (
+    <Suspense
+      fallback={
+        <p className="text-muted-foreground animate-pulse text-sm">
+          加载 Agent 分析…
+        </p>
+      }
+    >
+      <CaseAgentPanel
+        workOrderId={workOrderId}
+        dedupeKey={dedupeKey}
+        fallbackSuggestion={suggestion}
+        modifiedSuggestion={modifiedSuggestion}
+        initialRound={initialRound}
+        logMeta={logMeta}
+        timelineCount={timelineEvents.length}
+        activityHref={hideTimeline ? activityHref : undefined}
+      />
+    </Suspense>
+  );
 
-        {!hideTimeline ? (
-          <CaseSection
-            title="近期动态"
-            action={
-              <Link
-                href={activityHref}
-                className="text-primary text-xs font-medium hover:underline"
-              >
-                查看全部时间线
-              </Link>
-            }
-            bodyClassName="p-3"
-          >
-            <PlanTimelineSection
-              events={timelineEvents}
-              roundLinks={roundLinks}
-              suggestionBaseHref={detailBase}
-              compact
-            />
-          </CaseSection>
-        ) : null}
+  if (embedded) {
+    if (hideTimeline) {
+      return <div className="flex w-full min-w-0 flex-col gap-5">{agentPanel}</div>;
+    }
+
+    return (
+      <div className="grid w-full min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] xl:items-start">
+        <div className="min-w-0">{agentPanel}</div>
+        <aside className="xl:sticky xl:top-4 xl:self-start">
+          <TimelineRail
+            events={timelineEvents}
+            roundLinks={roundLinks}
+            detailBase={detailBase}
+            activityHref={activityHref}
+            compactAside
+          />
+        </aside>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <div className="flex min-w-0 flex-col gap-5">
-        <Suspense
-          fallback={
-            <p className="text-muted-foreground animate-pulse text-sm">
-              加载 Agent 分析…
-            </p>
-          }
-        >
-          <CaseAgentPanel
-            workOrderId={workOrderId}
-            dedupeKey={dedupeKey}
-            fallbackSuggestion={suggestion}
-            modifiedSuggestion={modifiedSuggestion}
-            initialRound={initialRound}
-            logMeta={logMeta}
-            timelineCount={timelineEvents.length}
-          />
-        </Suspense>
-      </div>
-
-      <aside className="lg:sticky lg:top-6 lg:self-start">
-        <CaseSection
-          title="近期动态"
-          action={
-            <Link
-              href={activityHref}
-              className="text-primary text-xs font-medium hover:underline"
-            >
-              查看全部时间线
-            </Link>
-          }
-          bodyClassName="max-h-[calc(100vh-8rem)] overflow-y-auto p-3"
-        >
-          <PlanTimelineSection
+      <div className="flex min-w-0 flex-col gap-5">{agentPanel}</div>
+      {!hideTimeline ? (
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <TimelineRail
             events={timelineEvents}
             roundLinks={roundLinks}
-            suggestionBaseHref={detailBase}
-            compact
+            detailBase={detailBase}
+            activityHref={activityHref}
           />
-        </CaseSection>
-      </aside>
+        </aside>
+      ) : null}
     </div>
   );
 }

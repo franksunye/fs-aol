@@ -30,6 +30,7 @@ export function CaseAgentPanel({
   initialRound,
   logMeta,
   timelineCount,
+  activityHref,
 }: {
   workOrderId: string;
   dedupeKey: string;
@@ -38,6 +39,7 @@ export function CaseAgentPanel({
   initialRound: number;
   logMeta: AgentLogMeta;
   timelineCount: number;
+  activityHref?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -214,11 +216,12 @@ export function CaseAgentPanel({
       )}
 
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <CaseSection title="上下文与证据" bodyClassName="p-0">
+        <CaseSection title="关键事实" bodyClassName="p-0">
           <EvidenceTabs
             suggestion={suggestionForRound}
             trace={evidenceTrace}
             timelineCount={timelineCount}
+            activityHref={activityHref}
             embedded
           />
         </CaseSection>

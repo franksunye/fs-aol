@@ -112,7 +112,7 @@ export function CaseDetailView({
           roundLinks={roundLinks}
           detailBase={detailBase}
           embedded={isPane}
-          hideTimeline={isPane}
+          hideTimeline={isActivity}
         />
       )}
 
