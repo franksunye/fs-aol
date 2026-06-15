@@ -4,7 +4,6 @@ import { executionActionHref } from "@/lib/action-execution-mock";
 import { runDetailHref } from "@/lib/runs-nav";
 import { getLatestActionForDedupe } from "@/lib/tracking/actions";
 import { listTracesLite } from "@/lib/tracking/traces";
-import { CaseSection } from "./case-section";
 
 export async function CaseRunLinks({
   dedupeKey,
@@ -23,15 +22,17 @@ export async function CaseRunLinks({
   if (!latest && !action) return null;
 
   return (
-    <div className="mt-4">
-      <CaseSection title="信任轨与执行">
-      <div className="flex flex-wrap gap-2 text-sm">
+    <footer className="mt-6 border-t border-border pt-4">
+      <p className="text-muted-foreground mb-2 text-[11px] font-medium tracking-wide">
+        信任轨与执行
+      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         {latest ? (
           <Link
             href={runDetailHref(formatTraceRunId(latest.id), hk)}
             className="text-primary hover:underline"
           >
-            查看 Run #{latest.id}
+            Run #{latest.id}
           </Link>
         ) : null}
         {action ? (
@@ -39,16 +40,15 @@ export async function CaseRunLinks({
             href={executionActionHref(String(action.id), hk)}
             className="text-primary hover:underline"
           >
-            待执行 Action · {action.status}
+            Action · {action.status}
           </Link>
         ) : null}
       </div>
       {action?.terminalFeedback ? (
         <p className="text-muted-foreground mt-2 text-xs">
-          执行反馈：{action.terminalFeedback}
+          {action.terminalFeedback}
         </p>
       ) : null}
-    </CaseSection>
-    </div>
+    </footer>
   );
 }

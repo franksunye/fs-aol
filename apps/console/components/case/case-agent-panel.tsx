@@ -247,26 +247,36 @@ export function CaseAgentPanel({
         </CaseSection>
       </div>
 
-      <CaseSection title="分析过程" className="border-dashed">
-        {error && sortedTraces.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{error}</p>
-        ) : activeTrace && activeTrace.steps.length > 0 ? (
-          <div className="space-y-2">
-            {activeTrace.steps.map((st, i) => (
-              <ToolStepCard
-                key={i}
-                step={st}
-                index={i}
-                defaultOpen={i === activeTrace.steps.length - 1}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            该轮暂无分步 trace，方案来自日志快照。
-          </p>
-        )}
-      </CaseSection>
+      <details className="overflow-hidden rounded-xl border border-dashed border-border bg-card shadow-sm">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+          分析过程
+          {activeTrace?.steps.length ? (
+            <span className="text-muted-foreground ml-2 text-xs font-normal">
+              {activeTrace.steps.length} 步
+            </span>
+          ) : null}
+        </summary>
+        <div className="border-t border-border px-4 pb-4 pt-2">
+          {error && sortedTraces.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{error}</p>
+          ) : activeTrace && activeTrace.steps.length > 0 ? (
+            <div className="space-y-2">
+              {activeTrace.steps.map((st, i) => (
+                <ToolStepCard
+                  key={i}
+                  step={st}
+                  index={i}
+                  defaultOpen={false}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              该轮暂无分步 trace，方案来自日志快照。
+            </p>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
