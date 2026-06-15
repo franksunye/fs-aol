@@ -19,7 +19,6 @@ import {
   staleDaysAt,
   wecomPushMeta,
 } from "@/lib/reanalysis-triggers";
-import { priorityClasses } from "@/lib/labels";
 import type { AgentLogMeta } from "@/components/agent-analysis-panel";
 import { cn } from "@/lib/utils";
 
@@ -177,7 +176,6 @@ export function CaseAgentPanel({
 
       {(isReanalysis ||
         pushMeta ||
-        suggestionForRound.优先级 ||
         staleAtRound != null ||
         triggerTags.length > 0) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -185,11 +183,6 @@ export function CaseAgentPanel({
             {isReanalysis ? "再分析" : "首次分析"}
             {isLatest ? " · 当前" : ""}
           </Badge>
-          {suggestionForRound.优先级 ? (
-            <Badge className={priorityClasses(suggestionForRound.优先级)}>
-              优先级 {suggestionForRound.优先级}
-            </Badge>
-          ) : null}
           {staleAtRound != null ? (
             <Badge variant="secondary" className="text-[10px] font-normal">
               分析时滞留 {staleAtRound} 天

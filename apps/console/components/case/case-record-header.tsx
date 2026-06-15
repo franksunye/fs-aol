@@ -5,6 +5,7 @@ import {
   decisionLabel,
   decisionClasses,
   priorityClasses,
+  eventTypeLabel,
 } from "@/lib/labels";
 import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 import { BadgeStack } from "@/components/action-center/badge-stack";
@@ -50,6 +51,14 @@ export function CaseRecordHeader({
 
   if (row.city?.trim()) {
     badges.push({ key: "city", label: row.city.trim(), variant: "outline" });
+  }
+
+  if (row.eventType?.trim()) {
+    badges.push({
+      key: "event",
+      label: eventTypeLabel(row.eventType),
+      variant: "outline",
+    });
   }
 
   badges.push({
