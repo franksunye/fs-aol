@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getSuggestion, listTracesLite } from "@/lib/suggestions";
 import { getTimelineEvents } from "@/lib/timeline";
 import { CaseDetailView } from "@/components/case/case-detail-view";
+import { CaseRunLinks } from "@/components/case/case-run-links";
 import { encodeKey } from "@/lib/labels";
 import { buildTimelineRoundLinks, parseAgentRound } from "@/lib/agent-rounds";
 import {
@@ -71,6 +72,13 @@ export default async function SuggestionDetail({
         detailBase={detailBase}
         panel={parseDetailPanel(sp.panel, sp.view)}
         variant="page"
+        footer={
+          <CaseRunLinks
+            dedupeKey={row.dedupeKey}
+            workOrderId={row.workOrderId}
+            hk={listContext.hk}
+          />
+        }
       />
     </main>
   );

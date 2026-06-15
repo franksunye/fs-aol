@@ -23,7 +23,8 @@ export async function CaseRunLinks({
   if (!latest && !action) return null;
 
   return (
-    <CaseSection title="信任轨与执行">
+    <div className="mt-4">
+      <CaseSection title="信任轨与执行">
       <div className="flex flex-wrap gap-2 text-sm">
         {latest ? (
           <Link
@@ -48,5 +49,6 @@ export async function CaseRunLinks({
         </p>
       ) : null}
     </CaseSection>
+    </div>
   );
 }

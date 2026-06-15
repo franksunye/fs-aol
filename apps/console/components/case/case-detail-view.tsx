@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { SuggestionRow } from "@/lib/suggestions";
 import type { TimelineEvent } from "@/lib/timeline";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ export function CaseDetailView({
   detailBase,
   panel,
   variant,
+  footer,
 }: {
   row: SuggestionRow;
   timelineEvents: TimelineEvent[];
@@ -26,6 +28,8 @@ export function CaseDetailView({
   detailBase: string;
   panel: DetailPanel;
   variant: "pane" | "page";
+  /** 页底辅助区（如信任轨与执行链接） */
+  footer?: ReactNode;
 }) {
   const s = row.suggestion;
   const modified = row.outcome?.modifiedSuggestion ?? null;
@@ -68,6 +72,10 @@ export function CaseDetailView({
         />
       </div>
 
+      <div className="mt-4">
+        <OpportunitySnapshotCard row={row} mobileHref={mobileHref} />
+      </div>
+
       <CaseDetailTabs active={panel} />
 
       {isActivity ? (
@@ -79,30 +87,29 @@ export function CaseDetailView({
           />
         </CaseSection>
       ) : (
-        <div className="space-y-4">
-          <OpportunitySnapshotCard row={row} mobileHref={mobileHref} />
-          <CaseWorkspace
-            workOrderId={row.workOrderId}
-            dedupeKey={row.dedupeKey}
-            suggestion={s}
-            modifiedSuggestion={modified}
-            initialRound={initialRound}
-            logMeta={{
-              status: row.status,
-              stateAt: row.stateAt,
-              outcomeFollowedUpAt:
-                row.outcome?.decision === "followed_up"
-                  ? row.outcome.createdAt
-                  : null,
-            }}
-            timelineEvents={timelineEvents}
-            roundLinks={roundLinks}
-            detailBase={detailBase}
-            embedded={isPane}
-            hideTimeline={isPane}
-          />
-        </div>
+        <CaseWorkspace
+          workOrderId={row.workOrderId}
+          dedupeKey={row.dedupeKey}
+          suggestion={s}
+          modifiedSuggestion={modified}
+          initialRound={initialRound}
+          logMeta={{
+            status: row.status,
+            stateAt: row.stateAt,
+            outcomeFollowedUpAt:
+              row.outcome?.decision === "followed_up"
+                ? row.outcome.createdAt
+                : null,
+          }}
+          timelineEvents={timelineEvents}
+          roundLinks={roundLinks}
+          detailBase={detailBase}
+          embedded={isPane}
+          hideTimeline={isPane}
+        />
       )}
+
+      {footer}
     </div>
   );
 }

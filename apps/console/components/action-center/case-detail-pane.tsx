@@ -45,13 +45,7 @@ export async function CaseDetailPane({
   const detailBase = actionReviewPaneDetailHref(row.dedupeKey, listContext);
 
   return (
-    <>
-      <CaseRunLinks
-        dedupeKey={row.dedupeKey}
-        workOrderId={row.workOrderId}
-        hk={listContext.hk}
-      />
-      <CaseDetailView
+    <CaseDetailView
       row={row}
       timelineEvents={timelineEvents}
       initialRound={initialRound}
@@ -59,8 +53,14 @@ export async function CaseDetailPane({
       detailBase={detailBase}
       panel={parseDetailPanel(searchParams.panel, searchParams.view)}
       variant="pane"
+      footer={
+        <CaseRunLinks
+          dedupeKey={row.dedupeKey}
+          workOrderId={row.workOrderId}
+          hk={listContext.hk}
+        />
+      }
     />
-    </>
   );
 }
 
