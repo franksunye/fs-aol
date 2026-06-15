@@ -20,7 +20,7 @@ from ..context.enrich import (
     _parse_order_doc,
     _resolve_channel_path,
 )
-from ..domain import FollowUpSuggestion, WorkOrder, bj_now
+from ..domain import FollowUpSuggestion, WorkOrder, bj_now, fsm_status_label
 from .quote_products import quote_line_to_payload
 
 _BJ_TZ = timezone(timedelta(hours=8))
@@ -903,7 +903,7 @@ def _inbox_events(
         parts.append(_ARCHIVE_REASON_LABELS.get(reason, reason))
     mongo_status = str(log_row.get("mongo_status") or "").strip()
     if mongo_status:
-        parts.append(f"Mongo status {mongo_status}")
+        parts.append(f"当前状态：{fsm_status_label(mongo_status)}")
     live = str(log_row.get("live_verdict") or "").replace("【结论】", "").strip()
     if live:
         parts.append(live[:160])

@@ -62,6 +62,11 @@ def _task_type(status: str) -> str:
     return _STATUS_TO_TASK_TYPE.get(str(status), f"状态{status}")
 
 
+def fsm_status_label(status: str) -> str:
+    """FSM 工单状态码 → 管家可读文案（Activity Feed / 卡片等）。"""
+    return _task_type(status)
+
+
 def _group(status: str) -> str:
     return _STATUS_TO_GROUP.get(str(status), "following")
 

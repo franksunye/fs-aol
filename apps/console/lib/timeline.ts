@@ -1,4 +1,20 @@
 import { db, ensureSchema, TABLE_TIMELINE } from "./db";
+import { loadBinding } from "./integration-bindings/load";
+
+const FSM_STATUS_LABELS =
+  loadBinding("xlink-fsm").code_tables.status_to_task_type ?? {};
+
+function fsmStatusLabel(code: string): string {
+  return FSM_STATUS_LABELS[code] ?? `状态${code}`;
+}
+
+/** 历史 timeline_events 可能仍含引擎旧文案「Mongo status 204」等。 */
+export function formatTimelineSummary(summary: string): string {
+  if (!summary.includes("Mongo status")) return summary;
+  return summary.replace(/Mongo status (\d+)/g, (_, code: string) =>
+    `当前状态：${fsmStatusLabel(code)}`
+  );
+}
 
 export interface TimelineFormField {
   label: string;
@@ -227,7 +243,7 @@ export async function getTimelineEvents(
       at: str(row.at),
       atMs: Number(row.at_ms ?? 0),
       title: str(row.title),
-      summary: str(row.summary),
+      summary: formatTimelineSummary(str(row.summary)),
       refId: str(row.ref_id),
       survey: kind === "survey" ? parseSurveyPayload(payload) : null,
       appointment:

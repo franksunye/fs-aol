@@ -61,6 +61,47 @@ class TimelineAgentTests(unittest.TestCase):
         inbox = next(e for e in events if e["kind"] == "inbox")
         self.assertIn("归档", inbox["title"])
         self.assertIn("签约", inbox["summary"])
+        self.assertNotIn("Mongo status", inbox["summary"])
+
+    def test_inbox_left_wedge_shows_fsm_status_label(self) -> None:
+        cfg = Config()
+        wo = WorkOrder(
+            work_order_id="SA-3",
+            order_num="GD20260510029",
+            event_type=EVENT_STALE_SIGN_PENDING,
+        )
+        dk = f"{EVENT_STALE_SIGN_PENDING}:SA-3"
+        suggestion = FollowUpSuggestion(needs_follow_up=True, priority="中")
+        trace = ReasoningTrace(
+            work_order_id="SA-3",
+            mode="steps_llm_hunyuan",
+            created_at=bj_now().isoformat(),
+            parsed=suggestion.to_display_dict(),
+        )
+        log_row = {
+            "dedupe_key": dk,
+            "inbox_bucket": "archived",
+            "archive_reason": "left_wedge",
+            "reconciled_at": bj_now().isoformat(),
+            "mongo_status": "300",
+            "status": "sent",
+            "processed_at": bj_now().isoformat(),
+        }
+        store = MagicMock()
+        store.list_traces_for_work_order.return_value = [trace]
+        store.get_latest_outcome.return_value = None
+        store.get_latest_blocker.return_value = None
+
+        with patch("aol.context.timeline.enrich_work_order_context") as mock_enrich:
+            mock_enrich.return_value = MagicMock(contracts=[], quotes=[])
+            with patch("aol.context.timeline._business_events", return_value=[]):
+                events = build_timeline_events(
+                    cfg, wo, suggestion, trace, store, log_row=log_row
+                )
+
+        inbox = next(e for e in events if e["kind"] == "inbox")
+        self.assertIn("当前状态：现场服务", inbox["summary"])
+        self.assertNotIn("Mongo status", inbox["summary"])
 
     def test_stale_snapshot_for_active_pending_reanalysis(self) -> None:
         cfg = Config()
