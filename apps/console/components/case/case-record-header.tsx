@@ -9,6 +9,7 @@ import {
 } from "@/lib/labels";
 import { formatWorkOrderRef } from "@/lib/work-order-ref";
 import { extractBusinessFacts } from "@/lib/business-facts";
+import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
 import type { TimelineEvent } from "@/lib/timeline";
 import { BadgeStack } from "@/components/action-center/badge-stack";
 import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";

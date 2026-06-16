@@ -188,6 +188,7 @@ export const WORKBENCH_FACET_SAMPLE_ROW: SuggestionRow = {
   orderNum: "GD2026064004",
   eventType: "quoted_unsigned",
   housekeeperId: "hk1",
+  housekeeperName: "样例管家",
   city: "深圳",
   status: "206",
   processedAt: new Date().toISOString(),
