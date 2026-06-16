@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS {{AOL_TABLE_PREFIX}}follow_up_logs (
     order_num       TEXT,
     city            TEXT,
     housekeeper_id  TEXT,
+    housekeeper_name TEXT,
     suggestion      TEXT,
     status          TEXT,
     processed_at    TEXT,

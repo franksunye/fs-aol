@@ -43,31 +43,18 @@ def _prod_mongo_url() -> str:
     )
 
 
-def _load_work_order(order_num: str) -> Tuple[Any, Any]:
-    from datetime import datetime as dt
-
-    from pymongo import MongoClient
-
-    from aol import domain
+def _load_work_order(order_num: str, work_order_id: str = "") -> Tuple[Any, Any]:
     from aol.config import Config
-    from aol.integration.fsm_mongo import resolve_pilot_housekeepers, _enrich_housekeeper_names
+    from aol.integration.subject_resolve import load_work_order
 
-    client = MongoClient(_prod_mongo_url(), serverSelectionTimeoutMS=8000)
-    db = client["xlink"]
-    doc = db["serviceAppointment"].find_one({"orderNum": order_num, "state": 1})
-    if not doc:
-        raise SystemExit(f"未找到工单: {order_num}")
-    wo = domain.work_order_from_sa(doc)
-    ut = doc.get("updateTime")
-    if isinstance(ut, dt):
-        wo.stale_days = max(0, (domain.bj_now() - ut.replace(tzinfo=None)).days)
     cfg = Config()
     cfg.fsm_mongo_url = _prod_mongo_url()
     cfg.fsm_mongo_db = "xlink"
     cfg.fsm_source = "mongo"
-    resolve_pilot_housekeepers(cfg, db)
-    _enrich_housekeeper_names(db, [wo])
-    client.close()
+    wo = load_work_order(cfg, work_order_id=work_order_id, order_num=order_num)
+    if wo is None:
+        ref = work_order_id or order_num
+        raise SystemExit(f"未找到工单: {ref}")
     return wo, cfg
 
 
@@ -208,7 +195,8 @@ def _score(parsed: Dict[str, Any]) -> Dict[str, Any]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="单工单 LLM 对比 hunyuan vs deepseek")
-    ap.add_argument("--order-num", default="GD2026057898", help="工单号")
+    ap.add_argument("--order-num", default="", help="工单号（重复时须配合 --work-order-id）")
+    ap.add_argument("--work-order-id", default="", help="Mongo serviceAppointment._id")
     ap.add_argument("--out-dir", default="tmp/llm-compare", help="输出根目录")
     ap.add_argument("--round", default="", help="子目录标记，如 round2")
     ap.add_argument(
@@ -224,7 +212,9 @@ def main() -> None:
     if not hunyuan_key:
         raise SystemExit("需要 HUNYUAN_API_KEY（fs-aol/.env）")
 
-    wo, _cfg = _load_work_order(args.order_num)
+    wo, _cfg = _load_work_order(args.order_num, args.work_order_id)
+    if not args.order_num and not args.work_order_id:
+        raise SystemExit("需要 --order-num 或 --work-order-id")
     from agent_tools import enrich_work_order_context
 
     cfg_probe = type("C", (), {"fsm_source": "mongo", "fsm_mongo_url": _prod_mongo_url(), "fsm_mongo_db": "xlink"})()
@@ -233,7 +223,8 @@ def main() -> None:
 
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     sub = f"{ts}-{args.round}" if args.round else ts
-    out = Path(args.out_dir) / args.order_num / sub
+    ref = wo.order_num or wo.work_order_id
+    out = Path(args.out_dir) / ref / sub
     out.mkdir(parents=True, exist_ok=True)
     providers = [p.strip() for p in args.providers.split(",") if p.strip()]
 
@@ -261,13 +252,13 @@ def main() -> None:
     h_score = _score(results.get("hunyuan", {}).get("parsed") or {})
     d_score = _score(results.get("deepseek", {}).get("parsed") or {}) if results.get("deepseek", {}).get("parsed") else {"score": 0, "notes": ["未运行"]}
 
-    readme = f"""# LLM 对比 · {args.order_num}
+    readme = f"""# LLM 对比 · {ref}
 
 生成时间：{ts}
 
 ## 输入
 
-- 工单：`{args.order_num}`（生产 `xlink` 只读）
+- 工单：`{ref}`（work_order_id=`{wo.work_order_id}`，生产 `xlink` 只读）
 - 同一 `prompt_user.txt` + `enrich.json`
 - 系统提示词：v0.2 Action Spec（见各 JSON 内 `prompt_system` 或代码）
 

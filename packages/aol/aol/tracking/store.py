@@ -158,6 +158,20 @@ class TrackingStore:
         turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN analyzed_stale_days INTEGER")
 
     @staticmethod
+    def _migrate_logs_housekeeper_name_sqlite(conn: sqlite3.Connection) -> None:
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
+        if not cols or "housekeeper_name" in cols:
+            return
+        conn.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN housekeeper_name TEXT")
+
+    @staticmethod
+    def _migrate_logs_housekeeper_name_turso(turso: Any) -> None:
+        cols = TrackingStore._turso_table_columns(turso, TABLE_LOGS)
+        if not cols or "housekeeper_name" in cols:
+            return
+        turso.execute(f"ALTER TABLE {TABLE_LOGS} ADD COLUMN housekeeper_name TEXT")
+
+    @staticmethod
     def _migrate_sqlite_v02(conn: sqlite3.Connection) -> None:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({TABLE_LOGS})")}
         if not cols:
@@ -224,6 +238,7 @@ class TrackingStore:
             self._migrate_logs_state_at_sqlite(self._conn)
             self._migrate_logs_inbox_sqlite(self._conn)
             self._migrate_logs_analyzed_stale_sqlite(self._conn)
+            self._migrate_logs_housekeeper_name_sqlite(self._conn)
             self._conn.execute(SCHEMA_TRACES)
             self._migrate_trace_columns(self._conn)
             self._ensure_extended_schema()
@@ -242,6 +257,7 @@ class TrackingStore:
             self._migrate_logs_state_at_turso(self._turso)
             self._migrate_logs_inbox_turso(self._turso)
             self._migrate_logs_analyzed_stale_turso(self._turso)
+            self._migrate_logs_housekeeper_name_turso(self._turso)
             self._turso.execute(SCHEMA_TRACES)
             self._ensure_extended_schema()
         else:
@@ -315,10 +331,16 @@ class TrackingStore:
             (dedupe_key,),
         )
 
+    def get_fact_drift_reprocessable_dedupe_keys(self) -> set[str]:
+        from ..reprocess.fact_drift import select_fact_drift_reprocess_keys
+
+        return select_fact_drift_reprocess_keys(self.cfg, self)
+
     def effective_processed_keys(self) -> set[str]:
         reopen = (
             self.get_reprocessable_dedupe_keys()
             | self.get_time_reprocessable_dedupe_keys()
+            | self.get_fact_drift_reprocessable_dedupe_keys()
         )
         return self.get_processed_dedupe_keys() - reopen
 
@@ -503,23 +525,17 @@ class TrackingStore:
     def _work_order_for_backfill(
         self, cfg: Config, log: Dict[str, Any]
     ) -> WorkOrder:
-        """回填用：优先 Mongo 工单事实，否则用 logs 行拼最小 WorkOrder。"""
+        """回填用：优先 Mongo 工单事实（经 subject_resolve），否则用 logs 行拼最小 WorkOrder。"""
         wid = str(log.get("work_order_id") or "")
         event_type = str(log.get("event_type") or "")
         state_at = str(log.get("state_at") or "").strip()
 
         if cfg.fsm_source == "mongo" and cfg.fsm_mongo_url and wid:
             try:
-                from pymongo import MongoClient
+                from ..integration.subject_resolve import load_work_order
 
-                client = MongoClient(cfg.fsm_mongo_url, serverSelectionTimeoutMS=8000)
-                doc = client[cfg.fsm_mongo_db]["serviceAppointment"].find_one(
-                    {"_id": wid},
-                    projection=domain.SA_PROJECTION,
-                )
-                client.close()
-                if doc:
-                    wo = work_order_from_sa(doc)
+                wo = load_work_order(cfg, work_order_id=wid)
+                if wo is not None:
                     wo.event_type = event_type or wo.event_type
                     if state_at:
                         wo.completed_at = state_at
@@ -580,23 +596,29 @@ class TrackingStore:
         missing_only: bool = True,
         dedupe_key: Optional[str] = None,
         order_num: Optional[str] = None,
+        work_order_id: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> Dict[str, int]:
         """批量回填时间轴。默认仅处理尚无 timeline_events 的工单。"""
+        from ..integration.subject_resolve import filter_follow_up_logs, subject_ref
+
+        scope = dedupe_key or work_order_id or order_num or ""
         logs = self.list_follow_up_logs(
-            missing_timeline_only=missing_only and not (dedupe_key or order_num),
+            missing_timeline_only=missing_only and not scope,
             limit=None,
         )
-        if dedupe_key:
-            logs = [r for r in logs if str(r.get("dedupe_key")) == dedupe_key]
-        if order_num:
-            logs = [r for r in logs if str(r.get("order_num")) == order_num]
+        logs = filter_follow_up_logs(
+            logs,
+            dedupe_key=str(dedupe_key or ""),
+            work_order_id=str(work_order_id or ""),
+            order_num=str(order_num or ""),
+        )
         if limit is not None and limit > 0:
             logs = logs[:limit]
 
         stats = {"total": len(logs), "ok": 0, "fail": 0}
         for log in logs:
-            ref = log.get("order_num") or log.get("work_order_id")
+            ref = subject_ref(log)
             try:
                 if self.backfill_timeline_for_log(cfg, log):
                     stats["ok"] += 1
@@ -608,6 +630,50 @@ class TrackingStore:
                 stats["fail"] += 1
                 logger.exception("时间轴回填失败: %s", ref)
         return stats
+
+    def backfill_housekeeper_names(self, cfg: Config) -> Dict[str, int]:
+        """从 Mongo user 表回填 follow_up_logs.housekeeper_name（展示用）。"""
+        if cfg.fsm_source != "mongo" or not cfg.fsm_mongo_url:
+            return {"total": 0, "updated": 0, "skipped": 0}
+
+        from pymongo import MongoClient
+
+        logs = self.list_follow_up_logs(limit=None)
+        need = [
+            r
+            for r in logs
+            if str(r.get("housekeeper_id") or "").strip()
+            and not str(r.get("housekeeper_name") or "").strip()
+        ]
+        if not need:
+            return {"total": 0, "updated": 0, "skipped": len(logs)}
+
+        ids = list({str(r.get("housekeeper_id")) for r in need})
+        client = MongoClient(cfg.fsm_mongo_url, serverSelectionTimeoutMS=8000)
+        try:
+            db = client[cfg.fsm_mongo_db]
+            name_map: Dict[str, str] = {}
+            for doc in db["user"].find({"_id": {"$in": ids}}, {"_id": 1, "name": 1}):
+                name_map[str(doc["_id"])] = str(doc.get("name") or "").strip()
+        finally:
+            client.close()
+
+        updated = 0
+        for log in need:
+            hid = str(log.get("housekeeper_id") or "")
+            name = name_map.get(hid, "")
+            if not name:
+                continue
+            dk = str(log.get("dedupe_key") or "")
+            sql = f"UPDATE {TABLE_LOGS} SET housekeeper_name = ? WHERE dedupe_key = ?"
+            if self._conn is not None:
+                self._conn.execute(sql, (name, dk))
+            else:
+                self._turso.execute(sql, [name, dk])
+            updated += 1
+        if self._conn is not None:
+            self._conn.commit()
+        return {"total": len(need), "updated": updated, "skipped": len(need) - updated}
 
     def refresh_timeline(
         self,
@@ -682,10 +748,14 @@ class TrackingStore:
         only_active: bool = True,
         limit: Optional[int] = None,
         order_num: Optional[str] = None,
+        work_order_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         clauses: List[str] = []
         args: List[Any] = []
-        if order_num:
+        if work_order_id:
+            clauses.append("work_order_id = ?")
+            args.append(work_order_id)
+        elif order_num:
             clauses.append("order_num = ?")
             args.append(order_num)
         elif only_active:
@@ -783,18 +853,19 @@ class TrackingStore:
         state_at = (wo.completed_at or "").strip() or None
         init = initial_inbox_state(suggestion)
         analyzed_stale = max(0, int(wo.stale_days or 0))
+        hk_name = (wo.housekeeper_name or "").strip()
         row = (
             wo.dedupe_key, wo.work_order_id, wo.event_type, wo.order_num, wo.city,
-            wo.housekeeper_id, payload, status, now, state_at,
+            wo.housekeeper_id, hk_name, payload, status, now, state_at,
             init.bucket, init.reason or "", now, "", "",
             analyzed_stale,
         )
         sql = (
             f"INSERT OR REPLACE INTO {TABLE_LOGS} "
             "(dedupe_key, work_order_id, event_type, order_num, city, housekeeper_id, "
-            "suggestion, status, processed_at, state_at, inbox_bucket, archive_reason, "
-            "reconciled_at, mongo_status, live_verdict, analyzed_stale_days) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            "housekeeper_name, suggestion, status, processed_at, state_at, inbox_bucket, "
+            "archive_reason, reconciled_at, mongo_status, live_verdict, analyzed_stale_days) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         )
         if self._conn is not None:
             self._conn.execute(sql, row)

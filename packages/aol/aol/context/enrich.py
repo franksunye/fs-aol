@@ -150,7 +150,15 @@ class EnrichedContext:
             "channel_label": self.channel_label,
             "business_hints": self.business_hints,
             "quotes": self.quotes,
-            "contracts": self.contracts,
+            "contracts": [
+                {
+                    "contract_num": str(c.get("contract_num") or ""),
+                    "amount_yuan": c.get("amount_yuan"),
+                    "maintain_part": str(c.get("maintain_part") or ""),
+                    "signed_at": _fmt_time(c.get("signed_at")),
+                }
+                for c in self.contracts
+            ],
             "recent_activity": self.recent_activity,
             "tool_notes": self.tool_notes,
         }
@@ -375,7 +383,7 @@ def enrich_work_order_context(cfg: "Config", wo: "WorkOrder") -> EnrichedContext
                 "contract_num": str(c.get("contractNum") or ""),
                 "amount_yuan": _money(c.get("afterRefundMoney")),
                 "maintain_part": str(c.get("maintainPart") or ""),
-                "signed_at": c.get("createTime"),
+                "signed_at": _fmt_time(c.get("createTime")),
             }
             for c in contract_docs
         ]

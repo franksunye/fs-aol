@@ -36,6 +36,7 @@ export type WorkbenchDisplaySpec = {
   related_object?: {
     id_fields?: string[];
     type_label?: string;
+    disambiguate_with_work_order_id?: boolean;
   };
   source_system?: { id: string; label: string };
   /** Action 列表「上下文」列字段目录 */
@@ -128,6 +129,7 @@ export type MergedWorkbenchDisplay = {
   relatedObject: {
     idFields: string[];
     typeLabel: string;
+    disambiguateWithWorkOrderId?: boolean;
   };
   sourceSystem: { id: string; label: string };
   /** 上下文列 facet 目录与生效勾选 */

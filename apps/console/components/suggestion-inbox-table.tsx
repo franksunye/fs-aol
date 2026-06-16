@@ -22,6 +22,7 @@ import {
   formatSuggestionIssuedAt,
   INBOX_LAYER_LABELS,
 } from "@/lib/suggestion-list-display";
+import { formatWorkOrderRef } from "@/lib/work-order-ref";
 
 const ROW_GRID =
   "grid grid-cols-[3.25rem_minmax(0,1fr)_5.5rem] items-start gap-x-3 px-3 sm:grid-cols-[3.5rem_minmax(0,1fr)_5.5rem]";
@@ -99,7 +100,7 @@ export function SuggestionInboxTable({
                   {/* L0 锚点：工单号 + 商机阶段 */}
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-mono text-sm font-medium group-hover:underline">
-                      {r.orderNum || r.workOrderId}
+                      {formatWorkOrderRef(r)}
                     </span>
                     {stage ? (
                       <Badge variant="outline" className="text-[10px] font-normal">

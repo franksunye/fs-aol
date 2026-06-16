@@ -56,6 +56,7 @@ export function mapSuggestion(
     orderNum: str(row.order_num),
     city: str(row.city),
     housekeeperId: str(row.housekeeper_id),
+    housekeeperName: str(row.housekeeper_name),
     status: str(row.status),
     processedAt: str(row.processed_at),
     stateAt: str(row.state_at).trim() || null,

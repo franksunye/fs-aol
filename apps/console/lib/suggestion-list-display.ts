@@ -2,7 +2,7 @@ import type { SuggestionDoc } from "./suggestions";
 import type { SuggestionRow } from "./suggestions";
 import type { PilotHousekeeper } from "./pilot-housekeepers";
 import { eventTypeLabel } from "./labels";
-import { housekeeperName } from "./pilot-housekeepers";
+import { housekeeperName, resolveExecutorLabel } from "./pilot-housekeepers";
 
 /** 列表四层短标签（详情页仍用「情况判断 / 跟进方案」等完整名） */
 export const INBOX_LAYER_LABELS = {
@@ -117,7 +117,7 @@ export function workOrderContextLine(
 ): string {
   const parts = [eventTypeLabel(r.eventType)];
   if (r.city) parts.push(r.city);
-  if (pilots.length) parts.push(housekeeperName(pilots, r.housekeeperId));
+  if (pilots.length) parts.push(resolveExecutorLabel(pilots, r));
   if (staleDays) parts.push(`滞留 ${staleDays} 天`);
   return parts.join(" · ");
 }

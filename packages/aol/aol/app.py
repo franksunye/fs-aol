@@ -91,13 +91,21 @@ def run(cfg: Optional[Config] = None) -> int:
             if cfg.reanalyze_enabled
             else set()
         )
+        fact_drift_keys = (
+            store.get_fact_drift_reprocessable_dedupe_keys()
+            if cfg.reanalyze_enabled
+            else set()
+        )
+        reprocess_keys = time_reprocess_keys | fact_drift_keys
         if time_reprocess_keys:
             logger.info("时间触发再分析入池: %d 条", len(time_reprocess_keys))
+        if fact_drift_keys:
+            logger.info("事实漂移再分析入池: %d 条", len(fact_drift_keys))
         processed_keys = store.effective_processed_keys()
         work_orders = fetch_completed_work_orders(
             cfg,
             processed_keys,
-            reprocess_keys=time_reprocess_keys,
+            reprocess_keys=reprocess_keys,
         )
 
         success = 0
@@ -110,7 +118,9 @@ def run(cfg: Optional[Config] = None) -> int:
             logger.info("本轮无待跟进事件。")
         for wo in work_orders:
             ref = wo.order_num or wo.work_order_id
+            is_reprocess = wo.dedupe_key in reprocess_keys
             is_time_reprocess = wo.dedupe_key in time_reprocess_keys
+            is_fact_drift = wo.dedupe_key in fact_drift_keys
             try:
                 prior_context = store.build_prior_context(wo.dedupe_key)
                 if is_time_reprocess:
@@ -123,6 +133,12 @@ def run(cfg: Optional[Config] = None) -> int:
                             f"- 上次分析时滞留约 {prev_stale} 天，当前约 {cur_stale} 天\n"
                             "- 请结合最新查证刷新优先级与跟进方案，勿照搬旧结论。"
                         ).strip()
+                if is_fact_drift:
+                    prior_context = (
+                        f"{prior_context}\n\n## 事实上下文（再分析）\n"
+                        "- 报价金额、支付或签约状态相对上次分析已变化\n"
+                        "- 必须以最新系统查证为准，勿沿用旧金额或旧签约态。"
+                    ).strip()
                 suggestion, trace = reason_follow_up(cfg, wo, prior_context=prior_context)
                 store.log_reasoning_trace(trace)  # 每次推理都落 trace（含失败）
                 total_tokens += int(trace.total_tokens or 0)
@@ -145,11 +161,11 @@ def run(cfg: Optional[Config] = None) -> int:
                 if suggestion.needs_follow_up:
                     old_log = (
                         store.get_follow_up_log(wo.dedupe_key)
-                        if is_time_reprocess
+                        if is_reprocess
                         else None
                     )
                     push_card = (
-                        not is_time_reprocess
+                        not is_reprocess
                         or reanalysis_should_push(cfg, old_log, suggestion)
                     )
                     enrich_out = (
@@ -170,7 +186,7 @@ def run(cfg: Optional[Config] = None) -> int:
                             compact=not cfg.dry_run,
                         )
                         sent = send_wecom_card(cfg, card, housekeeper_id=wo.housekeeper_id)
-                    if is_time_reprocess:
+                    if is_reprocess:
                         if not push_card:
                             status = "reanalyzed_no_push"
                         elif sent:
@@ -182,7 +198,7 @@ def run(cfg: Optional[Config] = None) -> int:
                 else:
                     status = (
                         "reanalyzed_skipped_no_follow_up"
-                        if is_time_reprocess
+                        if is_reprocess
                         else "skipped_no_follow_up"
                     )
 
@@ -199,7 +215,7 @@ def run(cfg: Optional[Config] = None) -> int:
                     except Exception:
                         logger.exception("工单 %s 时间轴物化失败（不影响主流程）。", ref)
                     success += 1
-                    if is_time_reprocess:
+                    if is_reprocess:
                         reanalyzed += 1
                 else:
                     logger.warning("工单 %s 推送失败，下轮重试。", ref)
@@ -212,7 +228,7 @@ def run(cfg: Optional[Config] = None) -> int:
 
         if work_orders:
             logger.info(
-                "本轮完成：成功 %d / 共 %d（其中时间再分析 %d）",
+                "本轮完成：成功 %d / 共 %d（其中再分析 %d）",
                 success,
                 len(work_orders),
                 reanalyzed,

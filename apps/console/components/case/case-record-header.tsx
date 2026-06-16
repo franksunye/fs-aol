@@ -7,22 +7,31 @@ import {
   priorityClasses,
   eventTypeLabel,
 } from "@/lib/labels";
-import { computeStaleDaysFromStateAt } from "@/lib/suggestion-list-display";
+import { formatWorkOrderRef } from "@/lib/work-order-ref";
+import { extractBusinessFacts } from "@/lib/business-facts";
+import type { TimelineEvent } from "@/lib/timeline";
 import { BadgeStack } from "@/components/action-center/badge-stack";
 import { DataStateBadge, DataStateNote } from "@/components/data-state-badge";
+import { CaseSourceBadge } from "@/components/case/case-source-badge";
 import type { ListBadge } from "@/lib/list-display";
 
 export function CaseRecordHeader({
   row,
+  timelineEvents = [],
   compact = false,
 }: {
   row: SuggestionRow;
+  timelineEvents?: TimelineEvent[];
   compact?: boolean;
 }) {
   const s = row.suggestion;
   const staleDays = computeStaleDaysFromStateAt(row.stateAt);
   const quoteBadge = formatQuoteBadge(s);
   const stage = actionReviewStageLabel(row);
+  const businessHeadline = extractBusinessFacts(
+    timelineEvents,
+    row.liveVerdict
+  ).headline;
 
   const badges: ListBadge[] = [
     {
@@ -43,8 +52,8 @@ export function CaseRecordHeader({
 
   if (quoteBadge) {
     badges.push({
-      key: "quote",
-      label: quoteBadge,
+      key: "quote-agent",
+      label: `Agent ${quoteBadge}`,
       className: "bg-violet-50 text-violet-700 border-violet-100",
     });
   }
@@ -87,11 +96,12 @@ export function CaseRecordHeader({
                 : "mt-1 font-mono text-2xl font-semibold tracking-tight"
             }
           >
-            {row.orderNum || row.workOrderId}
+            {formatWorkOrderRef(row)}
           </h1>
-          {s.原因摘要?.trim() ? (
+          {businessHeadline ? (
             <p className="text-muted-foreground mt-1.5 line-clamp-2 text-sm">
-              {s.原因摘要.trim()}
+              <span className="text-emerald-700">业务查证 · </span>
+              {businessHeadline}
             </p>
           ) : null}
         </div>
@@ -99,12 +109,13 @@ export function CaseRecordHeader({
       <div className="mt-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <DataStateBadge state="live" label="真实建议" />
-          <BadgeStack items={badges} max={3} />
+          <CaseSourceBadge kind="agent" />
+          <BadgeStack items={badges} max={4} />
         </div>
         {!compact ? (
           <DataStateNote className="mt-2 max-w-3xl">
-            该记录来自 Follow-up 真实试点链路，适合作为 Agent 判断依据、人工审批与
-            Action 生成的可追溯样本。
+            页眉绿色文案来自 XLink 业务里程碑；紫色标签为 Agent
+            推断。审批时请对照下方「业务查证」与「活动时间线」中的报价事件。
           </DataStateNote>
         ) : null}
       </div>

@@ -16,6 +16,7 @@ _NEGATIVE_HINTS = (
 _POSITIVE_HINTS = (
     "认可", "接受", "满意", "同意", "愿意", "配合", "期待", "可安排", "尽快签约",
 )
+_MONEY_RE = re.compile(r"([\d,]+)\s*元")
 
 
 def _quote_amount_yuan(enrich_ctx: Any) -> Optional[float]:
@@ -24,6 +25,75 @@ def _quote_amount_yuan(enrich_ctx: Any) -> Optional[float]:
     q0 = enrich_ctx.quotes[0] if enrich_ctx.quotes else {}
     amt = q0.get("amount_yuan") if isinstance(q0, dict) else None
     return float(amt) if isinstance(amt, (int, float)) else None
+
+
+def _quote_pay_state(enrich_ctx: Any) -> str:
+    if not enrich_ctx or not getattr(enrich_ctx, "quotes", None):
+        return ""
+    q0 = enrich_ctx.quotes[0] if enrich_ctx.quotes else {}
+    return str(q0.get("pay_state_label") or "") if isinstance(q0, dict) else ""
+
+
+def _replace_wrong_amounts(text: str, correct_amt: int) -> str:
+    """把文本中与查证不符的金额替换为权威金额（防 LLM 误读面积等）。"""
+
+    def repl(m: re.Match[str]) -> str:
+        raw = m.group(1).replace(",", "")
+        try:
+            n = int(float(raw))
+        except ValueError:
+            return m.group(0)
+        if n != correct_amt:
+            return f"{correct_amt}元"
+        return m.group(0)
+
+    return _MONEY_RE.sub(repl, text or "")
+
+
+def _ground_to_facts(s: FollowUpSuggestion, enrich_ctx: Any) -> None:
+    """强制将可核对字段锚定到 enrich 事实（Fact Snapshot 同源）。"""
+    if not enrich_ctx:
+        return
+
+    amt = _quote_amount_yuan(enrich_ctx)
+    pay = _quote_pay_state(enrich_ctx)
+    sit = s.situation
+
+    if enrich_ctx.has_signed_contract:
+        sit.quote_status = "已有生效签约"
+        s.needs_follow_up = False
+    elif enrich_ctx.has_quote and not sit.quote_status:
+        sit.quote_status = "已正式报价未签约"
+
+    if enrich_ctx.quotes and isinstance(amt, (int, float)) and amt > 0:
+        q0 = enrich_ctx.quotes[0]
+        pkgs = "、".join((q0.get("package_names") or [])[:2])
+        parts = "、".join((q0.get("repair_parts") or [])[:3])
+        amt_int = int(amt)
+        sit.amount_plan = f"正式报价{amt_int}元；方案：{pkgs}" if pkgs else f"正式报价{amt_int}元"
+
+        if s.reason_summary:
+            s.reason_summary = _replace_wrong_amounts(s.reason_summary, amt_int)
+        if s.priority_reasons:
+            s.priority_reasons = [
+                _replace_wrong_amounts(b, amt_int) for b in s.priority_reasons
+            ]
+        s.evidence_refs = [
+            _replace_wrong_amounts(r, amt_int) for r in (s.evidence_refs or [])
+        ]
+
+        pay_tag = f"（{pay}）" if pay else ""
+        canonical_quote = f"正式报价{amt_int}元{pay_tag}"
+        if parts:
+            canonical_quote += f"（{parts}）"
+        if not any(str(int(amt_int)) in r for r in (s.evidence_refs or [])):
+            s.evidence_refs = [canonical_quote[:120], *(s.evidence_refs or [])][:5]
+
+        if pay and "未支付" in " ".join(s.priority_reasons or []):
+            if pay != "未支付":
+                s.priority_reasons = [
+                    b.replace("未支付", pay) for b in (s.priority_reasons or [])
+                ]
 
 
 def _has_high_value_part(enrich_ctx: Any) -> bool:
@@ -89,7 +159,9 @@ def polish_suggestion(
     if stale > 0 and not any(f"{stale}天" in b or f"停留{stale}" in b for b in basis):
         basis.insert(0, f"已停留{stale}天，待签约停滞")
     if amt and not any(str(int(amt)) in b for b in basis):
-        basis.append(f"正式报价{amt:.0f}元未支付")
+        pay = _quote_pay_state(enrich_ctx)
+        pay_s = pay or "未支付"
+        basis.append(f"正式报价{amt:.0f}元（{pay_s}）")
     for hint in (getattr(enrich_ctx, "business_hints", None) or [])[:1]:
         if hint not in basis:
             basis.append(hint.replace("业务提示：", ""))
@@ -145,5 +217,8 @@ def polish_suggestion(
             if enrich_ctx.leak_sites:
                 parts.append("、".join(enrich_ctx.leak_sites))
             sit.channel_part = "；".join(parts)
+
+    # 最后：强制锚定可核对事实（覆盖 LLM 错写的金额/签约态）
+    _ground_to_facts(s, enrich_ctx)
 
     return s

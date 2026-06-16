@@ -53,13 +53,17 @@ def reason_follow_up_steps(
     ]
     t0 = time.perf_counter()
     enrich_ctx = enrich_work_order_context(cfg, wo)
+    enrich_out = enrich_ctx.to_step_dict()
+    from ..context.fact_snapshot import build_fact_snapshot
+
+    enrich_out["fact_snapshot"] = build_fact_snapshot(enrich_ctx, captured_at=now)
     steps.append({
         "step": 1,
         "kind": "tool",
         "name": "enrich_work_order_context",
         "latency_ms": int((time.perf_counter() - t0) * 1000),
         "status": "ok",
-        "output": enrich_ctx.to_step_dict(),
+        "output": enrich_out,
     })
     enrich_block = enrich_ctx.to_prompt_block()
     prior_block = f"\n\n{prior_context}" if prior_context else ""

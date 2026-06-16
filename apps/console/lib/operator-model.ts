@@ -62,6 +62,21 @@ export type WorkItem = {
   listDisplay?: WorkItemListDisplay;
 };
 
+export type EpistemicLane = "fact" | "cognition";
+
+/**
+ * 业务对象事实（Fact Plane）— 来自 Mongo / timeline 业务轨，非 LLM 推断。
+ * Console 展示金额、签约态、支付态时应优先读本类型。
+ */
+export type SubjectFacts = {
+  lane: "fact";
+  source: "timeline" | "live_verdict" | "fact_snapshot" | "none";
+  quoteAmountYuan: number | null;
+  quotePayState: string | null;
+  contractAmountYuan: number | null;
+  headline: string | null;
+};
+
 export type ActivityEvent = {
   id: string;
   lane: "business" | "agent";
@@ -70,4 +85,6 @@ export type ActivityEvent = {
   title: string;
   summary?: string;
   payload: unknown;
+  /** business → fact；agent → cognition（默认由 lane 推导） */
+  epistemicLane?: EpistemicLane;
 };

@@ -22,7 +22,10 @@
       "external": { "collection": "serviceAppointment", "label": "服务预约" },
       "identity": {
         "external_paths": ["_id", "id"],
-        "canonical_field": "work_order_id"
+        "canonical_field": "work_order_id",
+        "display_number_field": "order_num",
+        "display_number_unique": false,
+        "notes": "orderNum 非唯一（上游 API saNum 可重复）；追踪键为 work_order_id / dedupe_key"
       },
       "fields": [
         {
@@ -100,6 +103,7 @@
       "workbench_display": {
         "related_object": {
           "id_fields": ["order_num", "work_order_id"],
+          "disambiguate_with_work_order_id": true,
           "type_label": "工单"
         },
         "source_system": { "id": "xlink", "label": "XLink" },
@@ -108,7 +112,8 @@
             {
               "id": "quote_amount",
               "label": "合同金额",
-              "resolver": { "kind": "quote_amount_yuan" }
+              "resolver": { "kind": "quote_amount_yuan" },
+              "description": "Fact Plane：从 live_verdict（inbox 同步的 enrich 结论）解析，非 Agent suggestion"
             },
             {
               "id": "stale_days",

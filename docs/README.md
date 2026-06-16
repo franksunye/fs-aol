@@ -82,4 +82,4 @@ ln -sf ../../scripts/check_no_private_docs.sh .git/hooks/pre-commit
 
 - 版本：**v0.4.x** Follow-up 真实闭环与产品壳 live 化推进中；新增 **v0.4.6 Skill Registry** 作为 v0.5 多 Agent 前置架构闸门。近端里程碑为 **v0.4 打穿 Follow-up 真实闭环 + Skill Registry → v0.5 新增 2 个真实 Agent → v0.6 工程硬化 → v0.7 中英文 → v0.8 开源 alpha**，见 [PUB-05](public/PUB-05-releases.md)。
 - 阶段：Phase 1 → **真实 Follow-up 楔子打穿**，随后验证多 Agent 复用、工程质量、国际化与 AOL Core 抽象。
-- 最近更新：2026-06-12（`PUB-26` Skill Registry；`PUB-05` v0.4.6；`PUB-16` 第二 Skill 前架构闸门）
+- 最近更新：2026-06-16（`PUB-16` Fact/Milestone 通用化路线图；`PUB-23` binding 扩展；`PUB-25` fact_role facet；`PUB-26` Connector vs Skill 分工）

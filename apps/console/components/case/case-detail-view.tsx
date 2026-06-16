@@ -10,6 +10,7 @@ import { OpportunitySnapshotCard } from "@/components/case/opportunity-snapshot-
 import { PlanTimelineSection } from "@/components/plan-timeline-section";
 import { CaseSection } from "@/components/case/case-section";
 import { CaseRecordHeader } from "@/components/case/case-record-header";
+import { CaseSourceBadge } from "@/components/case/case-source-badge";
 import { CaseDetailTabs } from "@/components/case/case-detail-tabs";
 import { INBOX_TAB_LABELS, archiveReasonLabel } from "@/lib/labels";
 import type { DetailPanel } from "@/lib/action-center-nav";
@@ -47,7 +48,7 @@ export function CaseDetailView({
           : "mx-auto w-full max-w-[1400px] px-6 py-6 lg:px-8"
       }
     >
-      <CaseRecordHeader row={row} compact={isPane} />
+      <CaseRecordHeader row={row} timelineEvents={timelineEvents} compact={isPane} />
 
       {row.inboxBucket !== "active" ? (
         <Card className="mt-4 border-amber-200 bg-amber-50/80 p-3 text-sm">
@@ -57,15 +58,26 @@ export function CaseDetailView({
               ? ` · ${archiveReasonLabel(row.archiveReason)}`
               : null}
           </div>
-          {row.liveVerdict ? (
-            <p className="text-muted-foreground mt-1.5 text-xs">{row.liveVerdict}</p>
-          ) : null}
         </Card>
       ) : null}
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2 md:items-stretch">
-        <NextActionCard suggestion={s} />
-        <AgentSummaryCard suggestion={s} />
+      <div className="mt-4">
+        <OpportunitySnapshotCard
+          row={row}
+          timelineEvents={timelineEvents}
+          mobileHref={mobileHref}
+        />
+      </div>
+
+      <div className="mt-4">
+        <p className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium">
+          <span className="text-foreground">Agent 分析</span>
+          <CaseSourceBadge kind="agent" />
+        </p>
+        <div className="grid gap-4 md:grid-cols-2 md:items-stretch">
+          <NextActionCard suggestion={s} />
+          <AgentSummaryCard suggestion={s} />
+        </div>
       </div>
 
       <div className="mt-4">
@@ -79,14 +91,14 @@ export function CaseDetailView({
         />
       </div>
 
-      <div className="mt-4">
-        <OpportunitySnapshotCard row={row} mobileHref={mobileHref} />
-      </div>
-
       <CaseDetailTabs active={panel} />
 
       {isActivity ? (
         <CaseSection title="活动时间线" bodyClassName="p-3">
+          <p className="text-muted-foreground mb-3 text-xs">
+            灰色数据库图标为 XLink 业务里程碑；紫色星火为 Agent
+            工作记录（含查证快照与跟进建议，可能与业务事实不一致，须对照核对）。
+          </p>
           <PlanTimelineSection
             events={timelineEvents}
             roundLinks={roundLinks}

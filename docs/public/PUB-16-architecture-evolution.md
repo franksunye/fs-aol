@@ -2,7 +2,7 @@
 
 > **状态**：生效中 · **性质**：每个版本打 tag 前的架构自检 SSOT  
 > **依赖**：[PUB-02](PUB-02-architecture.md)（FS-COS 分层）· [PUB-07](PUB-07-product-surface.md)（产品脊柱）· [PUB-14](PUB-14-v030-scope.md)（v0.3 交付）  
-> **最后修订**：2026-06-09
+> **最后修订**：2026-06-16
 
 ---
 
@@ -140,8 +140,25 @@ type ActivityEvent = {
   title: string;
   summary?: string;
   payload: unknown;           // 由 kind 对应 renderer 解析
+  epistemicLane?: "fact" | "cognition";  // business→fact；agent→cognition
+};
+
+/** 业务事实（Fact Plane）— 来自 Connector / timeline 业务轨，非 LLM */
+type SubjectFacts = {
+  lane: "fact";
+  source: "timeline" | "live_verdict" | "fact_snapshot" | "none";
+  facts: Array<{
+    type: "money" | "enum" | "bool" | "text";
+    role: string;               // 如 primary_offer、signed_contract（binding 声明）
+    value: unknown;
+    currency?: string;
+    label?: string;
+  }>;
+  headline: string | null;
 };
 ```
+
+**认识论分层（Fact / Cognition）**：`business` 时间轴与 `SubjectFacts` 属于 **Fact Plane**（Mongo 里程碑 + enrich 只读结论）；`agent` 时间轴与 `Recommendation` 属于 **Cognition Plane**（LLM 推断）。Console **不得**用 Cognition 字段展示记账类金额。楔子迁移路线见本文 §6.1。
 
 **Follow-up Adapter**（首个实现）：`mapFollowUpRow(SuggestionRow) → WorkItem`。  
 换 CRM 时换 Adapter + Python Connector，不换 `CaseWorkspace` 布局。
@@ -161,8 +178,11 @@ type ActivityEvent = {
 | A5 | `lib/suggestions.ts` 是否又增 100+ 行 unrelated 职责？ | 拆到 `tracking/` 或 wedge adapter |
 | A6 | 时间轴是否为新 `kind` 硬编码了解析？ | 注册 `timeline-renderers[kind]` |
 | A7 | 本版 Shell / HITL / 分栏动线是否可复用于下一 Skill？ | 若是，写入 changelog「架构资产」一行 |
+| A8 | 是否在 UI / 列表 facet **用 suggestion 展示金额、签约态等记账事实**？ | 改读 `SubjectFacts` / `live_verdict` / `fact_snapshot`（Fact Plane） |
+| A9 | 是否在平台层新增 `quote` / `contract` 等楔子标识符（非 binding 配置）？ | 改为 `milestone_catalog` / `fact_roles` 或 Skill `contextSpec` |
+| A10 | enrich / reprocess / polish 是否写死某一 Connector 的集合名与字段？ | 抽到 binding `enrichment_profile` 或 Skill 策略 |
 
-**通过标准**：本版可以零架构改动，但**必须显式回答** A1–A7（哪怕全是「否」）。避免无意识漏债。
+**通过标准**：本版可以零架构改动，但**必须显式回答** A1–A10（哪怕全是「否」）。避免无意识漏债。
 
 ---
 
@@ -194,6 +214,35 @@ type ActivityEvent = {
 | 侧栏 Skill 槽 | 配置驱动导航项 |
 | Trace API 别名 | `/api/runs/[subjectId]` 与现有 traces 并存 |
 | Connector 接口草案 | Python `integration/base.py` 注册 enrich/fetch |
+| **Fact / Cognition 双轨 UI** | Case 详情分区：业务查证 vs Agent 分析；timeline 图标/文案区分 |
+| **`fact_snapshot.v1` + fact_drift** | trace 冻结事实指纹；报价/签约变更触发再分析 |
+
+### v0.5.x（Milestone / Fact 通用化 — 去 `quote` 硬编码）
+
+> **背景**：`quote`、`has_quote`、`quote_amount_yuan` 等是 XLink 防水楔子的业务语义，不应成为平台内置概念。  
+> **原则**：平台只认 **Subject / Milestone / Fact**；「正式报价」是 binding 里 `primary_offer` 角色的中文展示名。  
+> 详细 binding 字段见 [PUB-23](PUB-23-v043-integration-protocol-surface.md) §7；facet 演进见 [PUB-25](PUB-25-v045-workbench-display-facets.md) §3。
+
+| 版本 | 微调项 | 交付物 | 验收 |
+|------|--------|--------|------|
+| **v0.5.0** | **Binding 里程碑目录** | `milestone_catalog[]` + `fact_roles[]` 写入 schema + `xlink-fsm.v1.json` | `quote` timeline kind 可别名映射为 `commercial_offer`；旧 kind 只读兼容 |
+| **v0.5.1** | **Enrich Profile 执行器** | `enrichment_profiles` + `enrich_subject_context()`；XLink follow-up 抽为 profile | `enrich.py` 变薄包装，无硬编码 `order`/`contract` 查询散落平台层 |
+| **v0.5.2** | **Facet `fact_role` resolver** | Console `resolveFacetValue(fact_role)`；弃用 `quote_amount_yuan` 读 suggestion | 列表上下文列金额来自 Fact Plane；`parseFactQuote*` 标记 deprecated |
+| **v0.5.3** | **Skill 再分析策略** | `reprocess_rules` 迁入 Skill Definition；平台只跑 `fingerprint` 对比 | `candidates.py` 无「已签约但仍需跟进」等楔子文案 |
+| **v0.6** | **第二 Connector 样例** | mock CRM binding（`opportunity` + `amount`）端到端 | **Shell / Case 布局零改动**；仅新 binding + adapter |
+
+```text
+今天（耦合）:
+  Platform ──内置──► quote / contract / 正式报价
+
+目标（正交）:
+  Platform ──只认识──► Subject / Milestone / Fact(role)
+         ▲
+  Binding ──映射──► XLink.order.totalPrice → Fact(money, role=primary_offer)
+  Skill   ──解释──► follow-up 在 Action Spec 里写「正式报价」
+```
+
+**明确不做（v0.5）**：一次性删除所有 `quote` 字符串；无第二 Connector 前不建空泛 `IFactProvider` 接口层。
 
 ### v1.0（产品轨）
 
@@ -234,6 +283,8 @@ type ActivityEvent = {
 | 为通用性引入空接口层 | 无第二 Skill 时的过度抽象 |
 | 全库 rename 追语义 | 迁移成本 > 收益；用 adapter 别名即可 |
 | 在 UI 复制 inbox  reconcile 规则 | 与 Python `inbox/sync.py` 双轨失真 |
+| 在平台层硬编码 `quote` / `contract` 查询 | 进 binding `milestone_catalog` + enrich profile |
+| 用 LLM `suggestion` 展示记账金额 | 违反 Fact/Cognition 分层；读 `fact_snapshot` / timeline |
 
 ---
 
@@ -258,6 +309,10 @@ type ActivityEvent = {
 | `lib/suggestions.ts` 上帝模块 | `lib/tracking/` + `lib/adapters/follow-up.ts` | 渐进 re-export，不 big-bang |
 | `SuggestionRow` 直达 UI | `WorkItem` + adapter | 新组件用新类型；旧组件薄包装 |
 | `lib/timeline.ts` 楔子解析 | `timeline-renderers[kind]` | 按 kind 逐个迁出 |
+| `kind=quote` 硬编码 | `milestone_catalog.commercial_offer` | v0.5.0 binding + 别名 |
+| `quote_amount_yuan` facet | `fact_role` + `SubjectFacts` | v0.5.2；见 PUB-25 |
+| `enrich.py` XLink 专用 | `enrichment_profiles` 执行器 | v0.5.1 |
+| `fact_snapshot` 扁平字段 | `facts[]` + `role` | v0.5.0 schema 演进 |
 | `OpportunityRow` | `WorkItemRow`（props: WorkItem） | 重命名可延后 |
 | `housekeeper-filter` | `assignee-filter` + 配置标签 | v1.0 前 |
 | `contracts/` copy to `.contracts` | + 生成 TS 类型 | v0.4 |
@@ -271,7 +326,7 @@ type ActivityEvent = {
 |------|----------------|
 | S1 总览 | Shell 与指标 API 技能无关 |
 | S2 Inbox + HITL | `WorkItem` + disposition API 稳定 |
-| S3 Trace | Run 语义通用；enrich 步骤名配置化 |
+| S3 Trace | Run 语义通用；enrich 步骤名配置化；**Agent 轨称「查证快照」非系统事实** |
 | S4 ROI | 指标定义 per-skill，壳复用 |
 | S5 Studio | 不动 Console 核心；未来独立模块 |
 | S6 Tenant | 追踪层 + Auth；Console 无租户 if-else |
@@ -284,8 +339,8 @@ type ActivityEvent = {
 |------|------|
 | 最小版本有抽象价值吗？ | **有** — Inbox / HITL / Trace / Timeline / Shell 已是 Operator Platform 内核 |
 | 每版都要大重构吗？ | **否** — 每版 0～3 项边界微调 + 清单自检 |
-| 当前最该做的第一步？ | **Adapter + operator 读模型**（文档已落；代码可随下一 patch 跟进） |
-| 如何衡量「正轨生长」？ | 第二 Skill 接入时，**Shell 与 Case 布局零改动**，只加 adapter + renderer |
+| 当前最该做的第一步？ | **Fact/Cognition 双轨已落 Case 详情**；下一步 **v0.5.0 binding `milestone_catalog` + `fact_roles`** |
+| 如何衡量「正轨生长」？ | 第二 Skill / 第二 Connector 接入时，**Shell 与 Case 布局零改动**，只加 binding + adapter + profile |
 
 ---
 
@@ -299,4 +354,7 @@ type ActivityEvent = {
 | [PUB-14](PUB-14-v030-scope.md) | v0.3 产品交付范围 |
 | [PUB-15](PUB-15-agentic-ui-design.md) | L0 Shell 视觉 SSOT |
 | [PUB-17](PUB-17-console-information-architecture.md) | **产品三层导航**（Work / Agents / Systems）；与本文技术分层正交 |
+| [PUB-23](PUB-23-v043-integration-protocol-surface.md) | **v0.5 binding** `milestone_catalog` / `fact_roles` 字段草案 |
+| [PUB-25](PUB-25-v045-workbench-display-facets.md) | 列表 facet `fact_role` 演进；弃用 `quote_amount_yuan` |
+| [PUB-26](PUB-26-v046-skill-registry.md) | Skill `contextSpec` 与 fact role 分工 |
 | [PUB-changelog](PUB-changelog.md) | 版本摘要；架构项用 `[arch]` 标注 |

@@ -1,6 +1,6 @@
 import type { Decision, SuggestionRow } from "./suggestions";
 import type { PilotHousekeeper } from "./pilot-housekeepers";
-import { housekeeperName } from "./pilot-housekeepers";
+import { housekeeperName, resolveExecutorLabel } from "./pilot-housekeepers";
 import {
   actionInboxStatusLabel,
   FOLLOW_UP_SOURCE_AGENT,
@@ -84,8 +84,8 @@ export function sortActionReviews(
       return cmpLatest(a, b);
     }
     if (sortKey === "housekeeper") {
-      const na = housekeeperName(pilots, a.housekeeperId);
-      const nb = housekeeperName(pilots, b.housekeeperId);
+      const na = resolveExecutorLabel(pilots, a);
+      const nb = resolveExecutorLabel(pilots, b);
       const c = cmpText(na, nb);
       return c !== 0 ? c : cmpLatest(a, b);
     }

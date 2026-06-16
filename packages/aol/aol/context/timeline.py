@@ -828,7 +828,7 @@ def _events_for_trace(
                         lane="agent",
                         kind="enrich",
                         at_ms=trace_ms,
-                        title="系统查证" if not is_reanalysis else "再分析 · 系统查证",
+                        title="Agent 查证快照" if not is_reanalysis else "再分析 · Agent 查证快照",
                         summary=verdict[:200] if verdict else "已完成业务查证",
                     )
                 )

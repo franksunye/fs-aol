@@ -4,6 +4,7 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { SuggestionDoc } from "@/lib/suggestions";
+import { CaseSourceBadge } from "@/components/case/case-source-badge";
 import { CaseSection } from "./case-section";
 
 export function NextActionCard({ suggestion }: { suggestion: SuggestionDoc }) {
@@ -18,7 +19,8 @@ export function NextActionCard({ suggestion }: { suggestion: SuggestionDoc }) {
   return (
     <CaseSection
       title="建议行动"
-      className="border-emerald-200"
+      action={<CaseSourceBadge kind="agent" />}
+      className="border-l-4 border-l-violet-300 border-emerald-200"
       bodyClassName="bg-emerald-50/50"
     >
       {action ? (

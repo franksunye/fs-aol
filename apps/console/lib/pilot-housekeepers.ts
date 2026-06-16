@@ -33,3 +33,13 @@ export function housekeeperName(
   const hit = pilots.find((p) => p.id === housekeeperId);
   return hit?.name ?? housekeeperId;
 }
+
+/** 列表「执行人」：优先 Turso 持久化的管家姓名（含非试点管家） */
+export function resolveExecutorLabel(
+  pilots: PilotHousekeeper[],
+  row: { housekeeperId?: string; housekeeperName?: string | null }
+): string {
+  const fromLog = row.housekeeperName?.trim();
+  if (fromLog) return fromLog;
+  return housekeeperName(pilots, row.housekeeperId ?? "");
+}

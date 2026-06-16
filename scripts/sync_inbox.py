@@ -5,6 +5,7 @@
   python scripts/sync_inbox.py
   python scripts/sync_inbox.py --all
   python scripts/sync_inbox.py --order-num GD2026055411
+  python scripts/sync_inbox.py --work-order-id 6832118808914840881
   python scripts/sync_inbox.py --dry-run --limit 20
 """
 
@@ -39,7 +40,8 @@ def main() -> int:
         action="store_true",
         help="扫描全部日志（默认仅 active/NULL）",
     )
-    parser.add_argument("--order-num", help="指定工单号")
+    parser.add_argument("--order-num", help="指定工单号（可能重复，优先用 --work-order-id）")
+    parser.add_argument("--work-order-id", help="指定 Mongo serviceAppointment._id")
     parser.add_argument("--limit", type=int, default=0, help="最多处理 N 条")
     parser.add_argument("--dry-run", action="store_true", help="只打印不落库")
     parser.add_argument(
@@ -65,7 +67,8 @@ def main() -> int:
                 dry_run=args.dry_run,
                 limit=limit,
                 order_num=args.order_num,
-                only_active=not args.all and not args.order_num,
+                work_order_id=args.work_order_id,
+                only_active=not args.all and not (args.order_num or args.work_order_id),
             )
             logger.info("inbox 完成: %s", stats)
         if args.refresh_timelines or args.timelines_only:
@@ -75,6 +78,7 @@ def main() -> int:
                 dry_run=args.dry_run,
                 limit=limit,
                 order_num=args.order_num,
+                work_order_id=args.work_order_id,
                 only_active=False,
             )
             logger.info("时间轴完成: %s", tl)

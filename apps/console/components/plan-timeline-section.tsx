@@ -255,6 +255,8 @@ function TimelineRow({
 }) {
   const isAgent = ev.lane === "agent";
   const Icon = ev.lane === "business" ? Database : Sparkles;
+  const displayTitle =
+    ev.kind === "enrich" ? "Agent 查证快照" : ev.title;
   const agentHighlight =
     isAgent &&
     ["reanalysis", "reanalyze_pending", "inbox", "stale_snapshot"].includes(
@@ -302,8 +304,11 @@ function TimelineRow({
           <span
             className={`text-sm font-medium ${agentHighlight ? "text-amber-900 dark:text-amber-100" : ""}`}
           >
-            {ev.title}
+            {displayTitle}
           </span>
+          {ev.kind === "enrich" ? (
+            <span className="text-violet-600 text-[10px] font-medium">推断</span>
+          ) : null}
           <span className="text-muted-foreground font-mono text-[11px]">
             {formatAt(ev.at, ev.atMs)}
           </span>
@@ -369,7 +374,8 @@ export function PlanTimelineSection({
     <>
       {!compact ? (
         <p className="text-muted-foreground mb-4 text-xs">
-          业务里程碑与 Agent 工作记录按时间合并展示。
+          左灰边为 XLink 业务里程碑；右紫边为 Agent
+          工作记录。金额以业务轨「报价」事件为准。
         </p>
       ) : null}
 

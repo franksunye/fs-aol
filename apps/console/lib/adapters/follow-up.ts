@@ -1,4 +1,4 @@
-import { housekeeperName, loadPilotHousekeepers } from "../pilot-housekeepers";
+import { housekeeperName, loadPilotHousekeepers, resolveExecutorLabel } from "../pilot-housekeepers";
 import type {
   DispositionDecision,
   SkillId,
@@ -96,7 +96,7 @@ function buildListDisplay(
       ? { facets: contextFacets }
       : undefined,
     sourceSystem,
-    executorLabel: housekeeperName(pilots, row.housekeeperId),
+    executorLabel: resolveExecutorLabel(pilots, row),
     statusLabel: actionInboxStatusLabel(row),
     timestamp: formatListTimestamp(row.processedAt),
   };

@@ -1,6 +1,7 @@
 import { resolveStaleDays } from "@/lib/compute-stale-days";
-import { parseQuoteAmountYuan } from "@/lib/parse-quote-amount";
+import { parseFactQuoteAmountYuan } from "@/lib/parse-fact-quote";
 import { formatYuanCompact } from "@/lib/format-yuan";
+import { formatWorkOrderRef } from "@/lib/work-order-ref";
 import type { BindingOverridesJson } from "@/lib/runtime-config/types";
 import type { SuggestionRow } from "@/lib/tracking/types";
 import type {
@@ -64,6 +65,8 @@ export function mergeWorkbenchDisplay(
         spec.related_object?.type_label ??
         binding.objects[0]?.canonical.label ??
         "对象",
+      disambiguateWithWorkOrderId:
+        spec.related_object?.disambiguate_with_work_order_id ?? false,
     },
     sourceSystem: spec.source_system ?? {
       id: binding.ingestion.system_name,
@@ -93,8 +96,9 @@ function resolveFacetValue(
   const { resolver } = facet;
   switch (resolver.kind) {
     case "quote_amount_yuan": {
-      const n = parseQuoteAmountYuan(row.suggestion);
-      return n != null ? formatYuanCompact(n) : null;
+      const fromFact = parseFactQuoteAmountYuan(row.liveVerdict ?? "");
+      if (fromFact != null) return formatYuanCompact(fromFact);
+      return null;
     }
     case "stale_days_state_at": {
       const days = resolveStaleDays(row);
@@ -147,6 +151,9 @@ export function resolveRelatedObjectId(
   merged: MergedWorkbenchDisplay,
   row: SuggestionRow
 ): string {
+  if (merged.relatedObject.disambiguateWithWorkOrderId) {
+    return formatWorkOrderRef(row);
+  }
   for (const field of merged.relatedObject.idFields) {
     if (field === "order_num" && row.orderNum?.trim()) {
       return row.orderNum.trim();
@@ -191,7 +198,7 @@ export const WORKBENCH_FACET_SAMPLE_ROW: SuggestionRow = {
   archiveReason: "",
   reconciledAt: null,
   mongoStatus: "",
-  liveVerdict: "",
+  liveVerdict: "已正式报价 40653元（屋面）→ 可推进签约",
   analyzedStaleDays: null,
   suggestion: {
     原因摘要: "样例",
@@ -207,7 +214,7 @@ export const WORKBENCH_FACET_SAMPLE_ROW: SuggestionRow = {
 export function resolverKindLabel(kind: WorkbenchFacetSpec["resolver"]["kind"]): string {
   switch (kind) {
     case "quote_amount_yuan":
-      return "从建议 JSON 解析报价金额";
+      return "从 live_verdict 业务查证解析金额（Fact Plane）";
     case "stale_days_state_at":
       return "由工单 state_at（Mongo updateTime）现算滞留天数";
     case "suggestion_path":

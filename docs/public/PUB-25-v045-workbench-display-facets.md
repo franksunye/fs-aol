@@ -2,7 +2,7 @@
 
 > **状态**：生效中 · **性质**：Action 列表上下文列与 Turso overrides 纪律  
 > **依赖**：[PUB-17](PUB-17-console-information-architecture.md) · [PUB-23](PUB-23-v043-integration-protocol-surface.md) · [PUB-24](PUB-24-v044-product-shell-live.md)  
-> **最后修订**：2026-06-11
+> **最后修订**：2026-06-16
 
 ---
 
@@ -31,16 +31,32 @@ runtime_config.binding_overrides
 | Adapter | `listDisplay.contextColumn` |
 | UI | 「关联对象」= 身份；「上下文」= 可配置扫视字段 |
 
-## 3. Resolver kinds（v0.4.5 wedge）
+## 3. Resolver kinds
+
+### v0.4.5（当前 wedge）
+
+| kind | 数据源 | 备注 |
+|------|--------|------|
+| `quote_amount_yuan` | ~~`suggestion.情况判断.金额与方案`~~ → **`live_verdict` / Fact Plane** | v0.4.x 已改读事实轨；v0.5.2 **deprecated**，改用 `fact_role` |
+| `stale_days_state_at` | `follow_up_logs.state_at` 现算（Mongo `updateTime` 锚点） | |
+| `suggestion_path` | JSON path | 仅 Cognition 展示，不用于记账 |
+| `row_field` | `SuggestionRow` 顶层/metadata | |
+
+### v0.5.2（计划）
 
 | kind | 数据源 |
 |------|--------|
-| `quote_amount_yuan` | `suggestion.情况判断.金额与方案`（Agent 认知） |
-| `stale_days_state_at` | `follow_up_logs.state_at` 现算（Mongo `updateTime` 锚点） |
-| `suggestion_path` | JSON path（预留 v0.5） |
-| `row_field` | `SuggestionRow` 顶层/metadata（预留） |
+| `fact_role` | binding `fact_roles[id]` → `SubjectFacts` / `fact_snapshot` / timeline 业务轨 |
+| `milestone_label` | binding `milestone_catalog[id]` 最近一条业务轨事件 |
 
-无值时该行上下文 **不展示该字段**（诚实空态）；数据来自 `follow_up_logs.suggestion`，无需新 DB 列。
+```typescript
+// 目标 resolver 形态（示意）
+{ "kind": "fact_role", "fact_role": "primary_offer_amount", "format": "cny_wan" }
+```
+
+**Fact / Cognition 纪律**：`suggestion_path` 与 `fact_role` 不得混用同一 facet 表达「合同金额」；金额类 facet **必须**走 `fact_role`。
+
+无值时该行上下文 **不展示该字段**（诚实空态）。
 
 ## 4. 集成页配置
 

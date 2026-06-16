@@ -5,8 +5,9 @@
 
 用法（仓库根，.env 指向生产 Turso / 本地 sqlite）：
   python scripts/backfill_timeline.py
+  python scripts/backfill_timeline.py --work-order-id 6832118808914840881
+  python scripts/backfill_timeline.py --dedupe-key 'STALE_SIGN_PENDING:6832118808914840881'
   python scripts/backfill_timeline.py --order-num GD2026060809
-  python scripts/backfill_timeline.py --dedupe-key 'STALE_SIGN_PENDING:3243972156617869910'
   python scripts/backfill_timeline.py --all --limit 50
 """
 
@@ -14,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -41,8 +41,15 @@ def main() -> int:
         action="store_true",
         help="重写所有已处理工单的时间轴（默认仅补缺失）",
     )
-    parser.add_argument("--dedupe-key", help="指定 dedupe_key")
-    parser.add_argument("--order-num", help="指定工单号 orderNum")
+    parser.add_argument("--dedupe-key", help="指定 dedupe_key（推荐）")
+    parser.add_argument(
+        "--work-order-id",
+        help="指定 Mongo serviceAppointment._id",
+    )
+    parser.add_argument(
+        "--order-num",
+        help="指定工单号（可能重复，优先用 --work-order-id）",
+    )
     parser.add_argument("--limit", type=int, default=0, help="最多处理 N 条")
     args = parser.parse_args()
 
@@ -56,6 +63,7 @@ def main() -> int:
             missing_only=not args.all,
             dedupe_key=args.dedupe_key,
             order_num=args.order_num,
+            work_order_id=args.work_order_id,
             limit=limit,
         )
         logger.info(

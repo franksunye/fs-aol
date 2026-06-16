@@ -190,6 +190,35 @@ export const quoteReviewSkill: SkillDefinition = {
 
 ---
 
+## 6.1 Connector vs Skill：谁拥有「报价」？
+
+| 层 | 拥有什么 | 不拥有什么 |
+|----|----------|------------|
+| **Integration Binding** | 里程碑目录、事实角色、`field_path`、enrich profile | Skill 名称、Action Spec 文案 |
+| **Skill Definition** | `contextSpec` 声明需要哪些 `fact_roles`；`reprocess_rules` | Mongo 集合名、XLink 字段路径 |
+| **Platform** | `Subject` / `Milestone` / `Fact` 读模型；`fact_snapshot` 指纹 | `quote`、`正式报价` 等业务词 |
+
+Follow-up Skill 的 `contextSpec`（v0.5 形态示意）：
+
+```yaml
+# skills/follow-up/context.v1.yaml（示意）
+required_fact_roles:
+  - primary_offer_amount
+  - signed_amount
+required_milestones:
+  - commercial_offer
+  - signed_contract
+reprocess_on:
+  - fact_fingerprint_drift
+  - signed_but_agent_needs_follow  # Skill 级规则名，非平台硬编码
+```
+
+Quote Review（§6 草案）的 `businessObject.type: "quote"` 应理解为 **Skill 产品表达**；平台 trace 与 timeline 应使用 binding 的 `milestone_catalog` id，而非平台内置 `quote` 类型。
+
+迁移路线图：[PUB-16](PUB-16-architecture-evolution.md) §6.1 · binding 字段：[PUB-23](PUB-23-v043-integration-protocol-surface.md) §7。
+
+---
+
 ## 7. v0.4.6 交付范围
 
 | 区域 | 交付 |

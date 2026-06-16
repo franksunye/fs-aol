@@ -129,6 +129,7 @@
 | 2026-06-10 | **PUB-17** | Console 三层信息架构 SSOT：Work / Agents / Systems、Action 生命周期（建议→待执行→闭环）、列表字段与 KPI 下钻纪律、模块路由映射 |
 | 2026-06-10 | **PUB-18** | AOL 工业化打磨计划：数据状态四态、真实 Follow-up 执行链、Scenario Layer、Overview 驾驶舱、小闭环迭代 I0–I6 |
 | 2026-06-10 | **PUB-19** | Console DataList 企业级列表 SSOT：Frame 内滚动、URL 命名空间、Turso 分页、列设置与 Runs/评估接入纪律 |
+| 2026-06-16 | **PUB-16 / 23 / 25 / 26** | `[arch]` Fact/Cognition 双轨 + **Milestone/Fact 通用化路线图**（去 `quote` 硬编码）：binding `milestone_catalog`/`fact_roles`、facet `fact_role`、Skill `contextSpec` 分工 |
 
 ---
 

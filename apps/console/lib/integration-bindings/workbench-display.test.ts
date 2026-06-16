@@ -19,7 +19,7 @@ function testResolveQuoteAmountInContext() {
   const binding = loadBinding("xlink-fsm");
   const merged = mergeWorkbenchDisplay(binding, null)!;
   const related = resolveRelatedObject(merged, WORKBENCH_FACET_SAMPLE_ROW);
-  assert.equal(related.id, "GD2026064004");
+  assert.equal(related.id, "GD2026064004 · sample");
   assert.equal(related.type, "工单");
   const context = resolveContextColumn(merged, WORKBENCH_FACET_SAMPLE_ROW);
   assert.ok(

@@ -54,6 +54,8 @@ export interface SuggestionRow {
   orderNum: string;
   city: string;
   housekeeperId: string;
+  /** 引擎写入时从 Mongo user 解析；非试点管家也有姓名 */
+  housekeeperName: string;
   status: string;
   processedAt: string;
   stateAt: string | null;

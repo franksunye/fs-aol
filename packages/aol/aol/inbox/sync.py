@@ -59,6 +59,20 @@ class ActionRecord:
     status: str
 
 
+def _live_verdict_from_sa(
+    cfg: Config,
+    sa_doc: Optional[Dict[str, Any]],
+    log: Dict[str, Any],
+) -> str:
+    if not sa_doc:
+        return ""
+    wo = work_order_from_sa(sa_doc)
+    wo.event_type = str(log.get("event_type") or wo.event_type or "")
+    ctx = enrich_work_order_context(cfg, wo)
+    verdict = (ctx.business_verdict or "").replace("【结论】", "").strip()
+    return verdict[:240] if verdict else ""
+
+
 def reconcile_inbox_row(
     cfg: Config,
     log: Dict[str, Any],
@@ -77,8 +91,14 @@ def reconcile_inbox_row(
         return InboxState(BUCKET_EXECUTION, REASON_AWAITING_EXECUTION)
 
     suggestion = _parse_suggestion(log.get("suggestion"))
+    mongo_status = str((sa_doc or {}).get("status") or "")
     if not suggestion.needs_follow_up:
-        return InboxState(BUCKET_ARCHIVED, REASON_AGENT_NO_FOLLOW)
+        return InboxState(
+            BUCKET_ARCHIVED,
+            REASON_AGENT_NO_FOLLOW,
+            mongo_status=mongo_status,
+            live_verdict=_live_verdict_from_sa(cfg, sa_doc, log),
+        )
 
     if sa_doc is None:
         return InboxState(BUCKET_ARCHIVED, REASON_MONGO_MISSING)
@@ -96,7 +116,7 @@ def reconcile_inbox_row(
     wo.event_type = str(log.get("event_type") or wo.event_type or "")
     ctx = enrich_work_order_context(cfg, wo)
     verdict = (ctx.business_verdict or "").replace("【结论】", "").strip()
-    live = verdict[:240] if verdict else ""
+    live = verdict[:240] if verdict else _live_verdict_from_sa(cfg, sa_doc, log)
 
     if ctx.has_signed_contract:
         return InboxState(
@@ -158,13 +178,16 @@ def run_inbox_sync(
     dry_run: bool = False,
     limit: Optional[int] = None,
     order_num: Optional[str] = None,
+    work_order_id: Optional[str] = None,
     only_active: bool = True,
 ) -> Dict[str, int]:
     """刷新 follow_up_logs.inbox_bucket。默认只扫 active/NULL。"""
+    scope = work_order_id or order_num or ""
     logs = store.list_logs_for_inbox_sync(
-        only_active=only_active and not (order_num or ""),
+        only_active=only_active and not scope,
         limit=limit,
         order_num=order_num,
+        work_order_id=work_order_id,
     )
     stats = {
         "total": len(logs),
@@ -219,6 +242,8 @@ def run_inbox_sync(
             )
         stats["updated"] += 1
         ref = log.get("order_num") or wid
+        if work_order_id and wid:
+            ref = f"{ref} ({wid})"
         logger.info(
             "inbox %s → %s (%s) %s",
             ref,
@@ -237,13 +262,16 @@ def run_timeline_refresh(
     dry_run: bool = False,
     limit: Optional[int] = None,
     order_num: Optional[str] = None,
+    work_order_id: Optional[str] = None,
     only_active: bool = False,
 ) -> Dict[str, int]:
     """刷新 Console 可见工单的时间轴（业务轨 + Agent 轨，不跑 LLM）。"""
+    scope = work_order_id or order_num or ""
     logs = store.list_logs_for_inbox_sync(
-        only_active=only_active and not (order_num or ""),
+        only_active=only_active and not scope,
         limit=limit,
         order_num=order_num,
+        work_order_id=work_order_id,
     )
     stats = {"total": len(logs), "ok": 0, "fail": 0, "skipped": 0}
     for log in logs:

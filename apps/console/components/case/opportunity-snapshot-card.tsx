@@ -1,15 +1,12 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SuggestionRow } from "@/lib/suggestions";
-import { analysisMetaLines } from "@/lib/analysis-meta";
-import { channelPartLine, quoteLine } from "@/lib/suggestion-list-display";
+import { extractBusinessFacts } from "@/lib/business-facts";
 import { eventTypeLabel } from "@/lib/labels";
-import {
-  formatYuanCompact,
-  parseQuoteAmountYuan,
-} from "@/lib/action-review-metric-cards";
+import { formatYuanCompact } from "@/lib/action-review-metric-cards";
+import type { TimelineEvent } from "@/lib/timeline";
 import { cn } from "@/lib/utils";
+import { CaseSourceBadge } from "@/components/case/case-source-badge";
 
 function SnapshotSection({
   title,
@@ -18,7 +15,7 @@ function SnapshotSection({
 }: {
   title: string;
   defaultOpen?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <details
@@ -32,10 +29,6 @@ function SnapshotSection({
           "hover:bg-muted/30"
         )}
       >
-        <ChevronRight
-          className="text-muted-foreground size-3.5 shrink-0 transition-transform group-open:rotate-90"
-          aria-hidden
-        />
         <span className="text-foreground text-xs font-medium">{title}</span>
       </summary>
       <div className="px-4 pb-3">{children}</div>
@@ -43,34 +36,28 @@ function SnapshotSection({
   );
 }
 
+/** 业务对象事实：仅 timeline 业务轨 / live_verdict，不含 Agent suggestion。 */
 export function OpportunitySnapshotCard({
   row,
+  timelineEvents,
   mobileHref,
 }: {
   row: SuggestionRow;
+  timelineEvents: TimelineEvent[];
   mobileHref: string;
 }) {
-  const s = row.suggestion;
-  const sit = s.情况判断;
-  const channel = channelPartLine(s);
-  const quoteSummary = quoteLine(s);
-  const quoteAmt = parseQuoteAmountYuan(s);
-  const citeCount = s.引用查证?.filter((c) => c?.trim()).length ?? 0;
-  const opsLines = analysisMetaLines(row);
-  const showOps = row.inboxBucket === "active" && (opsLines.length > 0 || citeCount > 0);
-
-  const headerQuote =
-    quoteSummary !== "—"
-      ? quoteSummary
-      : sit?.报价状态?.trim() || null;
+  const facts = extractBusinessFacts(timelineEvents, row.liveVerdict);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-emerald-200/80 bg-card shadow-sm">
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-        <h2 className="text-foreground text-sm font-semibold">工单快照</h2>
-        {headerQuote ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="text-foreground text-sm font-semibold">业务查证</h2>
+          <CaseSourceBadge kind="business" />
+        </div>
+        {facts.headline ? (
           <span className="text-muted-foreground max-w-[min(100%,28rem)] truncate text-xs">
-            {headerQuote}
+            {facts.headline}
           </span>
         ) : null}
       </div>
@@ -85,19 +72,33 @@ export function OpportunitySnapshotCard({
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-xs">报价</dt>
-            <dd className="mt-0.5">
-              {quoteAmt != null
-                ? formatYuanCompact(quoteAmt)
-                : sit?.报价状态 || "—"}
+            <dt className="text-muted-foreground text-xs">正式报价</dt>
+            <dd className="mt-0.5 font-medium tabular-nums">
+              {facts.quoteAmountYuan != null
+                ? formatYuanCompact(facts.quoteAmountYuan)
+                : "—"}
             </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground text-xs">支付状态</dt>
+            <dd className="mt-0.5">{facts.quotePayState ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground text-xs">方案</dt>
+            <dd className="mt-0.5">{facts.quotePackages ?? "—"}</dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-muted-foreground text-xs">渠道 / 部位</dt>
-            <dd className="mt-0.5 leading-relaxed">
-              {channel !== "—" ? channel : sit?.渠道与部位 || "—"}
-            </dd>
+            <dt className="text-muted-foreground text-xs">维修部位</dt>
+            <dd className="mt-0.5 leading-relaxed">{facts.repairParts ?? "—"}</dd>
           </div>
+          {facts.contractAmountYuan != null ? (
+            <div>
+              <dt className="text-muted-foreground text-xs">生效签约</dt>
+              <dd className="mt-0.5 font-medium tabular-nums">
+                {formatYuanCompact(facts.contractAmountYuan)}
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-muted-foreground text-xs">移动反馈</dt>
             <dd className="mt-0.5">
@@ -113,18 +114,12 @@ export function OpportunitySnapshotCard({
             </div>
           ) : null}
         </dl>
+        {facts.source === "live_verdict" ? (
+          <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+            暂无业务时间线里程碑，以下为收件箱同步时的查证摘要；请以时间线「报价」事件为准。
+          </p>
+        ) : null}
       </SnapshotSection>
-
-      {showOps ? (
-        <SnapshotSection title="分析时效">
-          <ul className="text-muted-foreground space-y-1.5 text-xs leading-relaxed">
-            {opsLines.map((line) => (
-              <li key={line}>· {line}</li>
-            ))}
-            {citeCount > 0 ? <li>· 引用查证 {citeCount} 条</li> : null}
-          </ul>
-        </SnapshotSection>
-      ) : null}
     </div>
   );
 }
